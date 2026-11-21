@@ -1,0 +1,148 @@
+<!-- drifting leaves -->
+@for (l of leaves; track $index) {
+  <svg class="fall" viewBox="-14 -60 28 64" aria-hidden="true"
+       [style.--l]="l.left + '%'" [style.--s]="l.size + 'px'" [style.--dur]="l.dur + 's'" [style.--d]="l.delay + 's'">
+    <path [attr.d]="leafD" [attr.fill]="l.color" />
+  </svg>
+}
+
+<main class="page">
+  <header class="top">
+    <a class="logo" aria-label="InBetween">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M6 26c0-11 7-19 20-20 0 12-7 20-18 20-.7 0-1.4 0-2-.1" fill="currentColor" />
+        <path d="M6 26c4-7 9-12 15-15" stroke="#f4efe6" stroke-width="1.6" stroke-linecap="round" fill="none" />
+      </svg>
+      <span>InBetween</span>
+    </a>
+
+    <span class="status" [attr.data-s]="status()" role="status" aria-live="polite">
+      <i></i>{{ statusLabel }}
+    </span>
+  </header>
+
+  <section class="intro">
+    <svg class="orbit orbit--a" viewBox="-200 -200 400 400" aria-hidden="true">
+      <polygon [attr.points]="orbit8" />
+      <circle r="196" />
+    </svg>
+    <svg class="orbit orbit--b" viewBox="-200 -200 400 400" aria-hidden="true">
+      <polygon [attr.points]="orbit6" />
+    </svg>
+    <p class="eyebrow rise" style="--i:0">Your plant</p>
+    <h1 class="title rise" style="--i:1">Live from your <em>window.</em></h1>
+    <p class="sub rise" style="--i:2">Every photo your iPhone takes appears here the moment it is sent.</p>
+  </section>
+
+  <section class="live rise" style="--i:3">
+    <!-- main frame -->
+    <div class="frame" [class.empty]="!current()">
+      <i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i>
+
+      @if (current(); as p) {
+        @for (x of [p]; track x.id) {
+          <figure class="shot" [class.fresh]="freshId() === x.id">
+            <img class="shot__bg" [src]="x.src" alt="" aria-hidden="true" />
+            <img class="shot__img" [src]="x.src" [alt]="'Photo taken at ' + (x.takenAtMs | date: 'HH:mm:ss')" decoding="async" />
+            <span class="flash"></span>
+          </figure>
+        }
+
+        <div class="badges">
+          <span class="badge" [class.badge--live]="!pinned() && status() === 'live'">
+            <i></i>{{ pinned() ? 'Archive' : 'Latest' }}
+          </span>
+          @if (freshId() === p.id) {
+            <span class="badge badge--new">New</span>
+          }
+        </div>
+
+        <div class="meta">
+          <b>{{ p.takenAtMs | date: 'HH:mm:ss' }}</b>
+          <span>{{ ago(p.takenAtMs) }}</span>
+        </div>
+
+        @if (pinned()) {
+          <button type="button" class="back" (click)="backToLive()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            Back to latest
+          </button>
+        }
+      } @else {
+        <div class="waiting">
+          <svg class="sprout" viewBox="-60 -80 120 100" aria-hidden="true">
+            <path d="M0 0V-30" stroke="#4f8a55" stroke-width="4" stroke-linecap="round" />
+            <path [attr.d]="leafD" fill="#4f8a55" transform="translate(0 -26) rotate(-42) scale(.75)" />
+            <path [attr.d]="leafD" fill="#6aa564" transform="translate(0 -26) rotate(42) scale(.75)" />
+            <path [attr.d]="leafD" fill="#3c7347" transform="translate(0 -30) scale(.55)" />
+            <ellipse cx="0" cy="4" rx="34" ry="8" fill="#85391f" />
+          </svg>
+          <b>Waiting for the first photo…</b>
+          <span>
+            @if (status() === 'offline') {
+              Can’t reach the photo relay yet. Retrying automatically.
+            } @else {
+              Open the camera app on your iPhone and take a photo.
+            }
+          </span>
+        </div>
+      }
+    </div>
+
+    <!-- side card -->
+    <aside class="side">
+      <div class="ringbox">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="ring__track" cx="50" cy="50" r="46" />
+          <circle class="ring__bar" cx="50" cy="50" r="46"
+                  [attr.stroke-dasharray]="ring" [attr.stroke-dashoffset]="ringOffset()" />
+        </svg>
+        <div class="ringbox__txt">
+          <small>Next photo ≈</small>
+          <b>{{ countdown(nextIn()) }}</b>
+        </div>
+      </div>
+
+      <dl class="stats">
+        <div>
+          <dt>Received</dt>
+          <dd>{{ photos().length }}</dd>
+        </div>
+        <div>
+          <dt>Last photo</dt>
+          <dd>
+            @if (photos()[0]; as last) { {{ ago(last.takenAtMs) }} } @else { — }
+          </dd>
+        </div>
+        <div>
+          <dt>Connection</dt>
+          <dd class="conn" [attr.data-s]="status()"><i></i>{{ statusLabel }}</dd>
+        </div>
+      </dl>
+
+      <p class="note">The camera takes a photo about every 2 minutes. Timing is an estimate.</p>
+    </aside>
+  </section>
+
+  <!-- roll -->
+  <section class="roll">
+    <div class="roll__head">
+      <h2>Photo roll</h2>
+      <span class="pill">{{ photos().length }} {{ photos().length === 1 ? 'photo' : 'photos' }}</span>
+    </div>
+
+    <div class="grid">
+      @for (p of photos(); track p.id; let i = $index) {
+        <button type="button" class="thumb" [class.on]="current()?.id === p.id" [class.new]="freshId() === p.id"
+                [style.--i]="i < 12 ? i : 12" (click)="pick(p.id)"
+                [attr.aria-label]="'Show photo taken at ' + (p.takenAtMs | date: 'HH:mm:ss')">
+          <img [src]="p.src" alt="" loading="lazy" decoding="async" />
+          <span class="thumb__t">{{ p.takenAtMs | date: 'HH:mm' }}</span>
+          @if (freshId() === p.id) { <span class="thumb__new">New</span> }
+        </button>
+      } @empty {
+        <p class="empty-note">Photos will appear here as they arrive.</p>
+      }
+    </div>
+  </section>
+</main>

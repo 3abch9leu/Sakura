@@ -5,10 +5,11 @@ import { LoginComponent } from './login/login';
 import {  } from './login/login';
 import { DesignComponent } from './design/design';
 import { SpaceComponent } from './space/space';
+import { PlantComponent } from './plant.component/plant.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HomeComponent, LoginComponent, DesignComponent, SpaceComponent],
+  imports: [RouterOutlet, HomeComponent, LoginComponent, DesignComponent, SpaceComponent, PlantComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
