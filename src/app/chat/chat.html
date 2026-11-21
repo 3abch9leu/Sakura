@@ -1,0 +1,132 @@
+<button
+  #fab
+  type="button"
+  class="fab"
+  [class.fab--open]="open()"
+  (click)="toggle()"
+  [attr.aria-expanded]="open()"
+  aria-controls="ib-chat"
+  aria-label="Ask the InBetween assistant"
+>
+  <span class="fab__halo" aria-hidden="true"></span>
+  <svg class="fab__icon" viewBox="0 0 32 32" aria-hidden="true">
+    <path d="M6 26c0-11 7-19 20-20 0 12-7 20-18 20-.7 0-1.4 0-2-.1" fill="currentColor" />
+    <path d="M6 26c4-7 9-12 15-15" stroke="#f4efe6" stroke-width="1.6" stroke-linecap="round" fill="none" />
+  </svg>
+  <span class="fab__tag" aria-hidden="true">Ask InBetween</span>
+</button>
+
+<section
+  id="ib-chat"
+  class="panel"
+  [class.on]="open()"
+  [attr.aria-hidden]="open() ? null : 'true'"
+  [attr.inert]="open() ? null : ''"
+  role="dialog"
+  aria-modal="false"
+  aria-labelledby="ib-chat-title"
+>
+  <header class="head">
+    <svg class="head__star" viewBox="-16 -16 32 32" aria-hidden="true">
+      <polygon [attr.points]="star8" />
+    </svg>
+    <div class="head__copy">
+      <p class="eyebrow">Digital companion</p>
+      <h2 id="ib-chat-title">Ask <em>InBetween</em></h2>
+      <p class="head__sub">Shade, water, cost and how the screen works. Nothing else.</p>
+    </div>
+    <button class="close" type="button" (click)="close()" aria-label="Close assistant">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+    </button>
+  </header>
+
+  <div #scroller class="thread" role="log" aria-live="polite" aria-label="Conversation">
+    @if (!configured) {
+      <p class="setup">
+        The assistant is not configured yet. Add your Gemini API key to
+        <b>src/environments/environment.ts</b> to start chatting.
+      </p>
+    }
+
+    @if (messages().length === 0) {
+      <div class="hello">
+        <p>
+          I’m the multilingual assistant for InBetween, our living screen for
+          Tunisia and Japan. Ask me about the shade, the water network, the AI
+          design or the budget.
+        </p>
+        <div class="starters">
+          @for (s of starters; track s) {
+            <button type="button" (click)="send(s)" [disabled]="!configured || busy()">{{ s }}</button>
+          }
+        </div>
+      </div>
+    }
+
+    @for (m of messages(); track m.id) {
+      <div class="msg" [class.msg--user]="m.role === 'user'">
+        <p>{{ m.text }}</p>
+      </div>
+    }
+
+    @if (busy()) {
+      @if (streamed(); as live) {
+        <div class="msg msg--live">
+          <p>{{ live }}<span class="caret" aria-hidden="true"></span></p>
+        </div>
+      } @else {
+        <div class="msg msg--typing" aria-label="Assistant is typing">
+          <i></i><i></i><i></i>
+          <span class="wait">Thinking… {{ waited() }}s</span>
+        </div>
+      }
+    }
+
+    @if (error(); as e) {
+      <p class="err" role="alert">{{ e }}</p>
+    }
+  </div>
+
+  <form class="composer" (submit)="onSubmit($event)">
+    <button
+      class="mic"
+      type="button"
+      (click)="openVoice()"
+      aria-label="احكي مع InBetween بالدارجة"
+      title="مكالمة صوتية بالدارجة"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="9" y="3.5" width="6" height="11" rx="3" fill="currentColor" />
+        <path d="M6 11.5a6 6 0 0 0 12 0M12 17.5V21M9 21h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+      </svg>
+    </button>
+    <textarea
+      #composer
+      rows="1"
+      placeholder="Ask about shade, water, cost…"
+      aria-label="Your question"
+      [value]="draft()"
+      [disabled]="!configured || busy()"
+      (input)="onInput($event)"
+      (keydown)="onKey($event)"
+    ></textarea>
+    <button
+      class="send"
+      type="submit"
+      aria-label="Send question"
+      [disabled]="!configured || busy() || !draft().trim()"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+  </form>
+
+  <p class="foot">Concept-stage answers · figures are illustrative</p>
+
+  @if (voiceOpen()) {
+    <app-voice-panel [systemPrompt]="voicePrompt" (closed)="closeVoice()" />
+  }
+</section>

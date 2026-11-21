@@ -6,10 +6,11 @@ import {  } from './login/login';
 import { DesignComponent } from './design/design';
 import { SpaceComponent } from './space/space';
 import { PlantComponent } from './plant.component/plant.component';
+import { ChatComponent } from './chat/chat';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HomeComponent, LoginComponent, DesignComponent, SpaceComponent, PlantComponent],
+  imports: [RouterOutlet, HomeComponent, LoginComponent, DesignComponent, SpaceComponent, PlantComponent, ChatComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

@@ -4,6 +4,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "voice:server": "node server/punica-live.mjs",
+    "voice:setup": "node -e \"const fs=require('fs');if(!fs.existsSync('server/.env'))fs.copyFileSync('server/.env.example','server/.env');console.log('Edit server/.env and add PUNICA_API_KEY.')\"",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
