@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./hero.svg" width="100%" alt="YIN YANG - Balanced forces. Unstoppable drive. Kizuna 2026"/>
+<img src="./hero.svg" width="100%" alt="Sakura - Balanced forces. Unstoppable drive. Kizuna 2026"/>
 
 <a href="https://git.io/typing-svg">
   <img src="https://readme-typing-svg.demolab.com?font=Noto+Serif+JP&weight=500&size=21&pause=1300&color=FFB7C5&center=true&vCenter=true&width=820&height=50&lines=Balanced+forces.+Unstoppable+drive.;%E7%B5%86+%C2%B7+Kizuna+means+%22bond%22;Dev+%C2%B7+AI+%C2%B7+Systems+builders;Water+%C2%B7+Energy+%C2%B7+Agriculture;Ready+to+conquer+Kizuna+2026+%F0%9F%8C%B8" alt="typing" />
@@ -19,14 +19,14 @@
 
 </div>
 
-> 🌸 **Hey! We're Yin Yang**, a passionate team of dev, AI and system builders.
+> 🌸 **Hey! We're Sakura**, a passionate team of dev, AI and system builders.
 > We're tackling **water, energy & agriculture** challenges with smart tech and good vibes. Let's win together! 🚀
 
 <div align="center">
 
 | | |
 |:---|:---|
-| 🌸 **Team** | Yin Yang |
+| 🌸 **Team** | Sakura |
 | ⛩️ **Event** | Kizuna 2026 (hackathon) |
 | 👥 **Members** | 4 / 4, all from ESPRIT |
 | 🎯 **Domains** | Water · Energy · Agriculture |
@@ -41,7 +41,7 @@ That's what this team is about: different skills, one shared goal.
 
 <img src="./divider-b.svg" width="100%" alt=""/>
 
-### ☯️ 陰陽 · Why "Yin Yang"?
+### ☯️ 陰陽 · Why "Sakura"?
 
 *Two opposite forces, one harmonious system.*
 **Hardware ↔ Software · Data ↔ Design · Engineering ↔ Storytelling.**
