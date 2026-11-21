@@ -3,12 +3,15 @@ import httpx
 
 from fastapi import FastAPI, HTTPException, Query
 from app.services.open_meteo import get_weather
+from app.routers.iot import router as iot_router
 
 app = FastAPI(
     title="ROOTCODE - Intelligent Climate Management",
     description="Smart greenhouse water and energy optimization API",
     version="1.0.0"
 )
+
+app.include_router(iot_router)
 
 
 @app.get("/")

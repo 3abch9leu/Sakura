@@ -3,9 +3,20 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import asyncio
+import httpx
 from pathlib import Path
 
 from app.services.weather_inference import predict_tunis
+
+API_BASE = "http://127.0.0.1:8000"
+
+def api_get(path, timeout=3.0):
+    try:
+        response = httpx.get(f"{API_BASE}{path}", timeout=timeout)
+        response.raise_for_status()
+        return response.json(), None
+    except Exception as error:
+        return None, str(error)
 
 
 # =====================================================
@@ -107,11 +118,12 @@ st.divider()
 # NAVIGATION
 # =====================================================
 
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Overview",
     "🌡️ Temperature",
     "💧 Humidity",
-    "🔮 Future Forecast"
+    "🔮 Future Forecast",
+    "🌿 INBETWEEN IoT"
 ])
 
 
@@ -370,6 +382,69 @@ with tab4:
             file_name="tunis_ai_forecast.csv",
             mime="text/csv"
         )
+
+
+with tab5:
+    st.header("🌿 INBETWEEN Greenhouse")
+    latest, latest_error = api_get("/api/iot/latest")
+    recommendation, recommendation_error = api_get("/api/climate/recommendations", timeout=90.0)
+    actuator, actuator_error = api_get("/api/iot/actuators")
+    forecast_live = (recommendation or {}).get("forecast_summary")
+    forecast_error = recommendation_error
+    if latest:
+        st.caption(f"ESP32 reported measurement · connection {((recommendation or {}).get('sensor_status', 'unknown'))} · {latest.get('device_id')} · updated {latest.get('timestamp')}")
+        cols = st.columns(5)
+        for col, label, value in zip(cols, ["Indoor temperature", "Humidity", "Light ADC", "Soil moisture", "Reservoir"], [f"{latest['temperature_c']:.1f} °C", f"{latest['humidity_pct']:.1f}%", latest['light_adc'], f"{latest['soil_moisture_pct']:.1f}%", "LOW" if latest['water_level_low'] else "Available"]):
+            col.metric(label, value)
+    else:
+        st.warning(f"Sensors offline or no readings yet. {latest_error or ''}")
+    st.subheader("AI forecast beside greenhouse readings")
+    left, right = st.columns(2)
+    with left:
+        if forecast_live and forecast_live.get("forecast"):
+            fdf = pd.DataFrame(forecast_live["forecast"])
+            st.caption("Outdoor values are pretrained model predictions")
+            st.dataframe(fdf[["time_local", "temperature_c", "humidity_pct", "wind_speed_kmh", "precipitation_mm", "cloud_cover_pct"]], use_container_width=True)
+        else:
+            st.info(f"Forecast unavailable: {forecast_error or recommendation_error or 'no data'}")
+    with right:
+        if latest:
+            st.caption("Indoor values are ESP32 reported measurements")
+            st.json({k: latest[k] for k in ("temperature_c", "humidity_pct", "light_adc", "soil_moisture_pct", "water_level_low")})
+    st.subheader("Rule-based recommendations")
+    if recommendation:
+        for action in recommendation.get("actions", []):
+            st.write(f"**{action['action'].replace('_', ' ').title()} — {action['recommendation']}**: {action['reason']}")
+        st.caption("Recommendations are not actuator commands. Wet bulb uses the Stull approximation as an indicative screen.")
+        with st.expander("Conditions and safety"):
+            st.json({"forecast": recommendation.get("forecast_summary"), "safety_constraints": recommendation.get("safety_constraints"), "sensor_status": recommendation.get("sensor_status")})
+    else:
+        st.info(f"Recommendations unavailable: {recommendation_error}")
+    st.subheader("Actuator monitoring (simulation only)")
+    if actuator:
+        st.json(actuator)
+        st.caption("Physical actuation is disabled by default. Use firmware LEDs for Wokwi simulation; API controls only alter backend simulation state.")
+    else:
+        st.warning(actuator_error)
+    with st.expander("Manual backend simulation controls"):
+        if st.checkbox("Enable manual override", value=bool((actuator or {}).get("manual_override")), key="iot_manual_override"):
+            fan = st.checkbox("Simulated fan", key="iot_fan")
+            pump = st.checkbox("Simulated pump", key="iot_pump")
+            emergency = st.checkbox("Emergency stop", key="iot_estop")
+            if st.button("Apply simulation state"):
+                try:
+                    res = httpx.post(f"{API_BASE}/api/iot/actuators/simulation", json={"manual_override": True, "fan_on": fan, "pump_on": pump, "emergency_stop": emergency}, timeout=3.0)
+                    res.raise_for_status()
+                    st.success("Simulation state updated")
+                except Exception as error:
+                    st.error(str(error))
+        elif (actuator or {}).get("manual_override") and st.button("Disable override and clear outputs"):
+            try:
+                res = httpx.post(f"{API_BASE}/api/iot/actuators/simulation", json={"manual_override": False}, timeout=3.0)
+                res.raise_for_status()
+                st.success("Override disabled; simulation outputs cleared")
+            except Exception as error:
+                st.error(str(error))
 
 
 # =====================================================

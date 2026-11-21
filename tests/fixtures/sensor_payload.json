@@ -1,0 +1,9 @@
+{
+  "device_id": "inbetween_esp32_01",
+  "temperature_c": 28.5,
+  "humidity_pct": 65.0,
+  "light_adc": 500,
+  "soil_moisture_pct": 42.0,
+  "water_level_low": false,
+  "timestamp": "2026-11-21T12:00:00Z"
+}
