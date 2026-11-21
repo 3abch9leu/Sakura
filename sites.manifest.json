@@ -1,0 +1,7 @@
+{
+  "entrypoint": "sites-worker.js",
+  "compatibilityDate": "2026-11-21",
+  "modules": [{ "name": "sites-worker.js", "type": "esm", "path": "./sites-worker.js" }],
+  "assetsDirectory": "./dist/camera/browser",
+  "spa": true
+}
