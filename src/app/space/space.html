@@ -1,0 +1,249 @@
+<!-- Shared SVG definitions (unique ids) -->
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="spStar" width="100" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
+      <polygon [attr.points]="star8" fill="#000" />
+      @for (c of star8Dots; track $index) {
+        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="11" fill="#000" />
+      }
+    </pattern>
+    <pattern id="spHex" width="100" height="173.2" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
+      @for (p of hexStars; track $index) {
+        <polygon [attr.points]="p" fill="#000" />
+      }
+      @for (c of hexDots; track $index) {
+        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="6" fill="#000" />
+      }
+    </pattern>
+    <mask id="spMStar" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
+      <rect width="1000" height="1000" fill="#fff" />
+      <rect width="1000" height="1000" fill="url(#spStar)" />
+    </mask>
+    <mask id="spMHex" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
+      <rect width="1000" height="1000" fill="#fff" />
+      <rect width="1000" height="1000" fill="url(#spHex)" />
+    </mask>
+    <linearGradient id="spClay" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dc7c4d" />
+      <stop offset="1" stop-color="#b3573a" />
+    </linearGradient>
+    <linearGradient id="spMoss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d7050" />
+      <stop offset="1" stop-color="#244533" />
+    </linearGradient>
+    <linearGradient id="spGlass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe9b8" />
+      <stop offset="1" stop-color="#8fb7c4" />
+    </linearGradient>
+    <filter id="spBlur" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" />
+    </filter>
+    <filter id="spGrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n" />
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .25  0 0 0 0 .1  0 0 0 0 .04  1.4 0 0 0 -.55" result="g" />
+      <feComposite in="g" in2="SourceAlpha" operator="in" result="gc" />
+      <feMerge>
+        <feMergeNode in="SourceGraphic" />
+        <feMergeNode in="gc" />
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<!-- drifting leaves -->
+@for (l of leaves; track $index) {
+  <svg class="fall" viewBox="-14 -60 28 64" aria-hidden="true"
+       [style.--l]="l.left + '%'" [style.--s]="l.size + 'px'" [style.--dur]="l.dur + 's'" [style.--d]="l.delay + 's'">
+    <path [attr.d]="leafD" [attr.fill]="l.color" />
+  </svg>
+}
+
+<main class="page">
+  <header class="top">
+    <a class="logo" aria-label="InBetween">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M6 26c0-11 7-19 20-20 0 12-7 20-18 20-.7 0-1.4 0-2-.1" fill="currentColor" />
+        <path d="M6 26c4-7 9-12 15-15" stroke="#f4efe6" stroke-width="1.6" stroke-linecap="round" fill="none" />
+      </svg>
+      <span>InBetween</span>
+    </a>
+  </header>
+
+  <section class="intro">
+    <svg class="orbit orbit--a" viewBox="-200 -200 400 400" aria-hidden="true">
+      <polygon [attr.points]="orbit8" />
+      <circle r="196" />
+    </svg>
+    <svg class="orbit orbit--b" viewBox="-200 -200 400 400" aria-hidden="true">
+      <polygon [attr.points]="orbit6" />
+    </svg>
+    <p class="eyebrow rise" style="--i:0">Your space</p>
+    <h1 class="title rise" style="--i:1">Where do you <em>live?</em></h1>
+    <p class="sub rise" style="--i:2">Choose the setting that fits you. We’ll tailor your design to it.</p>
+  </section>
+
+  <section class="choices rise" style="--i:3" role="radiogroup" aria-label="Where do you live?"
+           [class.has-sel]="selected() !== null" [class.shake]="shake()">
+
+    <!-- URBAN -->
+    <button type="button" class="card card--urban" role="radio"
+            [class.on]="selected() === 'urban'" [attr.aria-checked]="selected() === 'urban'" (click)="pick('urban')">
+      <span class="scene scene--urban">
+        <span class="sun"></span>
+        <svg viewBox="0 0 600 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <g class="par par--1">
+            @for (b of farCity; track b.x) {
+              <rect [attr.x]="b.x" [attr.y]="380 - b.h" [attr.width]="b.w" [attr.height]="b.h" fill="#e3c7a6" opacity=".7" />
+            }
+          </g>
+
+          <g class="par par--2">
+            @for (b of buildings; track b.x) {
+              <rect [attr.x]="b.x" [attr.y]="b.y" [attr.width]="b.w" [attr.height]="b.h" [attr.fill]="b.c" />
+              @for (w of b.wins; track $index) {
+                <rect class="win" [class.lit]="w.lit" [attr.x]="w.x" [attr.y]="w.y" width="9" height="13" rx="1.5"
+                      [style.animation-delay]="w.d + 's'" />
+              }
+            }
+          </g>
+
+          <g class="par par--3">
+            <!-- hero building: window with a lattice screen and herbs -->
+            <rect x="350" y="90" width="250" height="300" fill="#ecd5b4" />
+            <rect x="380" y="128" width="170" height="194" rx="6" fill="url(#spGlass)" />
+            <g transform="translate(380 128) scale(.5)" class="shade">
+              <g filter="url(#spBlur)" style="transform:translate(10px,14px)">
+                <rect width="340" height="388" fill="#2a1608" opacity=".35" mask="url(#spMStar)" />
+              </g>
+              <g filter="url(#spGrain)">
+                <rect width="340" height="388" fill="url(#spClay)" mask="url(#spMStar)" />
+              </g>
+            </g>
+            <rect x="370" y="322" width="190" height="14" rx="4" fill="#85391f" />
+            @for (x of [398, 432, 466, 500, 534]; track x; let i = $index) {
+              <g [attr.transform]="'translate(' + x + ' 324)'">
+                <g class="sway" [style.animation-delay]="i * -0.7 + 's'">
+                  <path [attr.d]="leafD" fill="#4f8a55" transform="rotate(-30) scale(.55)" />
+                  <path [attr.d]="leafD" fill="#6aa564" transform="scale(.7)" />
+                  <path [attr.d]="leafD" fill="#3c7347" transform="rotate(30) scale(.55)" />
+                </g>
+              </g>
+            }
+          </g>
+
+          <g class="birds">
+            <path class="bird" d="M0 0q6-8 12 0q6-8 12 0" />
+            <path class="bird bird--b" d="M0 0q6-8 12 0q6-8 12 0" />
+            <path class="bird bird--c" d="M0 0q6-8 12 0q6-8 12 0" />
+          </g>
+        </svg>
+      </span>
+      <span class="info">
+        <span class="num">{{ options[0].num }}</span>
+        <b class="name">{{ options[0].name }}</b>
+        <span class="desc">{{ options[0].desc }}</span>
+        <span class="tags">
+          @for (t of options[0].tags; track t) { <i>{{ t }}</i> }
+        </span>
+      </span>
+      <span class="tick" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.500" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </span>
+    </button>
+
+    <!-- FARM -->
+    <button type="button" class="card card--farm" role="radio"
+            [class.on]="selected() === 'farm'" [attr.aria-checked]="selected() === 'farm'" (click)="pick('farm')">
+      <span class="scene scene--farm">
+        <span class="sun"></span>
+        <svg viewBox="0 0 600 380" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <g class="clouds par par--1">
+            <g class="cloud"><ellipse cx="0" cy="60" rx="46" ry="14" /><ellipse cx="24" cy="50" rx="30" ry="14" /><ellipse cx="-22" cy="52" rx="26" ry="11" /></g>
+            <g class="cloud cloud--b"><ellipse cx="0" cy="110" rx="38" ry="11" /><ellipse cx="20" cy="102" rx="24" ry="11" /></g>
+          </g>
+
+          <g class="par par--1">
+            <path d="M0 250C90 200 180 220 270 240S450 200 600 230V380H0Z" fill="#b5cc92" />
+          </g>
+          <g class="par par--2">
+            <path d="M0 282C120 242 240 292 360 264S520 242 600 272V380H0Z" fill="#8db46f" />
+
+            <!-- barn -->
+            <rect x="70" y="216" width="130" height="96" fill="#b5593a" />
+            <polygon points="60,218 135,166 210,218" fill="#85391f" />
+            <rect x="117" y="254" width="36" height="58" fill="#f4efe6" />
+            <path d="M117 254l36 58M153 254l-36 58" stroke="#b5593a" stroke-width="2.5" />
+            <circle cx="135" cy="226" r="8" fill="#f4efe6" />
+
+            <!-- farmhouse with hex screen -->
+            <rect x="410" y="232" width="150" height="82" fill="#efe2c9" />
+            <polygon points="400,234 485,190 570,234" fill="#c4693f" />
+            <rect x="436" y="248" width="62" height="54" rx="4" fill="url(#spGlass)" />
+            <g transform="translate(436 248) scale(.36)">
+              <g filter="url(#spBlur)" style="transform:translate(10px,14px)">
+                <rect width="172" height="150" fill="#10200f" opacity=".35" mask="url(#spMHex)" />
+              </g>
+              <g filter="url(#spGrain)">
+                <rect width="172" height="150" fill="url(#spMoss)" mask="url(#spMHex)" />
+              </g>
+            </g>
+            <rect x="512" y="268" width="28" height="46" fill="#a9532f" />
+
+            <!-- raised rain tank on stilts -->
+            <path d="M240 254v56M270 254v56M240 280l30 30M270 280l-30 30" stroke="#6b4a36" stroke-width="3" fill="none" />
+            <rect x="232" y="206" width="46" height="48" rx="12" fill="rgba(255,255,255,.55)" stroke="#6b4a36" stroke-width="2.5" />
+            <rect x="238" y="228" width="34" height="20" rx="8" fill="#7cc4d6" />
+            <path d="M255 254v50" stroke="rgba(124,196,214,.8)" stroke-width="4" stroke-linecap="round" />
+            <circle class="drip" cx="255" cy="258" r="3.5" fill="#cdeef6" />
+            <circle class="drip" cx="255" cy="258" r="3.5" fill="#cdeef6" style="animation-delay:-.9s" />
+          </g>
+
+          <g class="par par--3">
+            <rect y="310" width="600" height="70" fill="#6a9a56" />
+            @for (p of fieldPlants; track $index) {
+              <g [attr.transform]="'translate(' + p.x + ' ' + p.y + ') scale(' + p.s + ')'">
+                <g class="sway" [style.animation-delay]="p.d + 's'">
+                  <path [attr.d]="leafD" fill="#3c7347" transform="rotate(-32) scale(.7)" />
+                  <path [attr.d]="leafD" fill="#4f8a55" transform="rotate(32) scale(.7)" />
+                  <path [attr.d]="leafD" fill="#7db36a" transform="scale(.85)" />
+                </g>
+              </g>
+            }
+          </g>
+
+          <g class="birds">
+            <path class="bird bird--b" d="M0 0q6-8 12 0q6-8 12 0" />
+            <path class="bird" d="M0 0q6-8 12 0q6-8 12 0" />
+          </g>
+        </svg>
+      </span>
+      <span class="info">
+        <span class="num">{{ options[1].num }}</span>
+        <b class="name">{{ options[1].name }}</b>
+        <span class="desc">{{ options[1].desc }}</span>
+        <span class="tags">
+          @for (t of options[1].tags; track t) { <i>{{ t }}</i> }
+        </span>
+      </span>
+      <span class="tick" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.500" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </span>
+    </button>
+  </section>
+
+  @if (hint()) {
+    <small class="error">Choose where you live to continue.</small>
+  }
+</main>
+
+<footer class="actions">
+  <span class="picked" [class.show]="selected() !== null">
+    @if (selected()) {
+      Selected: <b>{{ selectedName }}</b>
+    }
+  </span>
+  <button type="button" class="btn" (click)="next()">
+    <span>Continue to design</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+  </button>
+</footer>
