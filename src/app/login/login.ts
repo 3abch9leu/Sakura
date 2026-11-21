@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -19,6 +20,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 export class LoginComponent implements AfterViewInit, OnDestroy {
   private readonly zone = inject(NgZone);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   @ViewChild('panel', { static: true }) private panelRef!: ElementRef<HTMLElement>;
   @ViewChild('arch', { static: true }) private archRef!: ElementRef<HTMLElement>;
@@ -48,8 +50,8 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
       setTimeout(() => this.shake.set(false), 500);
       return;
     }
-    // Next phase: call the authentication service.
-    console.log('Login payload', this.form.getRawValue());
+    // No auth backend yet: go straight to the designer.
+    this.router.navigate(['/design']);
   }
 
   /* ---------- decorative geometry ---------- */

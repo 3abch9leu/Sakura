@@ -61,8 +61,9 @@
     <a href="#between">Between</a>
     <a href="#how">How it works</a>
     <a href="#elements">Elements</a>
+    <a routerLink="/energy">Energy &amp; Comfort</a>
   </nav>
-  <a class="pill" href="#cta">Design your screen</a>
+  <a class="pill" routerLink="/design">Design your screen</a>
 </header>
 
 <main id="top">
@@ -94,8 +95,8 @@
         InBetween designs a perforated screen for your window with AI, then lets sun and gravity do the work.
       </p>
       <div class="cta-row">
-        <a class="btn btn--primary" href="#between">
-          <span>Explore the idea</span>
+        <a class="btn btn--primary" routerLink="/design">
+          <span>Design my screen</span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
         </a>
         <a class="btn btn--ghost" href="#how">How it works</a>
@@ -322,7 +323,7 @@
     </svg>
     <div class="wrap finale__inner">
       <h2 data-reveal>Find your place<br /><em>in between.</em></h2>
-      <a class="btn btn--light" href="#top" data-reveal [style.--d]="'.15s'">
+      <a class="btn btn--light" routerLink="/design" data-reveal [style.--d]="'.15s'">
         <span>Design your screen</span>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
       </a>

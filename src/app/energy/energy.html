@@ -1,0 +1,539 @@
+<main class="page" [class.page--wide]="step() === 1">
+  <header class="top">
+    <a class="logo" routerLink="/" aria-label="InBetween home">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M6 26c0-11 7-19 20-20 0 12-7 20-18 20-.7 0-1.4 0-2-.1" fill="currentColor" />
+        <path d="M6 26c4-7 9-12 15-15" stroke="#f6f3ec" stroke-width="1.6" stroke-linecap="round" fill="none" />
+      </svg>
+      <span>InBetween</span>
+    </a>
+    <div class="top__right">
+      <div class="langs" role="radiogroup" aria-label="Language of explanations">
+        @for (l of langs; track l.id) {
+          <button type="button" role="radio" [class.on]="lang() === l.id" [attr.aria-checked]="lang() === l.id" (click)="setLang(l.id)">{{ l.label }}</button>
+        }
+      </div>
+      <a class="toplink" routerLink="/design">Design a screen</a>
+    </div>
+  </header>
+
+  <!-- stepper -->
+  <nav class="road" aria-label="Progress">
+    @for (s of steps; track s.t; let i = $index) {
+      <button type="button" class="node" [class.done]="i < step()" [class.active]="i === step()" [disabled]="!canOpen(i)"
+              (click)="go(i)" [attr.aria-current]="i === step() ? 'step' : null">
+        <span class="node__dot">{{ i < step() ? '✓' : i + 1 }}</span>
+        <span class="node__txt"><b>{{ s.t }}</b><small>{{ s.s }}</small></span>
+      </button>
+      @if (i < steps.length - 1) { <span class="conn" [class.filled]="i < step()"></span> }
+    }
+  </nav>
+
+  @if (engine() === 'offline') {
+    <div class="note note--warn" role="alert">
+      We can't reach the INBETWEEN engine at {{ api.base }}. Start it in the <code>rootcode</code> folder with
+      <code>python -m uvicorn api:app --port 8000</code>. This page reconnects by itself.
+    </div>
+  }
+
+  @switch (step()) {
+
+    <!-- ============================================================ STEP 1: UPLOAD -->
+    @case (0) {
+      <section class="pane">
+        <p class="eyebrow">Energy &amp; Comfort Companion</p>
+        <h1>Understand your STEG bill, <em>stay cool for less.</em></h1>
+
+        <ol class="how">
+          <li><span>1</span><div><b>Add your bill</b><small>A photo or the PDF. Nothing to type.</small></div></li>
+          <li><span>2</span><div><b>See each part explained</b><small>We highlight every number on your bill and say what it means.</small></div></li>
+          <li><span>3</span><div><b>Know if it's right</b><small>We recalculate it with the official STEG tariff.</small></div></li>
+          <li><span>4</span><div><b>Pay less, stay cool</b><small>Try simple changes and see the effect in dinars.</small></div></li>
+        </ol>
+
+        <input #file type="file" accept="image/*,application/pdf,.pdf" hidden (change)="onFile($event)" />
+        <div class="drop" [class.over]="dragging()" [class.busy]="reading()" tabindex="0" role="button"
+             aria-label="Upload a STEG bill, photo or PDF"
+             (click)="!reading() && file.click()" (keydown.enter)="file.click()" (keydown.space)="file.click(); $event.preventDefault()"
+             (dragover)="$event.preventDefault(); dragging.set(true)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+          @if (reading()) {
+            <span class="spin spin--lg"></span>
+            <b>Reading your bill…</b>
+            <span>Finding each number and hiding your personal details. About 10 seconds.</span>
+          } @else {
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 6h14l10 10v26H14z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /><path d="M28 6v10h10M20 26h12M20 32h12M20 20h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+            <b>Add your STEG electricity bill</b>
+            <span>Drop it here or click · photo (JPG, PNG) or PDF</span>
+          }
+        </div>
+        @if (readError()) { <p class="error" role="alert">{{ readError() }}</p> }
+        <div class="alt">
+          <button type="button" class="link" (click)="useSpecimen()" [disabled]="reading()">No bill at hand? Try a sample bill</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" class="link" (click)="manual()" [disabled]="reading()">Type the numbers instead</button>
+        </div>
+        <p class="privacy">🔒 Your bill is read in memory and never stored. Your name, address and customer numbers are blurred and never sent to any AI.</p>
+        <p class="phototip">📸 Photo tips: lay the bill flat, use daylight, and fit the whole page in the picture.</p>
+      </section>
+    }
+
+    <!-- ============================================================ STEP 2: EXPLAINED -->
+    @case (1) {
+      <section class="pane">
+        <h1 class="h1--sm" [attr.dir]="rtl() ? 'rtl' : 'ltr'">{{ t()['explainedTitle'] }}</h1>
+        <p class="intro" [attr.dir]="rtl() ? 'rtl' : 'ltr'">{{ manualMode() ? t()['manualIntro'] : t()['noTyping'] }}</p>
+        @if (redacted().length) {
+          <p class="meta">🔒 Blurred for your privacy: {{ redacted().join(', ').replaceAll('_', ' ') }}.</p>
+        }
+        @for (w of readWarnings(); track w) { <p class="note note--warn">{{ w }}</p> }
+
+        <div class="explained" [class.explained--noimg]="!preview()">
+          @if (preview(); as src) {
+            <div class="billview">
+              <div class="billimg" [style.aspect-ratio]="1 / previewRatio()">
+                <img [src]="src" alt="Your bill, personal details blurred" />
+                @for (p of parts(); track p.id) {
+                  @if (p.box; as b) {
+                    <button type="button" class="hl" [class.on]="active() === p.id" [class.dim]="active() && active() !== p.id"
+                            [attr.data-st]="p.status"
+                            [style.left.%]="b[0] * 100" [style.top.%]="b[1] * 100"
+                            [style.width.%]="(b[2] - b[0]) * 100" [style.height.%]="(b[3] - b[1]) * 100"
+                            [attr.aria-label]="p.n + '. ' + p.name[lang()]" (click)="select(p.id)">
+                      <span class="hl__n">{{ p.n }}</span>
+                    </button>
+                  }
+                }
+              </div>
+              <p class="legend-st">
+                <span><i class="dot dot--found"></i>{{ t()['read'] }}</span>
+                <span><i class="dot dot--uncertain"></i>{{ t()['check'] }}</span>
+              </p>
+            </div>
+          }
+
+          <div class="partlist" [attr.dir]="rtl() ? 'rtl' : 'ltr'">
+            @for (p of parts(); track p.id) {
+              <article class="part" [id]="'part-' + p.id" [class.on]="active() === p.id" [attr.data-st]="p.status"
+                       (click)="select(p.id)" (keydown.enter)="select(p.id)" tabindex="0">
+                <header class="part__head">
+                  <span class="part__n" aria-hidden="true">{{ p.n }}</span>
+                  <b [attr.dir]="rtl() ? 'rtl' : 'ltr'">{{ p.name[lang()] }}</b>
+                  @if (!manualMode() || p.status === 'uncertain') {
+                    <span class="chip-st" [attr.data-st]="p.status">{{ p.status === 'uncertain' ? t()['check'] : t()['read'] }}</span>
+                  }
+                </header>
+
+                @if (editing() === p.id || manualMode()) {
+                  <div class="part__edit" (click)="$event.stopPropagation()">
+                    @switch (p.kind) {
+                      @case ('reading') {
+                        <div class="seg">
+                          <button type="button" [class.on]="readingType() === 'actual'" (click)="setReading('actual')">{{ t()['actual'] }}</button>
+                          <button type="button" [class.on]="readingType() === 'estimated'" (click)="setReading('estimated')">{{ t()['estimated'] }}</button>
+                        </div>
+                      }
+                      @case ('date') {
+                        <input type="date" [value]="val('period_start')" (input)="setVal('period_start', $any($event.target).value)" aria-label="Period start" />
+                        <span class="arrow">→</span>
+                        <input type="date" [value]="val('period_end')" (input)="setVal('period_end', $any($event.target).value)" aria-label="Period end" />
+                      }
+                      @default {
+                        <input type="number" inputmode="decimal" [attr.step]="p.unit === 'TND' ? '0.001' : '1'" [value]="val(p.keys[0])"
+                               (input)="setVal(p.keys[0], $any($event.target).value)" [attr.aria-label]="p.name.en" />
+                        @if (p.unit) { <span class="unit">{{ p.unit }}</span> }
+                      }
+                    }
+                    @if (!manualMode()) { <button type="button" class="btn btn--sm btn--ghost" (click)="editing.set(null)">{{ t()['done'] }}</button> }
+                  </div>
+                } @else {
+                  <div class="part__value">
+                    <span dir="ltr">{{ p.display }}</span>
+                    <button type="button" class="link link--sm" (click)="editing.set(p.id); $event.stopPropagation()">✎ {{ t()['edit'] }}</button>
+                  </div>
+                }
+
+                <p class="part__meaning" [attr.dir]="rtl() ? 'rtl' : 'ltr'">{{ p.meaning[lang()] }}</p>
+                @if (p.id === 'consumption' && indexCheck(); as ic) {
+                  <p class="part__check" [class.bad]="!ic.ok">{{ ic.text }}</p>
+                }
+                @if (p.id === 'reading' && !readingType()) {
+                  <p class="part__check bad">{{ t()['choose'] }}</p>
+                }
+              </article>
+            }
+
+            @if (missingParts().length) {
+              <details class="missing" [open]="showMissing()" (toggle)="showMissing.set($any($event.target).open)">
+                <summary><b [attr.dir]="rtl() ? 'rtl' : 'ltr'">{{ t()['missing'] }} ({{ missingParts().length }})</b>
+                  <small [attr.dir]="rtl() ? 'rtl' : 'ltr'">{{ t()['missingHint'] }}</small></summary>
+                @for (p of missingParts(); track p.id) {
+                  <div class="missing__row">
+                    <span [attr.dir]="rtl() ? 'rtl' : 'ltr'">{{ p.name[lang()] }}</span>
+                    @switch (p.kind) {
+                      @case ('reading') {
+                        <div class="seg seg--sm">
+                          <button type="button" (click)="setReading('actual')">{{ t()['actual'] }}</button>
+                          <button type="button" (click)="setReading('estimated')">{{ t()['estimated'] }}</button>
+                        </div>
+                      }
+                      @case ('date') {
+                        <input type="date" (change)="setVal('period_start', $any($event.target).value)" aria-label="Period start" />
+                        <input type="date" (change)="setVal('period_end', $any($event.target).value)" aria-label="Period end" />
+                      }
+                      @default {
+                        <input type="number" inputmode="decimal" [placeholder]="p.unit ?? ''" (change)="setVal(p.keys[0], $any($event.target).value)" [attr.aria-label]="p.name.en" />
+                      }
+                    }
+                  </div>
+                }
+              </details>
+            }
+
+            <label class="other">
+              <span>Does the amount to pay also include gas, the RTT contribution or unpaid amounts? Type their total <em>(optional)</em></span>
+              <span class="other__in"><input type="number" step="0.001" inputmode="decimal" [value]="val('other_charges_tnd')" (input)="setVal('other_charges_tnd', $any($event.target).value)" /> TND</span>
+            </label>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ============================================================ STEP 3: RESULT -->
+    @case (2) {
+      @if (result(); as R) {
+        @let U = R.understanding;
+        <section class="pane">
+          <div class="verdict" [attr.data-status]="R.verification.status" role="status">
+            <span class="verdict__icon" aria-hidden="true">{{ verdict[R.verification.status].icon }}</span>
+            <div>
+              <h1 class="h1--sm">{{ verdict[R.verification.status].title }}</h1>
+              <p>{{ verdict[R.verification.status].plain || R.verification.summary }}</p>
+              @for (c of R.verification.causes; track c) { <p class="cause">→ {{ c }}</p> }
+            </div>
+          </div>
+          @for (w of R.verification.warnings; track w) { <p class="note note--warn">{{ w }}</p> }
+
+          <div class="explain card">
+            <div class="explain__head"><b>In simple words</b>
+              @if (explanation(); as E) { <small>{{ E.mode === 'llm' ? 'Written by the AI assistant from your checked numbers' : 'Written from your checked numbers' }}</small> }
+            </div>
+            @if (explaining()) {
+              <p class="muted"><span class="spin"></span> Writing your explanation…</p>
+            } @else if (explanation(); as E) {
+              <div class="explain__body" [attr.dir]="isRtl(E.lang) ? 'rtl' : 'ltr'" [attr.lang]="E.lang === 'darija' ? 'aeb' : E.lang">
+                @for (p of E.paragraphs; track $index) { <p>{{ p }}</p> }
+              </div>
+              <p class="src">Sources:
+                @for (s of E.sources; track s; let last = $last) { <a [href]="s" target="_blank" rel="noopener">{{ s.includes('steg') ? 'STEG' : 'ANME' }}</a>{{ last ? '' : ', ' }} }
+              </p>
+            }
+          </div>
+
+          <h2 class="h2">Your numbers</h2>
+          <div class="tiles">
+            <div class="tile"><small>You used</small><b>{{ U.consumption_kwh ?? '—' }}<span> kWh</span></b>
+              @if (U.days) { <em>in {{ U.days }} days</em> }</div>
+            <div class="tile"><small>Per day</small><b>{{ U.kwh_per_day != null ? (U.kwh_per_day | number: '1.1-1') : '—' }}<span> kWh</span></b>
+              @if (!U.kwh_per_day) { <em>needs the dates</em> }</div>
+            <div class="tile"><small>Per month</small><b>{{ U.kwh_per_month != null ? (U.kwh_per_month | number: '1.0-0') : '—' }}<span> kWh</span></b>
+              <em>decides your price</em></div>
+            <div class="tile"><small>Your price</small><b>{{ U.band?.price_mill_per_kwh ?? '—' }}<span> millimes/kWh</span></b>
+              @if (U.band) { <em>+ {{ (U.band.vat_rate * 100) | number: '1.0-0' }} % VAT</em> }</div>
+          </div>
+
+          <div class="grid2">
+            @if (bandLadder(); as B) {
+              <figure class="card chart">
+                <figcaption><b>Your price band</b><small>The more you use per month, the higher the price of <em>every</em> kWh.</small></figcaption>
+                <div class="ladder" role="img" [attr.aria-label]="'You use ' + (B.monthly | number: '1.0-0') + ' kWh per month, in the ' + (U.band?.price_mill_per_kwh ?? '') + ' millimes band'">
+                  @for (s of B.segs; track s.price; let i = $index) {
+                    <div class="ladder__seg" [class.on]="s.active" [style.left.%]="s.x" [style.width.%]="s.w" [attr.data-shade]="s.shade"
+                         (pointerenter)="bandHover.set(i)" (pointerleave)="bandHover.set(null)"><span>{{ s.price }}</span></div>
+                  }
+                  <div class="ladder__mark" [style.left.%]="B.marker"><i></i><b>You: {{ B.monthly | number: '1.0-0' }} kWh/month</b></div>
+                  @if (bandHover() !== null) {
+                    @let h = B.segs[bandHover()!];
+                    <div class="tip" [style.left.%]="h.x + h.w / 2">{{ h.lo }}–{{ h.last ? '…' : h.hi }} kWh/month → {{ h.price }} millimes per kWh</div>
+                  }
+                </div>
+                <div class="ladder__axis" aria-hidden="true">
+                  @for (e of [0, 100, 200, 300, 500]; track e) { <span [style.left.%]="(e / B.max) * 100">{{ e }}</span> }
+                </div>
+                @if (U.next_band; as nb) {
+                  <p class="insight">💡 Use <b>{{ nb.headroom_kwh_month | number: '1.0-0' }} kWh more per month</b> and every kWh jumps to {{ nb.next_price_mill_per_kwh }} millimes.</p>
+                }
+                <small class="src">Millimes per kWh, before tax. 62 and 96 only for 1–2 kVA meters up to 100 kWh/month.
+                  <a href="https://www.steg.com.tn/fr/page/les-tarifs-d%C3%A9lectricit%C3%A9" target="_blank" rel="noopener">STEG tariffs</a></small>
+              </figure>
+            }
+            @if (breakdown(); as K) {
+              <figure class="card chart">
+                <figcaption><b>Where your money goes</b><small>Electricity part: {{ K.total | number: '1.3-3' }} TND</small></figcaption>
+                <div class="stack" role="img" [attr.aria-label]="'Energy ' + K.parts[0].value + ', fixed ' + K.parts[1].value + ', taxes ' + K.parts[2].value + ' TND'">
+                  @for (p of K.parts; track p.key) { <span class="stack__seg" [class]="'stack__seg ' + p.cls" [style.width.%]="p.pct"></span> }
+                </div>
+                <ul class="stack__legend">
+                  @for (p of K.parts; track p.key) {
+                    <li><i [class]="p.cls"></i><span>{{ p.label }}</span><b>{{ p.value | number: '1.3-3' }} TND</b><small>{{ p.pct | number: '1.0-0' }} %</small></li>
+                  }
+                </ul>
+                <small class="src">Taxes = VAT {{ K.taxes.vat | number: '1.3-3' }} + local {{ K.taxes.municipal | number: '1.3-3' }} + FTE {{ K.taxes.fte | number: '1.3-3' }} TND.</small>
+              </figure>
+            } @else {
+              <div class="card"><p class="muted">Add the subscribed power (kVA) in step 2 to see where your money goes.</p></div>
+            }
+          </div>
+
+          @if (R.verification.checks.length) {
+            <div class="card">
+              <table class="checks">
+                <caption>Line by line: your bill vs the official tariff</caption>
+                <thead><tr><th scope="col">Line</th><th scope="col">Your bill</th><th scope="col">Official tariff</th><th scope="col"><span class="sr">Result</span></th></tr></thead>
+                <tbody>
+                  @for (c of R.verification.checks; track c.line) {
+                    <tr [class.bad]="!c.match">
+                      <th scope="row">{{ c.label }}</th>
+                      <td>{{ c.printed_tnd | number: '1.3-3' }}</td>
+                      <td>{{ c.calculated_tnd | number: '1.3-3' }}</td>
+                      <td><span class="pill" [class.pill--ok]="c.match" [class.pill--warn]="!c.match">{{ c.match ? '✓ Same' : 'Differs by ' + (c.difference_tnd | number: '1.3-3') }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <button type="button" class="link" (click)="showMethod.set(!showMethod())" [attr.aria-expanded]="showMethod()">
+            {{ showMethod() ? 'Hide' : 'How did we calculate this?' }}
+          </button>
+          @if (showMethod()) {
+            <div class="method">
+              <p>Tariff: STEG low voltage, residential, {{ R.tariff_version }}.</p>
+              @for (a of R.verification.calculation?.assumptions ?? []; track a) { <p>• {{ a }}</p> }
+              @for (c of R.tariff_conflicts; track c) { <p>• {{ c }}</p> }
+              <p><b>Not checked:</b> {{ R.not_verified.join(' ') }}</p>
+            </div>
+          }
+        </section>
+      }
+    }
+
+    <!-- ============================================================ STEP 4: PAY LESS -->
+    @case (3) {
+      <section class="pane">
+        <h1 class="h1--sm">Pay less, <em>stay cool</em></h1>
+        <p class="intro">Here we need <b>your</b> help: tell us how you use your air conditioner and other appliances.
+          We'll show how much energy they use and what a small change saves{{ result() ? ' on your bill' : '' }}.</p>
+
+        <div class="card ac">
+          <label class="switch"><input type="checkbox" [checked]="hasAc()" (change)="hasAc.set($any($event.target).checked)" /> I have an air conditioner</label>
+          @if (hasAc()) {
+            <div class="q">
+              <span class="q__label">How big is it?</span>
+              <div class="sizes" role="radiogroup" aria-label="Air conditioner size">
+                @for (s of acSizes; track s.id) {
+                  <button type="button" role="radio" class="size" [class.on]="acSize() === s.id" [attr.aria-checked]="acSize() === s.id" (click)="pickAc(s.id)">
+                    <b>{{ s.label }}</b><small>{{ s.note }}</small><em>≈ {{ s.watts }} W</em>
+                  </button>
+                }
+              </div>
+              <small class="hint">The exact power (W) is on the label of the indoor unit:
+                <input class="inline-in" type="number" [value]="acWatts()" (input)="acWatts.set(+$any($event.target).value)" aria-label="Air conditioner power in watts" /> W
+                · How many? <input class="inline-in inline-in--xs" type="number" min="1" max="6" [value]="acCount()" (input)="acCount.set(+$any($event.target).value || 1)" aria-label="Number of air conditioners" /></small>
+            </div>
+            <div class="q">
+              <span class="q__label">Hours per day it runs <b>{{ acHours() }} h</b></span>
+              <input type="range" min="0" max="24" step="0.5" [value]="acHours()" (input)="acHours.set(+$any($event.target).value)" aria-label="Hours per day" />
+            </div>
+            <div class="q">
+              <span class="q__label">Days you used it in this bill's period <b>{{ acDays() > billDays() ? billDays() : acDays() }} of {{ billDays() }}</b></span>
+              <input type="range" min="0" [attr.max]="billDays()" step="1" [value]="acDays()" (input)="acDays.set(+$any($event.target).value)" aria-label="Days used" />
+            </div>
+            <div class="q">
+              <span class="q__label">The temperature you set <b>{{ setCurrent() }} °C</b></span>
+              <input type="range" min="16" max="26" step="1" [value]="setCurrent()" (input)="setCurrent.set(+$any($event.target).value)" aria-label="Current temperature setting" />
+              <small class="hint">ANME advises 26 °C. According to the agency, each degree lower uses about 7 % more electricity.</small>
+            </div>
+            <div class="q q--try">
+              <span class="q__label">Try: run it <b>{{ acHoursLess() }} h less</b> per day and set it to <b>{{ setTarget() }} °C</b></span>
+              <input type="range" min="0" max="6" step="0.5" [value]="acHoursLess()" (input)="acHoursLess.set(+$any($event.target).value)" aria-label="Hours less per day" />
+            </div>
+          }
+        </div>
+
+        <details class="card others">
+          <summary><b>Other appliances</b> <small>(optional)</small></summary>
+          <div class="chips">
+            @for (p of presets; track p.name) { <button type="button" class="chip" (click)="addPreset(p)">+ {{ p.name }}</button> }
+            <button type="button" class="chip chip--ghost" (click)="addRow()">+ Other</button>
+          </div>
+          @if (others().length) {
+            <div class="appl">
+              <div class="appl__head" aria-hidden="true"><span>Appliance</span><span>Power (W)</span><span>Hours/day</span><span>Days</span><span>Hours less</span><span></span></div>
+              @for (r of others(); track $index; let i = $index) {
+                <div class="appl__row">
+                  <input type="text" [value]="r.name" placeholder="Name" (input)="setRow(i, 'name', $any($event.target).value)" aria-label="Appliance name" />
+                  <input type="number" min="0" [value]="r.power_w ?? ''" (input)="setRow(i, 'power_w', $any($event.target).value)" aria-label="Power in watts" />
+                  <input type="number" min="0" max="24" step="0.5" [value]="r.hours_per_day ?? ''" (input)="setRow(i, 'hours_per_day', $any($event.target).value)" aria-label="Hours per day" />
+                  <input type="number" min="0" [value]="r.days ?? ''" (input)="setRow(i, 'days', $any($event.target).value)" aria-label="Days" />
+                  <input type="number" min="0" max="24" step="0.5" [value]="r.reduce ?? ''" (input)="setRow(i, 'reduce', $any($event.target).value)" aria-label="Hours less per day" />
+                  <button type="button" class="x" (click)="removeRow(i)" aria-label="Remove">×</button>
+                </div>
+              }
+            </div>
+          }
+        </details>
+
+        <div class="row-end">
+          @if (adviceError()) { <p class="error">{{ adviceError() }}</p> }
+          <button type="button" class="btn btn--primary" (click)="runAdvice()" [disabled]="advising() || engine() === 'offline'">
+            @if (advising()) { <span class="spin spin--light"></span> Calculating… } @else { Show what I can save }
+          </button>
+        </div>
+
+        @if (advice()?.scenarios; as S) {
+          <div class="grid2" id="advice-result">
+            <div class="card result">
+              <b class="result__title">With these changes</b>
+              @if (overBill()) {
+                <p class="note note--warn">These appliances would use {{ S.total_kwh | number: '1.0-0' }} kWh, more than your whole bill ({{ result()?.understanding?.consumption_kwh }} kWh). Lower the hours or days so the result is realistic.</p>
+              }
+              <div class="result__big"><span>{{ S.total_kwh_saved | number: '1.0-0' }}</span><small>kWh saved in {{ billDays() }} days</small></div>
+              @if (S.money; as M) {
+                @if (M.saving_tnd != null) {
+                  <div class="result__big result__big--money"><span>−{{ M.saving_tnd | number: '1.2-2' }}</span><small>TND on your electricity</small></div>
+                  <p>Your electricity part would go from <b>{{ M.base_total_tnd | number: '1.3-3' }}</b> to <b>{{ M.with_savings_total_tnd | number: '1.3-3' }} TND</b>.</p>
+                  @if (M.band_changes) {
+                    <p class="insight">💡 You'd drop from the {{ M.base_band_mill }} to the {{ M.band_after_mill }} millimes band, so <b>every</b> kWh becomes cheaper.</p>
+                  }
+                }
+              } @else {
+                <p class="muted">Check a bill first (steps 1–3) to see the effect in dinars with the official tariff.</p>
+              }
+              @if (S.setpoint) { <p class="small">Of which {{ S.setpoint.kwh | number: '1.0-0' }} kWh from the warmer setting ({{ S.setpoint.fraction * 100 | number: '1.0-0' }} % of the AC's use).</p> }
+            </div>
+            <figure class="card chart">
+              <figcaption><b>Energy used in this period, per appliance</b><small>{{ S.total_kwh | number: '1.0-0' }} kWh in {{ billDays() }} days</small></figcaption>
+              <div class="hbars">
+                @for (a of S.appliances; track $index) {
+                  <div class="hbar" [title]="a.formula + ' = ' + a.kwh + ' kWh'">
+                    <span class="hbar__name">{{ a.name }}</span>
+                    <span class="hbar__track"><i [style.width.%]="(a.kwh / maxApplianceKwh()) * 100"></i></span>
+                    <b>{{ a.kwh | number: '1.0-0' }} kWh</b>
+                  </div>
+                }
+              </div>
+              <small class="src">kWh = power (W) × hours per day × days ÷ 1000.</small>
+              @for (a of S.assumptions; track a) { <small class="src">• {{ a }}</small> }
+              @if (S.money) { <small class="src">• {{ S.money.note }} {{ S.money.assumption }}</small> }
+            </figure>
+          </div>
+        }
+
+        <h2 class="h2 h2--sep">Keep the sun out before it heats the room</h2>
+        <p class="intro">INBETWEEN screens shade your window. Choose where it faces to compare them.</p>
+        <div class="shade-form">
+          <div><span class="lbl">Window faces</span>
+            <div class="chips" role="radiogroup" aria-label="Window direction">
+              @for (d of directions; track d) { <button type="button" role="radio" class="chip" [class.on]="facing() === d" [attr.aria-checked]="facing() === d" (click)="facing.set(d)">{{ d }}</button> }
+            </div></div>
+          <div><span class="lbl">City</span>
+            <div class="chips">
+              @for (c of cities; track c.name) { <button type="button" class="chip" [class.on]="city().name === c.name" (click)="city.set(c)">{{ c.name }}</button> }
+            </div></div>
+          <button type="button" class="btn btn--ghost" (click)="runShading()" [disabled]="shadeLoading() || engine() === 'offline'">
+            @if (shadeLoading()) { <span class="spin"></span> Comparing… } @else { Compare screens }
+          </button>
+        </div>
+        @if (shadeError()) { <p class="error">{{ shadeError() }}</p> }
+        @if (shade(); as SH) {
+          <div class="grid2">
+            <div class="card">
+              <div class="tiles tiles--2">
+                <div class="tile"><small>Sun on a {{ SH.facade }} window</small><b>{{ SH.kwh_per_m2_day | number: '1.1-1' }}<span> kWh/m²/day</span></b><em>hot clear July day</em></div>
+                <div class="tile"><small>Strongest sun</small><b class="tile__word">{{ SH.peak_hour }}</b><em>close the shade before</em></div>
+              </div>
+            </div>
+            @if (SH.designs) {
+              <figure class="card chart">
+                <figcaption><b>Sun heat blocked at the window</b><small>Model estimate, % of a bare window</small></figcaption>
+                <div class="hbars">
+                  @for (d of SH.designs; track d.name) {
+                    <div class="hbar" [class.hbar--muted]="d.name === 'baseline'">
+                      <span class="hbar__name">{{ designLabel[d.name] }}</span>
+                      <span class="hbar__track"><i [style.width.%]="d.heat_reduction_pct"></i></span>
+                      <b>{{ d.heat_reduction_pct | number: '1.0-0' }} %</b>
+                    </div>
+                  }
+                </div>
+              </figure>
+            }
+          </div>
+          <div class="verdict verdict--plain" role="note">
+            <span class="verdict__icon" aria-hidden="true">i</span>
+            <div><b>{{ SH.electricity_savings }}</b>
+              <p>Less sun heat is not the same as kWh saved on your bill. That depends on your room, insulation and air conditioner.</p></div>
+          </div>
+          <a class="btn btn--ghost" routerLink="/design">Design a screen for my window →</a>
+        }
+      </section>
+    }
+  }
+
+  <!-- action bar -->
+  <footer class="actions">
+    @if (step() > 0) {
+      <button type="button" class="btn btn--ghost" (click)="go(step() - 1)">← Back</button>
+    } @else { <span></span> }
+    @switch (step()) {
+      @case (1) {
+        <span class="actions__msg">
+          @if (verifyError()) { <span class="error">{{ verifyError() }}</span> }
+          @else if (!canVerify()) { We need at least the consumption (kWh). }
+          @else if (toCheck()) { {{ toCheck() }} value(s) marked "please check". }
+        </span>
+        <button type="button" class="btn btn--primary" (click)="verify()" [disabled]="verifying() || !canVerify() || engine() === 'offline'">
+          @if (verifying()) { <span class="spin spin--light"></span> Checking… } @else { Check my bill → }
+        </button>
+      }
+      @case (2) { <button type="button" class="btn btn--primary" (click)="go(3)">See how to pay less →</button> }
+      @default { <span></span> }
+    }
+  </footer>
+</main>
+
+<!-- assistant -->
+@if (step() > 0) {
+  <button type="button" class="fab" (click)="chatOpen.set(!chatOpen())" [attr.aria-expanded]="chatOpen()" aria-controls="assistant">
+    {{ chatOpen() ? '✕ Close' : '💬 Ask a question' }}
+  </button>
+}
+@if (chatOpen()) {
+  <aside id="assistant" class="chat" aria-label="Bill assistant">
+    <header><b>Ask about your bill</b><small>French, Arabic or Darija · official STEG &amp; ANME sources</small></header>
+    <div class="chat__log" aria-live="polite">
+      @if (!chatLog().length) {
+        @for (s of suggestions(); track s) { <button type="button" class="chip" [attr.dir]="dirOf(s)" (click)="ask(s)">{{ s }}</button> }
+      }
+      @for (m of chatLog(); track $index) {
+        <div class="msg" [class.msg--me]="m.role === 'user'" [attr.dir]="dirOf(m.text)">
+          <p>{{ m.text }}</p>
+          @if (m.snippets?.length) {
+            @for (s of m.snippets; track s.title) {
+              <blockquote dir="ltr"><b>{{ s.title }}</b>{{ s.text }} <a [href]="s.url" target="_blank" rel="noopener">{{ s.source }}</a></blockquote>
+            }
+          } @else if (m.sources?.length) {
+            <small class="msg__src" dir="ltr">Sources: @for (s of m.sources; track s.url; let last = $last) { <a [href]="s.url" target="_blank" rel="noopener">{{ s.title }}</a>{{ last ? '' : ' · ' }} }</small>
+          }
+        </div>
+      }
+      @if (chatBusy()) { <div class="msg msg--typing"><i></i><i></i><i></i></div> }
+      @if (chatError()) { <p class="error">{{ chatError() }}</p> }
+    </div>
+    <form class="chat__form" (submit)="ask(); $event.preventDefault()">
+      <input type="text" dir="auto" [value]="chatInput()" (input)="chatInput.set($any($event.target).value)"
+             placeholder="Your question · سؤالك · so2alek" aria-label="Your question" [disabled]="chatBusy()" />
+      <button type="submit" class="btn btn--primary btn--sm" [disabled]="chatBusy() || !chatInput().trim()">Send</button>
+    </form>
+  </aside>
+}

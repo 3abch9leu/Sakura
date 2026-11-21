@@ -1,62 +1,35 @@
-<!-- Shared SVG definitions (unique ids) -->
-<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
-  <defs>
-    <pattern id="dsStar" width="100" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
-      <polygon [attr.points]="star8" fill="#000" />
-      @for (c of star8Dots; track $index) {
-        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="11" fill="#000" />
-      }
-    </pattern>
-    <pattern id="dsHex" width="100" height="173.2" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
-      @for (p of hexStars; track $index) {
-        <polygon [attr.points]="p" fill="#000" />
-      }
-      @for (c of hexDots; track $index) {
-        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="6" fill="#000" />
-      }
-    </pattern>
-    <mask id="dsMStar" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
-      <rect width="1000" height="1000" fill="#fff" />
-      <rect width="1000" height="1000" fill="url(#dsStar)" />
-    </mask>
-    <mask id="dsMHex" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
-      <rect width="1000" height="1000" fill="#fff" />
-      <rect width="1000" height="1000" fill="url(#dsHex)" />
-    </mask>
-    <linearGradient id="dsClay" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#dc7c4d" />
-      <stop offset="1" stop-color="#b3573a" />
-    </linearGradient>
-    <linearGradient id="dsMoss" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#3d7050" />
-      <stop offset="1" stop-color="#244533" />
-    </linearGradient>
-    <filter id="dsBlur" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="3" />
-    </filter>
-    <filter id="dsGrain" x="0" y="0" width="100%" height="100%">
-      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n" />
-      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .25  0 0 0 0 .1  0 0 0 0 .04  1.4 0 0 0 -.55" result="g" />
-      <feComposite in="g" in2="SourceAlpha" operator="in" result="gc" />
-      <feMerge>
-        <feMergeNode in="SourceGraphic" />
-        <feMergeNode in="gc" />
-      </feMerge>
-    </filter>
-  </defs>
-</svg>
-
 <main class="page">
   <header class="top">
-    <a class="logo" aria-label="InBetween">
+    <a class="logo" routerLink="/" aria-label="InBetween home">
       <svg viewBox="0 0 32 32" aria-hidden="true">
         <path d="M6 26c0-11 7-19 20-20 0 12-7 20-18 20-.7 0-1.4 0-2-.1" fill="currentColor" />
         <path d="M6 26c4-7 9-12 15-15" stroke="#f4efe6" stroke-width="1.6" stroke-linecap="round" fill="none" />
       </svg>
       <span>InBetween</span>
     </a>
-    <span class="count">Step {{ step() + 1 }} of {{ steps.length }}</span>
+    <div class="top__right">
+      <a class="toplink" routerLink="/energy">Energy &amp; Comfort</a>
+      <span class="engine" [class]="'engine engine--' + engine()" role="status">
+        <i></i>
+        @switch (engine()) {
+          @case ('online') { Design engine ready }
+          @case ('offline') { Engine offline }
+          @default { Connecting… }
+        }
+      </span>
+      <span class="count">Step {{ step() + 1 }} of {{ steps.length }}</span>
+    </div>
   </header>
+
+  @if (engine() === 'offline') {
+    <div class="banner" role="alert">
+      <div>
+        <b>We can't reach the design engine at {{ api.base }}.</b>
+        <span>Start it in the <code>rootcode</code> folder with <code>uvicorn api:app --port 8000</code>, then retry.</span>
+      </div>
+      <button type="button" class="btn btn--ghost btn--sm" (click)="checkEngine()">Retry</button>
+    </div>
+  }
 
   <!-- ROADMAP -->
   <nav class="road" aria-label="Progress">
@@ -65,7 +38,7 @@
               [disabled]="i >= step()" (click)="goTo(i)" [attr.aria-current]="i === step() ? 'step' : null">
         <span class="node__dot">
           @if (i < step()) {
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.500" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
           } @else {
             <span>{{ i + 1 }}</span>
           }
@@ -81,30 +54,70 @@
   <section class="stagewrap" [class.shake]="shake()">
     @switch (step()) {
 
-      <!-- STEP 1: SPACE -->
+      <!-- ============================================================ STEP 1: WINDOW -->
       @case (0) {
         <div class="pane">
-          <p class="eyebrow rise" style="--i:0">01 — Your space</p>
-          <h1 class="title rise" style="--i:1">Tell us about <em>your space.</em></h1>
-          <p class="sub rise" style="--i:2">Upload a photo of the wall or window and add its size. This is where the screen will live.</p>
+          <p class="eyebrow rise" style="--i:0">01 · Your window</p>
+          <h1 class="title rise" style="--i:1">Show us <em>your window.</em></h1>
+          <p class="sub rise" style="--i:2">Take a photo from inside or outside, facing the window as straight as you can. Then tap the glass, and we'll find its outline and size.</p>
 
-          <div class="grid2">
-            <!-- upload -->
+          <div class="grid2 grid2--wide">
             <div class="rise" style="--i:3">
               <input #file type="file" accept="image/*" hidden (change)="onFile($event)" />
-              @if (photo(); as src) {
-                <div class="preview">
-                  <img [src]="src" alt="Your uploaded space" />
-                  <span class="dim dim--w"><i></i><b>{{ width.value ?? '—' }} m</b></span>
-                  <span class="dim dim--h"><i></i><b>{{ height.value ?? '—' }} m</b></span>
-                  <div class="preview__tools">
-                    <button type="button" (click)="file.click()">Replace</button>
-                    <button type="button" (click)="removePhoto(file)">Remove</button>
+              @if (photo(); as p) {
+                <div class="stage" [class.busy]="detecting()">
+                  <img [src]="p.url" alt="Your window" draggable="false" />
+                  <svg #ov class="stage__ov" [attr.viewBox]="'0 0 ' + p.w + ' ' + p.h" preserveAspectRatio="none"
+                       (click)="onPhotoClick($event, ov)" (pointermove)="onDragMove($event, ov)"
+                       (pointerup)="endDrag($event, ov)" (pointercancel)="endDrag($event, ov)">
+                    @if (corners(); as c) {
+                      <polygon class="q-fill" [attr.points]="quadPoints(c)" />
+                      @for (l of gridLines(); track $index) {
+                        <path class="q-grid" [attr.d]="l" />
+                      }
+                      <polygon class="q-edge" [attr.points]="quadPoints(c)" />
+                      @for (pt of c; track $index; let i = $index) {
+                        <g class="q-handle" (pointerdown)="startDrag(i, $event, ov)">
+                          <circle [attr.cx]="pt[0]" [attr.cy]="pt[1]" [attr.r]="p.w / 28" class="q-hit" />
+                          <circle [attr.cx]="pt[0]" [attr.cy]="pt[1]" [attr.r]="p.w / 90" class="q-dot" />
+                        </g>
+                      }
+                    }
+                    @for (t of taps(); track $index) {
+                      <circle class="tap" [attr.cx]="t[0]" [attr.cy]="t[1]" [attr.r]="p.w / 110" />
+                    }
+                  </svg>
+
+                  <div class="stage__hint" aria-live="polite">
+                    @if (detecting()) {
+                      <span class="spin"></span> Finding your window…
+                    } @else if (!corners()) {
+                      👆 Tap the glass of the window
+                    } @else {
+                      Drag the corners if the outline is off
+                    }
+                  </div>
+
+                  <div class="stage__tools">
+                    <button type="button" (click)="file.click()">Change photo</button>
+                    @if (corners() && facadeRes()) {
+                      <button type="button" (click)="addPane()" title="For windows split into several panes">+ Add a pane</button>
+                    }
+                    <button type="button" (click)="manualCorners()">Mark corners by hand</button>
+                    <button type="button" (click)="removePhoto()">Remove</button>
                   </div>
                 </div>
+                @if (detectError()) {
+                  <p class="note note--warn" role="alert">{{ detectError() }}</p>
+                }
+                @if (facadeRes(); as f) {
+                  @for (w of f.warnings; track w) {
+                    <p class="note note--warn">{{ w }}</p>
+                  }
+                }
               } @else {
                 <div class="drop" [class.over]="dragging()" tabindex="0" role="button"
-                     aria-label="Upload a photo of your space"
+                     aria-label="Upload a photo of your window"
                      (click)="file.click()" (keydown.enter)="file.click()" (keydown.space)="file.click(); $event.preventDefault()"
                      (dragover)="onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
                   <svg class="drop__icon" viewBox="0 0 64 64" aria-hidden="true">
@@ -112,203 +125,396 @@
                     <circle cx="22" cy="28" r="5" fill="none" stroke="currentColor" stroke-width="2.4" />
                     <path d="M8 46l16-14 12 10 8-7 12 11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" />
                   </svg>
-                  <b>Drop a photo here</b>
-                  <span>or click to browse · JPG, PNG, up to 10 MB</span>
+                  <b>Drop a photo of your window</b>
+                  <span>or click to browse · JPG or PNG</span>
                 </div>
+                <button type="button" class="linkbtn" (click)="useSample()">No photo handy? Try with a sample window →</button>
               }
               @if (fileError()) {
                 <small class="error">{{ fileError() }}</small>
               }
             </div>
 
-            <!-- fields -->
-            <form class="form" [formGroup]="form" (ngSubmit)="next()" novalidate>
-              <div class="row2">
-                <div class="field rise" style="--i:4" [class.invalid]="width.invalid && width.touched">
-                  <input id="width" type="number" step="0.1" min="0" formControlName="width" placeholder=" " inputmode="decimal" />
-                  <label for="width">Width (m)</label>
-                  @if (width.touched && width.errors) {
-                    <small class="error">
-                      @if (width.errors['required']) { Required. } @else { 0.3 – 20 m. }
-                    </small>
-                  }
+            <div class="side rise" style="--i:4">
+              <form class="form" [formGroup]="form" (ngSubmit)="next()" novalidate>
+                <div class="field" [class.invalid]="width.invalid && width.touched">
+                  <input id="width" type="number" step="0.05" min="0.3" max="6" formControlName="width" placeholder=" " inputmode="decimal" />
+                  <label for="width">Window width (m)</label>
+                  <small class="help">Measure the glass and frame opening with a tape. This sets the real scale.</small>
                 </div>
-                <div class="field rise" style="--i:5" [class.invalid]="height.invalid && height.touched">
-                  <input id="height" type="number" step="0.1" min="0" formControlName="height" placeholder=" " inputmode="decimal" />
-                  <label for="height">Height (m)</label>
-                  @if (height.touched && height.errors) {
-                    <small class="error">
-                      @if (height.errors['required']) { Required. } @else { 0.3 – 20 m. }
-                    </small>
-                  }
+                <div class="field" [class.invalid]="height.invalid && height.touched">
+                  <input id="height" type="number" step="0.05" min="0.3" max="6" formControlName="height"
+                         [placeholder]="heightEstimated() ? '≈ ' + heightM() : ' '" inputmode="decimal" />
+                  <label for="height">Height (m) <em>{{ photo() ? 'optional' : 'required' }}</em></label>
+                  <small class="help">
+                    @if (heightEstimated()) {
+                      Estimated from the photo: ≈ {{ heightM() }} m. Type the real value for more precision.
+                    } @else if (photo()) {
+                      We'll estimate it from the photo.
+                    } @else {
+                      Needed when there's no photo.
+                    }
+                  </small>
                 </div>
-              </div>
+                <button type="submit" hidden></button>
+              </form>
 
-              <div class="field rise" style="--i:6" [class.invalid]="location.invalid && location.touched">
-                <input id="location" type="text" formControlName="location" placeholder=" " autocomplete="address-level2" />
-                <label for="location">Location</label>
-                <svg class="pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11.500a7 7 0 0 0-14 0C5 14.800 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /><circle cx="12" cy="9.500" r="2.500" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
-                @if (location.touched && location.errors) {
-                  <small class="error">Enter the city or area.</small>
-                }
-              </div>
-              <button type="submit" hidden></button>
-            </form>
+              @if (grid(); as g) {
+                <div class="fact">
+                  <svg viewBox="0 0 40 40" aria-hidden="true">
+                    @for (r of [0, 1, 2]; track r) {
+                      @for (c of [0, 1, 2]; track c) {
+                        <rect [attr.x]="4 + c * 11" [attr.y]="4 + r * 11" width="10" height="10" rx="2"
+                              [attr.fill]="r === 2 ? 'var(--moss)' : 'var(--clay)'" [attr.opacity]="r === 2 ? 1 : 0.75" />
+                      }
+                    }
+                  </svg>
+                  <div>
+                    <b>{{ widthM() }} × {{ heightM() }} m · {{ g.total }} tiles</b>
+                    <small>{{ g.cols }} columns × {{ g.rows }} rows of 30 cm tiles. The bottom row carries the plants.</small>
+                  </div>
+                </div>
+              }
+
+              <ul class="tips">
+                <li>Face the window as straight on as you can.</li>
+                <li>Tap the <b>glass</b>, not the frame.</li>
+                <li>Split windows: tap one pane, then "+ Add a pane".</li>
+              </ul>
+            </div>
           </div>
         </div>
       }
 
-      <!-- STEP 2: DESIGN -->
+      <!-- ============================================================ STEP 2: PLACE -->
       @case (1) {
         <div class="pane">
-          <p class="eyebrow rise" style="--i:0">02 — Design</p>
-          <h1 class="title rise" style="--i:1">Choose your <em>pattern.</em></h1>
-          <p class="sub rise" style="--i:2">Pick the tradition your screen will be inspired by, then tell us which plants you already have.</p>
+          <p class="eyebrow rise" style="--i:0">02 · Its place</p>
+          <h1 class="title rise" style="--i:1">Where does the <em>sun</em> hit it?</h1>
+          <p class="sub rise" style="--i:2">The direction your window faces decides how much heat comes in and how thirsty your plants will be.</p>
 
-          <div class="patterns rise" style="--i:3" role="radiogroup" aria-label="Pattern">
-            @for (p of patterns; track p.id) {
-              <button type="button" class="pcard" role="radio" [class.on]="pattern() === p.id"
-                      [attr.aria-checked]="pattern() === p.id" (click)="pickPattern(p.id)">
-                <span class="pcard__art">
-                  <svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-                    <rect width="400" height="240" [attr.fill]="p.id === 'tunisian' ? '#f0dcb8' : '#dfe6c3'" />
-                    <g class="pshadow" filter="url(#dsBlur)">
-                      <rect width="400" height="240" fill="#2a1608" opacity=".35" [attr.mask]="p.id === 'tunisian' ? 'url(#dsMStar)' : 'url(#dsMHex)'" />
-                    </g>
-                    <g filter="url(#dsGrain)">
-                      <rect width="400" height="240" [attr.fill]="p.id === 'tunisian' ? 'url(#dsClay)' : 'url(#dsMoss)'"
-                            [attr.mask]="p.id === 'tunisian' ? 'url(#dsMStar)' : 'url(#dsMHex)'" />
-                    </g>
+          <div class="grid2">
+            <div class="rise" style="--i:3">
+              <h2 class="h2">Which way does it face?</h2>
+              <p class="help">Stand at the window and look out. That's the direction.</p>
+              <div class="compass" role="radiogroup" aria-label="Window direction">
+                <span class="compass__ring" aria-hidden="true"></span>
+                @for (d of directions; track d.id) {
+                  <button type="button" role="radio" class="dir" [class.on]="facing() === d.id"
+                          [attr.aria-checked]="facing() === d.id" [attr.aria-label]="d.label"
+                          [style.--a]="d.deg + 'deg'" (click)="facing.set(d.id); stepError.set('')">{{ d.id }}</button>
+                }
+                <span class="compass__mid" aria-hidden="true">
+                  @if (facing()) {
+                    <svg viewBox="-20 -20 40 40" [style.transform]="'rotate(' + (directions.find(x => x.id === facing())?.deg ?? 0) + 'deg)'">
+                      <path d="M0-16L6 4H-6Z" fill="var(--clay)" /><circle r="3" fill="var(--ink)" />
+                    </svg>
+                  } @else { ? }
+                </span>
+              </div>
+
+              <h2 class="h2">City</h2>
+              <div class="chips">
+                @for (c of cities; track c.name) {
+                  <button type="button" class="chip" [class.on]="city().name === c.name" (click)="city.set(c)">{{ c.name }}</button>
+                }
+                <button type="button" class="chip chip--ghost" [class.on]="city().name === 'My location'" (click)="locate()" [disabled]="locating()">
+                  {{ locating() ? 'Locating…' : '📍 My location' }}
+                </button>
+              </div>
+
+              <h2 class="h2">Summer air</h2>
+              <div class="seg" role="radiogroup" aria-label="Climate">
+                @for (c of climates; track c.rh) {
+                  <button type="button" role="radio" [class.on]="rh() === c.rh" [attr.aria-checked]="rh() === c.rh" (click)="rh.set(c.rh)">
+                    <b>{{ c.label }}</b><small>{{ c.note }}</small>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="card rise" style="--i:4">
+              <p class="tag">Sun on this window · hot clear July day</p>
+              @if (!facing()) {
+                <div class="empty">
+                  <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="8" fill="var(--sun)" />
+                    @for (a of [0, 45, 90, 135, 180, 225, 270, 315]; track a) {
+                      <path d="M24 6v6" stroke="var(--sun)" stroke-width="3" stroke-linecap="round" [attr.transform]="'rotate(' + a + ' 24 24)'" />
+                    }
                   </svg>
-                </span>
-                <span class="pcard__body">
-                  <b>{{ p.name }}</b>
-                  <small>{{ p.note }}</small>
-                </span>
-                <span class="tick" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.500" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                </span>
-              </button>
-            }
+                  <p>Pick a direction to see when the sun hits your window.</p>
+                </div>
+              } @else if (sunChart(); as c) {
+                <div class="stat-row" [class.dim]="sunLoading()">
+                  <div class="stat"><b>{{ sun()!.kwh_per_m2_day | number: '1.1-1' }}</b><small>kWh/m² per day</small></div>
+                  <div class="stat"><b>{{ hourLabel(sun()!.peak_hour) }}</b><small>strongest sun</small></div>
+                  <div class="stat"><b>{{ sun()!.peak_w_m2 | number: '1.0-0' }}</b><small>W/m² at peak</small></div>
+                </div>
+                <div class="chart" [class.dim]="sunLoading()">
+                  <svg #sv [attr.viewBox]="'0 0 ' + c.W + ' ' + c.H" role="img"
+                       [attr.aria-label]="'Sunlight on a ' + dirLabel(facing()) + ' window through the day, peaking at ' + hourLabel(sun()!.peak_hour)"
+                       (pointermove)="onSunMove($event, sv)" (pointerleave)="sunHover.set(null)">
+                    @for (t of c.yTicks; track t.v) {
+                      <line class="gridline" [attr.x1]="c.L" [attr.x2]="c.W - c.R" [attr.y1]="t.y" [attr.y2]="t.y" />
+                      <text class="axis" [attr.x]="c.L - 6" [attr.y]="t.y + 4" text-anchor="end">{{ t.v }}</text>
+                    }
+                    @for (t of c.xTicks; track t.h) {
+                      <text class="axis" [attr.x]="t.x" [attr.y]="c.H - 6" text-anchor="middle">{{ t.h }}h</text>
+                    }
+                    <path class="sun-area" [attr.d]="c.area" />
+                    <path class="sun-line" [attr.d]="c.line" />
+                    @if (sunHover() !== null) {
+                      <line class="cross" [attr.x1]="c.pts[sunHover()!][0]" [attr.x2]="c.pts[sunHover()!][0]" [attr.y1]="c.T" [attr.y2]="c.base" />
+                      <circle class="sun-dot" [attr.cx]="c.pts[sunHover()!][0]" [attr.cy]="c.pts[sunHover()!][1]" r="5" />
+                    }
+                    <text class="axis" [attr.x]="c.L - 6" [attr.y]="c.T - 4" text-anchor="end">W/m²</text>
+                  </svg>
+                  @if (sunHover() !== null) {
+                    <div class="tip" [style.left.%]="(c.pts[sunHover()!][0] / c.W) * 100">
+                      <b>{{ hourLabel(c.hours[sunHover()!].hour) }}–{{ hourLabel(c.hours[sunHover()!].hour + 1) }}</b>
+                      <span>{{ c.vals[sunHover()!] | number: '1.0-0' }} W/m²</span>
+                    </div>
+                  }
+                </div>
+                <p class="insight">☀️ {{ sunInsight() }}</p>
+              } @else if (sunLoading()) {
+                <div class="empty"><span class="spin"></span><p>Tracing the sun…</p></div>
+              } @else {
+                <div class="empty"><p>Sun data unavailable. You can still continue.</p></div>
+              }
+            </div>
           </div>
-          @if (patternError()) {
-            <small class="error error--block">Choose a pattern to continue.</small>
-          }
+        </div>
+      }
 
-          <div class="plants-head rise" style="--i:4">
-            <h2>Plants you already have</h2>
-            <span class="pill">{{ selectedPlants().length }} selected</span>
+      <!-- ============================================================ STEP 3: PLANTS & WATER -->
+      @case (2) {
+        <div class="pane">
+          <p class="eyebrow rise" style="--i:0">03 · Plants & water</p>
+          <h1 class="title rise" style="--i:1">What would you like to <em>grow?</em></h1>
+          <p class="sub rise" style="--i:2">Each plant tile holds one pocket per plant. Water drips to them by gravity, with no pump and no electricity.</p>
+
+          <div class="plants-head rise" style="--i:3">
+            <h2 class="h2">Choose 1 to 6 plants</h2>
+            <span class="pill">{{ selectedPlants().length }} / 6 selected</span>
           </div>
-
-          <div class="plants rise" style="--i:5">
-            @for (p of plants; track p.id) {
-              <button type="button" class="plant" [class.on]="isSelected(p.id)" [attr.aria-pressed]="isSelected(p.id)" (click)="togglePlant(p.id)">
+          <div class="plants rise" style="--i:4">
+            @for (id of plantIds(); track id) {
+              @let p = looks[id];
+              <button type="button" class="plant" [class.on]="isSelected(id)" [attr.aria-pressed]="isSelected(id)"
+                      [disabled]="!isSelected(id) && selectedPlants().length >= 6" (click)="togglePlant(id)">
                 <svg class="plant__icon" viewBox="-46 -66 92 78" aria-hidden="true">
                   @for (a of p.angles; track a; let i = $index) {
                     <path [attr.d]="leaves[p.leaf]" [attr.fill]="p.color" [attr.fill-opacity]="i % 2 ? 0.85 : 1"
                           [attr.transform]="'rotate(' + a + ') scale(' + p.scale + ')'" />
                   }
-                  @if (p.berry) {
-                    <circle cx="-16" cy="-6" r="5" fill="#d4492f" />
-                    <circle cx="17" cy="-10" r="5" fill="#d4492f" />
+                  @if (p.fruit) {
+                    <circle cx="-16" cy="-6" r="5" [attr.fill]="p.fruit" />
+                    <circle cx="17" cy="-10" r="5" [attr.fill]="p.fruit" />
                   }
                 </svg>
-                <span class="plant__txt"><b>{{ p.name }}</b><small>{{ p.latin }}</small></span>
+                <span class="plant__txt"><b>{{ p.name }}</b><small>{{ plantDemand()[id] | number: '1.2-2' }} L/day</small></span>
                 <span class="check" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.500" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>
                 </span>
               </button>
             }
           </div>
+
+          <div class="grid2 grid2--tight rise" style="--i:5">
+            <div class="card">
+              <div class="row-between">
+                <h2 class="h2 h2--flush">Plant tiles</h2>
+                <div class="stepper" role="group" aria-label="Number of plant tiles">
+                  <button type="button" (click)="setRoot(-1)" [disabled]="rootTiles() <= 1" aria-label="Fewer">−</button>
+                  <output>{{ rootTiles() }}</output>
+                  <button type="button" (click)="setRoot(1)" [disabled]="rootTiles() >= maxRootTiles()" aria-label="More">+</button>
+                </div>
+              </div>
+              <p class="help">Tiles on the bottom row that carry plant pockets. The other {{ (grid()?.total ?? 0) - rootTiles() }} tiles only give shade.
+                @if (grid(); as g) { Your window fits up to {{ g.cols }} per row. }</p>
+            </div>
+            <div class="card">
+              <div class="row-between">
+                <h2 class="h2 h2--flush">Water you can give per day</h2>
+                <b class="big">{{ waterBudget() }} L</b>
+              </div>
+              <input type="range" min="1" max="15" step="0.5" [value]="waterBudget()"
+                     (input)="waterBudget.set(+$any($event.target).value)" aria-label="Daily water budget in litres" />
+              <p class="help">
+                About {{ (waterBudget() / 1.5) | number: '1.0-1' }} bottles of 1.5 L.
+                @if (selectedPlants().length) {
+                  Your plants need roughly <b>{{ plantNeed() | number: '1.1-1' }} L/day</b> before sun adjustment.
+                  @if (plantNeed() > waterBudget()) { <span class="warn-text">This may be too little.</span> }
+                }
+              </p>
+            </div>
+          </div>
         </div>
       }
 
-      <!-- STEP 3: PREVIEW -->
-      @case (2) {
-        <div class="pane">
-          <p class="eyebrow rise" style="--i:0">03 — Preview</p>
-          <h1 class="title rise" style="--i:1">Your wall, <em>imagined.</em></h1>
-          <p class="sub rise" style="--i:2">An AI-generated impression of the screen on your space.</p>
+      <!-- ============================================================ STEP 4: RESULTS -->
+      @case (3) {
+        @if (designs(); as D) {
+          <div class="pane">
+            <p class="eyebrow rise" style="--i:0">04 · Your design</p>
+            <h1 class="title rise" style="--i:1">Three designs, <em>made for your window.</em></h1>
+            <p class="sub rise" style="--i:2">Each one is the best possible trade-off between shade, water and plants. Pick the one that suits you.</p>
 
-          <div class="result rise" style="--i:3" [class.built]="done()">
-            <div class="scene">
-              @if (photo(); as src) {
-                <img class="scene__img" [src]="src" alt="Your space" />
-              } @else {
-                <svg class="scene__img" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-                  <rect width="800" height="600" fill="#e7d6bb" />
-                  <rect y="470" width="800" height="130" fill="#cdb592" />
-                  <rect x="470" y="70" width="250" height="360" rx="6" fill="#b9d3dc" />
-                  <path d="M470 70h250v360H470z M595 70v360 M470 250h250" fill="none" stroke="#f4efe6" stroke-width="10" />
-                  <rect x="40" y="440" width="720" height="12" fill="#8c7a63" />
-                </svg>
-              }
-
-              <div class="facade" [style.--ar]="ratio">
-                <svg class="facade__screen" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-                  <g filter="url(#dsBlur)" style="transform:translate(8px,12px)">
-                    <rect width="400" height="400" fill="#2a1608" opacity=".4" [attr.mask]="pattern() === 'tunisian' ? 'url(#dsMStar)' : 'url(#dsMHex)'" />
-                  </g>
-                  <g filter="url(#dsGrain)">
-                    <rect width="400" height="400" [attr.fill]="pattern() === 'tunisian' ? 'url(#dsClay)' : 'url(#dsMoss)'"
-                          [attr.mask]="pattern() === 'tunisian' ? 'url(#dsMStar)' : 'url(#dsMHex)'" />
-                  </g>
-                </svg>
-                <div class="planter">
-                  <div class="planter__row">
-                    @for (p of chosenPlants; track p.id; let i = $index) {
-                      <svg class="pl" [style.--i]="i" viewBox="-46 -66 92 78" aria-hidden="true">
-                        @for (a of p.angles; track a; let j = $index) {
-                          <path [attr.d]="leaves[p.leaf]" [attr.fill]="p.color" [attr.fill-opacity]="j % 2 ? 0.85 : 1"
-                                [attr.transform]="'rotate(' + a + ') scale(' + p.scale + ')'" />
-                        }
-                        @if (p.berry) {
-                          <circle cx="-16" cy="-6" r="5" fill="#d4492f" />
-                          <circle cx="17" cy="-10" r="5" fill="#d4492f" />
-                        }
-                      </svg>
-                    }
-                  </div>
-                  <div class="planter__bar"></div>
-                </div>
-              </div>
-
-              @if (!done()) {
-                <div class="scan" aria-live="polite">
-                  <div class="scan__chip">
-                    <i></i>
-                    <span>{{ stages[genStage()] }}…</span>
-                  </div>
-                </div>
+            <div class="options rise" style="--i:3" role="radiogroup" aria-label="Design options">
+              @for (n of order; track n) {
+                <button type="button" role="radio" class="opt" [class.on]="chosen() === n" [attr.aria-checked]="chosen() === n" (click)="choose(n)">
+                  @if (n === 'balanced') { <span class="badge">Recommended</span> }
+                  <span class="opt__thumb" [innerHTML]="svgOf(n)"></span>
+                  <b class="opt__name">{{ info[n].label }}</b>
+                  <span class="opt__pitch">{{ info[n].pitch }}</span>
+                  <span class="kpis">
+                    <span><b>−{{ heatPct(n) }}%</b><small>heat</small></span>
+                    <span><b>{{ water(n) | number: '1.1-1' }} L</b><small>water/day</small></span>
+                    <span><b>{{ fedPct(n) }}%</b><small>plants fed</small></span>
+                  </span>
+                </button>
               }
             </div>
 
-            <aside class="summary">
-              <p class="tag">AI preview · illustrative</p>
-              <dl>
-                <div>
-                  <dt>Space</dt>
-                  <dd>{{ width.value }} × {{ height.value }} m<small>{{ location.value }}</small></dd>
-                </div>
-                <div>
-                  <dt>Pattern</dt>
-                  <dd>{{ patternName }}</dd>
-                </div>
-                <div>
-                  <dt>Plants</dt>
-                  <dd class="chips">
-                    @for (p of chosenPlants; track p.id) {
-                      <span class="chipx"><i [style.background]="p.color"></i>{{ p.name }}</span>
-                    } @empty {
-                      <small>None selected</small>
+            @if (baseline(); as b) {
+              <p class="compare rise" style="--i:4">
+                For comparison, a <b>standard perforated screen</b> would cut heat by only {{ heatPct('baseline') }}%
+                and leave your plants {{ 100 - fedPct('baseline') }}% short of water.
+              </p>
+            }
+
+            @if (current(); as d) {
+              <div class="result rise" style="--i:5">
+                <!-- visual -->
+                <div class="viz">
+                  @if (photo(); as p) {
+                    <div class="viz__frame">
+                      @if (shownImage(); as img) {
+                        <div class="ba" [style.--split]="split() + '%'">
+                          <img class="ba__after" [src]="img" alt="Your window with the {{ info[chosen()].label }} tiles" />
+                          <img class="ba__before" [src]="p.url" alt="Your window today" />
+                          <span class="ba__line" aria-hidden="true"><i></i></span>
+                          <span class="ba__lbl ba__lbl--l">Today</span>
+                          <span class="ba__lbl ba__lbl--r">{{ view() === 'ai' ? 'AI render' : 'With tiles' }}</span>
+                          <input class="ba__range" type="range" min="0" max="100" [value]="split()"
+                                 (input)="split.set(+$any($event.target).value)" aria-label="Compare before and after" />
+                        </div>
+                      } @else {
+                        <div class="viz__empty">
+                          @if (tryonLoading()) {
+                            <span class="spin"></span><p>Placing the tiles on your photo…</p>
+                          } @else if (tryonError()) {
+                            <p class="error">{{ tryonError() }}</p>
+                          }
+                        </div>
+                      }
+                      @if (rendering()) {
+                        <div class="veil" aria-live="polite">
+                          <div class="veil__chip">
+                            <span class="spin spin--light"></span>
+                            <span>
+                              Painting a photoreal version… {{ renderElapsed() }} s
+                              @if (!health()?.diffusion?.pipeline_loaded) { <small>The first render loads the AI model, about 1 minute.</small> }
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="viz__bar">
+                      <div class="seg seg--mini" role="tablist" aria-label="View">
+                        <button type="button" role="tab" [class.on]="view() === 'tiles'" [attr.aria-selected]="view() === 'tiles'" (click)="view.set('tiles')">Exact tiles</button>
+                        <button type="button" role="tab" [class.on]="view() === 'ai'" [attr.aria-selected]="view() === 'ai'"
+                                [disabled]="!currentVisual().render" (click)="view.set('ai')">AI photo</button>
+                      </div>
+                      <div class="viz__actions">
+                        @if (aiReady()) {
+                          <label class="slider" title="Low keeps the exact tile shapes. High looks more photographic.">
+                            <small>Faithful</small>
+                            <input type="range" min="0.25" max="0.55" step="0.05" [value]="strength()"
+                                   (input)="strength.set(+$any($event.target).value)" aria-label="AI creativity" />
+                            <small>Creative</small>
+                          </label>
+                          <button type="button" class="btn btn--primary btn--sm" (click)="renderAI(!!currentVisual().render)"
+                                  [disabled]="rendering() || !currentVisual().tryon">
+                            ✨ {{ currentVisual().render ? 'New variation' : 'Make it photoreal' }}
+                          </button>
+                        }
+                        <button type="button" class="btn btn--ghost btn--sm" (click)="download()" [disabled]="!shownImage()">Download image</button>
+                      </div>
+                    </div>
+                    @if (renderError()) { <p class="note note--warn">{{ renderError() }}</p> }
+                    @if (view() === 'ai') {
+                      <p class="fine">AI-enhanced visualisation. The "Exact tiles" view shows the real optimised geometry.</p>
                     }
-                  </dd>
+                  } @else {
+                    <div class="viz__frame viz__frame--svg" [innerHTML]="svgOf(chosen())"></div>
+                    <p class="fine">Add a photo in step 1 to see the tiles on your own window.</p>
+                  }
                 </div>
-              </dl>
-              <p class="disclaimer">Performance such as shade and water use is not simulated yet.</p>
-            </aside>
+
+                <!-- details -->
+                <aside class="details">
+                  <p class="tag">{{ info[chosen()].label }} · details</p>
+
+                  <div class="heat">
+                    <div class="heat__row">
+                      <span>Heat entering today</span>
+                      <b>{{ d.result.panel.heat_unshaded_kwh_day | number: '1.1-1' }} kWh/day</b>
+                    </div>
+                    <div class="meter" aria-hidden="true"><i style="width:100%"></i></div>
+                    <div class="heat__row">
+                      <span>With these tiles</span>
+                      <b>{{ d.result.objectives.heat_kwh_day | number: '1.1-1' }} kWh/day</b>
+                    </div>
+                    <div class="meter meter--good" aria-hidden="true">
+                      <i [style.width.%]="(d.result.objectives.heat_kwh_day / d.result.panel.heat_unshaded_kwh_day) * 100"></i>
+                    </div>
+                  </div>
+
+                  <h3 class="h3">Water per plant, each day</h3>
+                  <div class="bars" role="table" aria-label="Water received versus needed per plant pocket">
+                    @for (b of waterBars(); track b.plant; let i = $index) {
+                      <div class="bar" role="row" [class.hover]="barHover() === i" (pointerenter)="barHover.set(i)" (pointerleave)="barHover.set(null)">
+                        <span class="bar__name" role="rowheader">{{ b.name }}</span>
+                        <span class="bar__track" role="cell">
+                          <i class="bar__fill" [style.width.%]="b.recW"></i>
+                          <i class="bar__need" [style.left.%]="b.needX" title="Needed"></i>
+                        </span>
+                        <span class="bar__val" role="cell">
+                          {{ b.received_l * 1000 | number: '1.0-0' }} mL
+                          <span class="status" [class.status--ok]="b.ok" [class.status--low]="!b.ok">{{ b.ok ? '✓' : '!' }}</span>
+                        </span>
+                        @if (barHover() === i) {
+                          <span class="bar__tip">Gets {{ b.received_l * 1000 | number: '1.0-0' }} mL, needs {{ b.need_l * 1000 | number: '1.0-0' }} mL ({{ b.ratio * 100 | number: '1.0-0' }}%)</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <p class="legend"><i class="lg lg--fill"></i> water received <i class="lg lg--need"></i> what the plant needs</p>
+
+                  <h3 class="h3">How to use it</h3>
+                  <ul class="howto">
+                    <li><span>💧</span><div>Pour <b>{{ d.design.water_l_day * 1000 | number: '1.0-0' }} mL</b> into each plant tile's bottle every day ({{ d.result.panel.root_tiles }} tiles, {{ d.result.objectives.water_l_day | number: '1.1-1' }} L in total).</div></li>
+                    <li><span>⏱️</span><div>It drips slowly over <b>{{ d.result.hydraulics.drain_time_min | number: '1.0-0' }} min</b>, so the soil can soak it up.</div></li>
+                    <li><span>🌿</span><div>{{ d.result.panel.n_tiles }} tiles: {{ d.result.panel.root_tiles }} with plants, {{ d.result.panel.shade_tiles }} for shade only.</div></li>
+                    <li><span>🪟</span><div>{{ d.design.layers }} stacked layers, star openings of {{ d.design.aperture_mm | number: '1.0-0' }} mm. {{ d.result.panel.effective_porosity * 100 | number: '1.0-0' }}% stays open for light and view.</div></li>
+                    @if (d.design.cooling_open) {
+                      <li><span>❄️</span><div>A cooling strip is wetted too, for {{ d.result.panel.evaporative_cooling_kwh_day | number: '1.2-2' }} kWh/day of evaporative cooling.</div></li>
+                    }
+                  </ul>
+
+                  <div class="detail-actions">
+                    <button type="button" class="btn btn--ghost btn--sm" (click)="downloadSpec()">Download specs (JSON)</button>
+                    <button type="button" class="btn btn--ghost btn--sm" (click)="chatOpen.set(true)">💬 Ask a question</button>
+                  </div>
+                  <p class="disclaimer">Model estimates for a hot, clear summer day. Plant needs and heat factors are assumptions until measured on a real prototype.</p>
+                </aside>
+              </div>
+            }
           </div>
-        </div>
+        }
       }
     }
   </section>
@@ -316,18 +522,64 @@
   <!-- ACTIONS -->
   <footer class="actions">
     @if (step() > 0) {
-      <button type="button" class="btn btn--ghost" (click)="back()">
+      <button type="button" class="btn btn--ghost" (click)="back()" [disabled]="optimizing()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
         <span>Back</span>
       </button>
     } @else {
       <span></span>
     }
-    @if (step() < 2) {
-      <button type="button" class="btn btn--primary" (click)="next()">
-        <span>{{ step() === 0 ? 'Continue to design' : 'Generate my design' }}</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    @if (stepError()) {
+      <p class="actions__err" role="alert">{{ stepError() }}</p>
+    }
+    @if (step() < 3) {
+      <button type="button" class="btn btn--primary" (click)="next()" [disabled]="optimizing()">
+        @if (optimizing()) {
+          <span class="spin spin--light"></span><span>{{ optStages[optStage()] }}…</span>
+        } @else {
+          <span>{{ step() === 2 ? 'Find my best designs' : 'Continue' }}</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        }
       </button>
+    } @else {
+      <button type="button" class="btn btn--ghost" (click)="goTo(2)">Change plants or water</button>
     }
   </footer>
 </main>
+
+<!-- ASSISTANT -->
+@if (step() === 3) {
+  <button type="button" class="fab" (click)="chatOpen.set(!chatOpen())" [attr.aria-expanded]="chatOpen()" aria-controls="assistant">
+    {{ chatOpen() ? '✕' : '💬' }}<span>{{ chatOpen() ? 'Close' : 'Ask the assistant' }}</span>
+  </button>
+}
+@if (chatOpen()) {
+  <aside id="assistant" class="chat" aria-label="Design assistant">
+    <header>
+      <b>Design assistant</b>
+      <small>Answers with the real engines, never made-up numbers.</small>
+    </header>
+    <div class="chat__log" aria-live="polite">
+      @if (!chatLog().length) {
+        <p class="chat__intro">Ask anything about your design. For example:</p>
+        @for (s of suggestions; track s) {
+          <button type="button" class="chip" (click)="ask(s)">{{ s }}</button>
+        }
+      }
+      @for (m of chatLog(); track $index) {
+        <div class="msg" [class.msg--me]="m.role === 'user'">{{ m.text }}</div>
+      }
+      @if (chatBusy()) {
+        <div class="msg msg--typing"><i></i><i></i><i></i></div>
+      }
+      @if (chatError()) {
+        <p class="note note--warn">{{ chatError() }}</p>
+      }
+    </div>
+    <form class="chat__form" (submit)="ask(); $event.preventDefault()">
+      <input type="text" [value]="chatInput()" (input)="chatInput.set($any($event.target).value)"
+             placeholder="Type your question…" aria-label="Your question" [disabled]="chatBusy()" />
+      <button type="submit" class="btn btn--primary btn--sm" [disabled]="chatBusy() || !chatInput().trim()">Send</button>
+    </form>
+  </aside>
+}
