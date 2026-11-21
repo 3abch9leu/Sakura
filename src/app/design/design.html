@@ -1,0 +1,333 @@
+<!-- Shared SVG definitions (unique ids) -->
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="dsStar" width="100" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
+      <polygon [attr.points]="star8" fill="#000" />
+      @for (c of star8Dots; track $index) {
+        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="11" fill="#000" />
+      }
+    </pattern>
+    <pattern id="dsHex" width="100" height="173.2" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
+      @for (p of hexStars; track $index) {
+        <polygon [attr.points]="p" fill="#000" />
+      }
+      @for (c of hexDots; track $index) {
+        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="6" fill="#000" />
+      }
+    </pattern>
+    <mask id="dsMStar" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
+      <rect width="1000" height="1000" fill="#fff" />
+      <rect width="1000" height="1000" fill="url(#dsStar)" />
+    </mask>
+    <mask id="dsMHex" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
+      <rect width="1000" height="1000" fill="#fff" />
+      <rect width="1000" height="1000" fill="url(#dsHex)" />
+    </mask>
+    <linearGradient id="dsClay" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dc7c4d" />
+      <stop offset="1" stop-color="#b3573a" />
+    </linearGradient>
+    <linearGradient id="dsMoss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d7050" />
+      <stop offset="1" stop-color="#244533" />
+    </linearGradient>
+    <filter id="dsBlur" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" />
+    </filter>
+    <filter id="dsGrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n" />
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .25  0 0 0 0 .1  0 0 0 0 .04  1.4 0 0 0 -.55" result="g" />
+      <feComposite in="g" in2="SourceAlpha" operator="in" result="gc" />
+      <feMerge>
+        <feMergeNode in="SourceGraphic" />
+        <feMergeNode in="gc" />
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<main class="page">
+  <header class="top">
+    <a class="logo" aria-label="InBetween">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M6 26c0-11 7-19 20-20 0 12-7 20-18 20-.7 0-1.4 0-2-.1" fill="currentColor" />
+        <path d="M6 26c4-7 9-12 15-15" stroke="#f4efe6" stroke-width="1.6" stroke-linecap="round" fill="none" />
+      </svg>
+      <span>InBetween</span>
+    </a>
+    <span class="count">Step {{ step() + 1 }} of {{ steps.length }}</span>
+  </header>
+
+  <!-- ROADMAP -->
+  <nav class="road" aria-label="Progress">
+    @for (s of steps; track s.t; let i = $index) {
+      <button type="button" class="node" [class.done]="i < step()" [class.active]="i === step()"
+              [disabled]="i >= step()" (click)="goTo(i)" [attr.aria-current]="i === step() ? 'step' : null">
+        <span class="node__dot">
+          @if (i < step()) {
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.500" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          } @else {
+            <span>{{ i + 1 }}</span>
+          }
+        </span>
+        <span class="node__txt"><b>{{ s.t }}</b><small>{{ s.s }}</small></span>
+      </button>
+      @if (i < steps.length - 1) {
+        <span class="conn" [class.filled]="i < step()" [class.flow]="i === step()"></span>
+      }
+    }
+  </nav>
+
+  <section class="stagewrap" [class.shake]="shake()">
+    @switch (step()) {
+
+      <!-- STEP 1: SPACE -->
+      @case (0) {
+        <div class="pane">
+          <p class="eyebrow rise" style="--i:0">01 — Your space</p>
+          <h1 class="title rise" style="--i:1">Tell us about <em>your space.</em></h1>
+          <p class="sub rise" style="--i:2">Upload a photo of the wall or window and add its size. This is where the screen will live.</p>
+
+          <div class="grid2">
+            <!-- upload -->
+            <div class="rise" style="--i:3">
+              <input #file type="file" accept="image/*" hidden (change)="onFile($event)" />
+              @if (photo(); as src) {
+                <div class="preview">
+                  <img [src]="src" alt="Your uploaded space" />
+                  <span class="dim dim--w"><i></i><b>{{ width.value ?? '—' }} m</b></span>
+                  <span class="dim dim--h"><i></i><b>{{ height.value ?? '—' }} m</b></span>
+                  <div class="preview__tools">
+                    <button type="button" (click)="file.click()">Replace</button>
+                    <button type="button" (click)="removePhoto(file)">Remove</button>
+                  </div>
+                </div>
+              } @else {
+                <div class="drop" [class.over]="dragging()" tabindex="0" role="button"
+                     aria-label="Upload a photo of your space"
+                     (click)="file.click()" (keydown.enter)="file.click()" (keydown.space)="file.click(); $event.preventDefault()"
+                     (dragover)="onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+                  <svg class="drop__icon" viewBox="0 0 64 64" aria-hidden="true">
+                    <rect x="6" y="12" width="52" height="40" rx="8" fill="none" stroke="currentColor" stroke-width="2.4" />
+                    <circle cx="22" cy="28" r="5" fill="none" stroke="currentColor" stroke-width="2.4" />
+                    <path d="M8 46l16-14 12 10 8-7 12 11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" />
+                  </svg>
+                  <b>Drop a photo here</b>
+                  <span>or click to browse · JPG, PNG, up to 10 MB</span>
+                </div>
+              }
+              @if (fileError()) {
+                <small class="error">{{ fileError() }}</small>
+              }
+            </div>
+
+            <!-- fields -->
+            <form class="form" [formGroup]="form" (ngSubmit)="next()" novalidate>
+              <div class="row2">
+                <div class="field rise" style="--i:4" [class.invalid]="width.invalid && width.touched">
+                  <input id="width" type="number" step="0.1" min="0" formControlName="width" placeholder=" " inputmode="decimal" />
+                  <label for="width">Width (m)</label>
+                  @if (width.touched && width.errors) {
+                    <small class="error">
+                      @if (width.errors['required']) { Required. } @else { 0.3 – 20 m. }
+                    </small>
+                  }
+                </div>
+                <div class="field rise" style="--i:5" [class.invalid]="height.invalid && height.touched">
+                  <input id="height" type="number" step="0.1" min="0" formControlName="height" placeholder=" " inputmode="decimal" />
+                  <label for="height">Height (m)</label>
+                  @if (height.touched && height.errors) {
+                    <small class="error">
+                      @if (height.errors['required']) { Required. } @else { 0.3 – 20 m. }
+                    </small>
+                  }
+                </div>
+              </div>
+
+              <div class="field rise" style="--i:6" [class.invalid]="location.invalid && location.touched">
+                <input id="location" type="text" formControlName="location" placeholder=" " autocomplete="address-level2" />
+                <label for="location">Location</label>
+                <svg class="pin" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11.500a7 7 0 0 0-14 0C5 14.800 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /><circle cx="12" cy="9.500" r="2.500" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
+                @if (location.touched && location.errors) {
+                  <small class="error">Enter the city or area.</small>
+                }
+              </div>
+              <button type="submit" hidden></button>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- STEP 2: DESIGN -->
+      @case (1) {
+        <div class="pane">
+          <p class="eyebrow rise" style="--i:0">02 — Design</p>
+          <h1 class="title rise" style="--i:1">Choose your <em>pattern.</em></h1>
+          <p class="sub rise" style="--i:2">Pick the tradition your screen will be inspired by, then tell us which plants you already have.</p>
+
+          <div class="patterns rise" style="--i:3" role="radiogroup" aria-label="Pattern">
+            @for (p of patterns; track p.id) {
+              <button type="button" class="pcard" role="radio" [class.on]="pattern() === p.id"
+                      [attr.aria-checked]="pattern() === p.id" (click)="pickPattern(p.id)">
+                <span class="pcard__art">
+                  <svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                    <rect width="400" height="240" [attr.fill]="p.id === 'tunisian' ? '#f0dcb8' : '#dfe6c3'" />
+                    <g class="pshadow" filter="url(#dsBlur)">
+                      <rect width="400" height="240" fill="#2a1608" opacity=".35" [attr.mask]="p.id === 'tunisian' ? 'url(#dsMStar)' : 'url(#dsMHex)'" />
+                    </g>
+                    <g filter="url(#dsGrain)">
+                      <rect width="400" height="240" [attr.fill]="p.id === 'tunisian' ? 'url(#dsClay)' : 'url(#dsMoss)'"
+                            [attr.mask]="p.id === 'tunisian' ? 'url(#dsMStar)' : 'url(#dsMHex)'" />
+                    </g>
+                  </svg>
+                </span>
+                <span class="pcard__body">
+                  <b>{{ p.name }}</b>
+                  <small>{{ p.note }}</small>
+                </span>
+                <span class="tick" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.500" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </span>
+              </button>
+            }
+          </div>
+          @if (patternError()) {
+            <small class="error error--block">Choose a pattern to continue.</small>
+          }
+
+          <div class="plants-head rise" style="--i:4">
+            <h2>Plants you already have</h2>
+            <span class="pill">{{ selectedPlants().length }} selected</span>
+          </div>
+
+          <div class="plants rise" style="--i:5">
+            @for (p of plants; track p.id) {
+              <button type="button" class="plant" [class.on]="isSelected(p.id)" [attr.aria-pressed]="isSelected(p.id)" (click)="togglePlant(p.id)">
+                <svg class="plant__icon" viewBox="-46 -66 92 78" aria-hidden="true">
+                  @for (a of p.angles; track a; let i = $index) {
+                    <path [attr.d]="leaves[p.leaf]" [attr.fill]="p.color" [attr.fill-opacity]="i % 2 ? 0.85 : 1"
+                          [attr.transform]="'rotate(' + a + ') scale(' + p.scale + ')'" />
+                  }
+                  @if (p.berry) {
+                    <circle cx="-16" cy="-6" r="5" fill="#d4492f" />
+                    <circle cx="17" cy="-10" r="5" fill="#d4492f" />
+                  }
+                </svg>
+                <span class="plant__txt"><b>{{ p.name }}</b><small>{{ p.latin }}</small></span>
+                <span class="check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.500" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- STEP 3: PREVIEW -->
+      @case (2) {
+        <div class="pane">
+          <p class="eyebrow rise" style="--i:0">03 — Preview</p>
+          <h1 class="title rise" style="--i:1">Your wall, <em>imagined.</em></h1>
+          <p class="sub rise" style="--i:2">An AI-generated impression of the screen on your space.</p>
+
+          <div class="result rise" style="--i:3" [class.built]="done()">
+            <div class="scene">
+              @if (photo(); as src) {
+                <img class="scene__img" [src]="src" alt="Your space" />
+              } @else {
+                <svg class="scene__img" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                  <rect width="800" height="600" fill="#e7d6bb" />
+                  <rect y="470" width="800" height="130" fill="#cdb592" />
+                  <rect x="470" y="70" width="250" height="360" rx="6" fill="#b9d3dc" />
+                  <path d="M470 70h250v360H470z M595 70v360 M470 250h250" fill="none" stroke="#f4efe6" stroke-width="10" />
+                  <rect x="40" y="440" width="720" height="12" fill="#8c7a63" />
+                </svg>
+              }
+
+              <div class="facade" [style.--ar]="ratio">
+                <svg class="facade__screen" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                  <g filter="url(#dsBlur)" style="transform:translate(8px,12px)">
+                    <rect width="400" height="400" fill="#2a1608" opacity=".4" [attr.mask]="pattern() === 'tunisian' ? 'url(#dsMStar)' : 'url(#dsMHex)'" />
+                  </g>
+                  <g filter="url(#dsGrain)">
+                    <rect width="400" height="400" [attr.fill]="pattern() === 'tunisian' ? 'url(#dsClay)' : 'url(#dsMoss)'"
+                          [attr.mask]="pattern() === 'tunisian' ? 'url(#dsMStar)' : 'url(#dsMHex)'" />
+                  </g>
+                </svg>
+                <div class="planter">
+                  <div class="planter__row">
+                    @for (p of chosenPlants; track p.id; let i = $index) {
+                      <svg class="pl" [style.--i]="i" viewBox="-46 -66 92 78" aria-hidden="true">
+                        @for (a of p.angles; track a; let j = $index) {
+                          <path [attr.d]="leaves[p.leaf]" [attr.fill]="p.color" [attr.fill-opacity]="j % 2 ? 0.85 : 1"
+                                [attr.transform]="'rotate(' + a + ') scale(' + p.scale + ')'" />
+                        }
+                        @if (p.berry) {
+                          <circle cx="-16" cy="-6" r="5" fill="#d4492f" />
+                          <circle cx="17" cy="-10" r="5" fill="#d4492f" />
+                        }
+                      </svg>
+                    }
+                  </div>
+                  <div class="planter__bar"></div>
+                </div>
+              </div>
+
+              @if (!done()) {
+                <div class="scan" aria-live="polite">
+                  <div class="scan__chip">
+                    <i></i>
+                    <span>{{ stages[genStage()] }}…</span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <aside class="summary">
+              <p class="tag">AI preview · illustrative</p>
+              <dl>
+                <div>
+                  <dt>Space</dt>
+                  <dd>{{ width.value }} × {{ height.value }} m<small>{{ location.value }}</small></dd>
+                </div>
+                <div>
+                  <dt>Pattern</dt>
+                  <dd>{{ patternName }}</dd>
+                </div>
+                <div>
+                  <dt>Plants</dt>
+                  <dd class="chips">
+                    @for (p of chosenPlants; track p.id) {
+                      <span class="chipx"><i [style.background]="p.color"></i>{{ p.name }}</span>
+                    } @empty {
+                      <small>None selected</small>
+                    }
+                  </dd>
+                </div>
+              </dl>
+              <p class="disclaimer">Performance such as shade and water use is not simulated yet.</p>
+            </aside>
+          </div>
+        </div>
+      }
+    }
+  </section>
+
+  <!-- ACTIONS -->
+  <footer class="actions">
+    @if (step() > 0) {
+      <button type="button" class="btn btn--ghost" (click)="back()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        <span>Back</span>
+      </button>
+    } @else {
+      <span></span>
+    }
+    @if (step() < 2) {
+      <button type="button" class="btn btn--primary" (click)="next()">
+        <span>{{ step() === 0 ? 'Continue to design' : 'Generate my design' }}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
+    }
+  </footer>
+</main>

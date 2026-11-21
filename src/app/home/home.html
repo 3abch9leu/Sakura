@@ -1,0 +1,336 @@
+<div class="progress" aria-hidden="true"></div>
+
+<!-- Shared SVG definitions: lattice masks, clay/moss gradients, ceramic grain -->
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="pStar" width="100" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
+      <polygon [attr.points]="star8" fill="#000" />
+      @for (c of star8Dots; track $index) {
+        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="11" fill="#000" />
+      }
+    </pattern>
+    <pattern id="pHex" width="100" height="173.2" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
+      @for (p of hexStars; track $index) {
+        <polygon [attr.points]="p" fill="#000" />
+      }
+      @for (c of hexDots; track $index) {
+        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="6" fill="#000" />
+      }
+    </pattern>
+    <mask id="mStar" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
+      <rect width="1000" height="1000" fill="#fff" />
+      <rect width="1000" height="1000" fill="url(#pStar)" />
+    </mask>
+    <mask id="mHex" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
+      <rect width="1000" height="1000" fill="#fff" />
+      <rect width="1000" height="1000" fill="url(#pHex)" />
+    </mask>
+    <linearGradient id="gClay" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dc7c4d" />
+      <stop offset="1" stop-color="#b3573a" />
+    </linearGradient>
+    <linearGradient id="gMoss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d7050" />
+      <stop offset="1" stop-color="#244533" />
+    </linearGradient>
+    <filter id="fBlur" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" />
+    </filter>
+    <filter id="fGrain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n" />
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .25  0 0 0 0 .1  0 0 0 0 .04  1.4 0 0 0 -.55" result="g" />
+      <feComposite in="g" in2="SourceAlpha" operator="in" result="gc" />
+      <feMerge>
+        <feMergeNode in="SourceGraphic" />
+        <feMergeNode in="gc" />
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
+
+<!-- NAV -->
+<header class="nav" #nav>
+  <a class="logo" href="#top" aria-label="InBetween home">
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M6 26c0-11 7-19 20-20 0 12-7 20-18 20-.7 0-1.4 0-2-.1" fill="currentColor" />
+      <path d="M6 26c4-7 9-12 15-15" stroke="#f4efe6" stroke-width="1.6" stroke-linecap="round" fill="none" />
+    </svg>
+    <span>InBetween</span>
+  </a>
+  <nav class="links" aria-label="Sections">
+    <a href="#between">Between</a>
+    <a href="#how">How it works</a>
+    <a href="#elements">Elements</a>
+  </nav>
+  <a class="pill" href="#cta">Design your screen</a>
+</header>
+
+<main id="top">
+  <!-- HERO -->
+  <section class="hero" #hero>
+    <div class="hero__copy">
+      <p class="eyebrow">Tunisia × Japan · Living façades</p>
+      <h1 class="title" aria-label="InBetween">
+        <span class="in" aria-hidden="true">In</span>
+        <span class="between" aria-hidden="true">
+          @for (l of letters; track $index) {
+            <span class="ch" [style.--i]="$index">{{ l }}</span>
+          }
+        </span>
+      </h1>
+      <p class="lead">
+        A façade that
+        <span class="rotator">
+          <ul aria-hidden="true">
+            @for (w of words; track w) {
+              <li>{{ w }}</li>
+            }
+            <li>{{ words[0] }}</li>
+          </ul>
+        </span>
+        with no electricity once it’s built.
+      </p>
+      <p class="sub">
+        InBetween designs a perforated screen for your window with AI, then lets sun and gravity do the work.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn--primary" href="#between">
+          <span>Explore the idea</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </a>
+        <a class="btn btn--ghost" href="#how">How it works</a>
+      </div>
+      <p class="hint"><i></i>Move your cursor. The sun follows.</p>
+    </div>
+
+    <div class="stage">
+      <svg class="orbit orbit--a" viewBox="-200 -200 400 400" aria-hidden="true">
+        <polygon [attr.points]="orbit8" />
+        <circle r="196" />
+      </svg>
+      <svg class="orbit orbit--b" viewBox="-200 -200 400 400" aria-hidden="true">
+        <polygon [attr.points]="orbit6" />
+      </svg>
+
+      <div class="arch-frame">
+        <div class="arch" #arch>
+          <div class="arch__wall"></div>
+          <div class="arch__glow"></div>
+          <svg viewBox="0 0 400 560" preserveAspectRatio="xMidYMid slice" role="img"
+               aria-label="A terracotta lattice screen casting a moving shadow, with herbs growing below">
+            <g class="shadow" filter="url(#fBlur)">
+              <rect width="400" height="560" fill="#2a1608" opacity=".4" mask="url(#mStar)" />
+            </g>
+            <g filter="url(#fGrain)">
+              <rect width="400" height="560" fill="url(#gClay)" mask="url(#mStar)" />
+            </g>
+
+            <!-- gravity channel -->
+            <rect x="366" y="170" width="30" height="42" rx="7" fill="rgba(255,255,255,.4)" stroke="rgba(255,255,255,.75)" />
+            <rect x="370" y="190" width="22" height="18" rx="4" fill="#7cc4d6" />
+            <rect x="381" y="212" width="6" height="276" rx="3" fill="rgba(124,196,214,.5)" />
+            <circle class="hdrop" cx="384" cy="216" r="3.5" fill="#cdeef6" />
+            <circle class="hdrop" cx="384" cy="216" r="3.5" fill="#cdeef6" style="animation-delay:-.95s" />
+            <circle class="hdrop" cx="384" cy="216" r="3.5" fill="#cdeef6" style="animation-delay:-1.9s" />
+
+            <!-- herbs -->
+            @for (p of plants; track p.x) {
+              <g [attr.transform]="'translate(' + p.x + ' 496)'">
+                <g class="sway" [style.animation-delay]="p.d">
+                  @for (a of leafAngles; track a; let i = $index) {
+                    <path class="lf" [attr.d]="leafD" [attr.transform]="'rotate(' + a + ') scale(' + (1.25 + (i % 2) * 0.25) + ')'" />
+                  }
+                </g>
+              </g>
+            }
+            <rect y="488" width="400" height="72" fill="#85391f" />
+            <rect y="488" width="400" height="9" fill="#a9532f" />
+          </svg>
+        </div>
+      </div>
+
+      <span class="chip chip--shade"><i></i>Shade</span>
+      <span class="chip chip--water"><i></i>Water</span>
+      <span class="chip chip--food"><i></i>Food</span>
+    </div>
+  </section>
+
+  <!-- RIBBON -->
+  <div class="ribbon" aria-hidden="true">
+    <div class="ribbon__track">
+      @for (n of [1, 2]; track n) {
+        <div class="ribbon__group">
+          @for (w of ribbon; track w) {
+            <span>{{ w }}</span><b>✦</b>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- BETWEEN -->
+  <section class="section" id="between">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>01 — Between</p>
+      <h2 class="h2" data-reveal>Two traditions.<br /><em>One screen.</em></h2>
+      <p class="sub sub--wide" data-reveal>
+        Tunisian star geometry and Japanese lattice meet under constraints: every opening must still carry shade, water and structure. Drag to blend.
+      </p>
+
+      <div class="compare" #cmp data-reveal [style.--pos]="pos()"
+           (pointerdown)="startDrag($event, cmp)" (pointermove)="moveDrag($event, cmp)"
+           (pointerup)="endDrag()" (pointercancel)="endDrag()">
+        <div class="layer layer--a">
+          <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <g style="transform:translate(10px,14px)" filter="url(#fBlur)">
+              <rect width="800" height="500" fill="#2a1608" opacity=".35" mask="url(#mStar)" />
+            </g>
+            <g filter="url(#fGrain)"><rect width="800" height="500" fill="url(#gClay)" mask="url(#mStar)" /></g>
+          </svg>
+        </div>
+        <div class="layer layer--b">
+          <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <g style="transform:translate(10px,14px)" filter="url(#fBlur)">
+              <rect width="800" height="500" fill="#10200f" opacity=".35" mask="url(#mHex)" />
+            </g>
+            <g filter="url(#fGrain)"><rect width="800" height="500" fill="url(#gMoss)" mask="url(#mHex)" /></g>
+          </svg>
+        </div>
+
+        <span class="tagline tagline--l"><b>Tunisia</b> Qallaline · zellige star</span>
+        <span class="tagline tagline--r"><b>Japan</b> Asanoha-inspired lattice</span>
+
+        <div class="handle" role="slider" tabindex="0" aria-label="Blend between Tunisian and Japanese motifs"
+             aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="pos()" (keydown)="onKey($event)">
+          <span class="knob">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l-6 6 6 6M15 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </span>
+        </div>
+      </div>
+      <p class="note" data-reveal>Illustrative geometry. Final screens are validated for hydraulics and structure before fabrication.</p>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section class="section section--sand" id="how">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>02 — How it works</p>
+      <h2 class="h2" data-reveal>From a photo to<br /><em>a living wall.</em></h2>
+      <ol class="steps">
+        @for (s of steps; track s.n) {
+          <li data-reveal [style.--d]="$index * 0.12 + 's'">
+            <span class="num">{{ s.n }}</span>
+            <h3>{{ s.t }}</h3>
+            <p>{{ s.p }}</p>
+          </li>
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- ELEMENTS -->
+  <section class="section" id="elements">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>03 — Elements</p>
+      <h2 class="h2" data-reveal>Four ideas,<br /><em>zero wires.</em></h2>
+
+      <div class="bento">
+        <article class="card card--a" data-reveal>
+          <svg class="art" viewBox="0 0 320 170" aria-hidden="true">
+            <rect x="110" y="6" width="100" height="44" rx="10" fill="rgba(255,255,255,.14)" stroke="rgba(255,255,255,.5)" />
+            <rect x="116" y="26" width="88" height="18" rx="6" fill="#7cc4d6" opacity=".85" />
+            <path d="M160 50V72M60 72H260M60 72V116M160 72V116M260 72V116" stroke="rgba(255,255,255,.55)" stroke-width="3" fill="none" stroke-linecap="round" />
+            <g fill="#9fdcea">
+              <circle class="drop" cx="60" cy="120" r="4" />
+              <circle class="drop" cx="160" cy="120" r="4" style="animation-delay:-.7s" />
+              <circle class="drop" cx="260" cy="120" r="4" style="animation-delay:-1.4s" />
+            </g>
+            <g stroke="rgba(255,255,255,.6)" fill="none" stroke-width="2.5" stroke-linejoin="round">
+              <path d="M42 146H78L73 166H47Z" />
+              <path d="M142 146H178L173 166H147Z" />
+              <path d="M242 146H278L273 166H247Z" />
+            </g>
+          </svg>
+          <div>
+            <h3>No power. Just gravity.</h3>
+            <p>Water flows from a raised reservoir through gravity channels to wicks at each plant. No pump, no sensors, no Wi-Fi.</p>
+          </div>
+        </article>
+
+        <article class="card card--b" data-reveal [style.--d]="'.1s'">
+          <svg class="art" viewBox="0 0 320 170" aria-hidden="true">
+            <g class="sun-b">
+              <circle cx="50" cy="26" r="26" fill="#f5b85a" opacity=".25" />
+              <circle cx="50" cy="26" r="14" fill="#f5b85a" />
+            </g>
+            <rect x="30" y="64" width="260" height="96" rx="12" fill="#efe3cd" />
+            <rect x="30" y="64" width="260" height="38" rx="10" fill="#c4693f" />
+            <g fill="#fff3c4">
+              <circle cx="75" cy="83" r="10" /><circle cx="135" cy="83" r="10" />
+              <circle cx="195" cy="83" r="10" /><circle cx="255" cy="83" r="10" />
+            </g>
+            <g class="sh-b" fill="#ffd37a" opacity=".9">
+              <ellipse cx="75" cy="130" rx="15" ry="9" /><ellipse cx="135" cy="130" rx="15" ry="9" />
+              <ellipse cx="195" cy="130" rx="15" ry="9" /><ellipse cx="255" cy="130" rx="15" ry="9" />
+            </g>
+          </svg>
+          <div>
+            <h3>Shade that follows the sun.</h3>
+            <p>Openings are tuned by sun-path simulation for your orientation, so light is filtered, not just blocked.</p>
+          </div>
+        </article>
+
+        <article class="card card--c" data-reveal>
+          <svg class="art" viewBox="0 0 320 170" aria-hidden="true">
+            @for (x of [70, 160, 250]; track x; let i = $index) {
+              <g [attr.transform]="'translate(' + x + ' 138)'">
+                <g class="sprout" [style.animation-delay]="i * -1.1 + 's'">
+                  @for (a of [-32, 0, 32]; track a) {
+                    <path class="lf2" [attr.d]="leafD" [attr.transform]="'rotate(' + a + ') scale(1.5)'" />
+                  }
+                </g>
+              </g>
+            }
+            <rect x="30" y="134" width="260" height="32" rx="10" fill="#b5593a" />
+          </svg>
+          <div>
+            <h3>Edible by design.</h3>
+            <p>Pockets for mint, basil and rosemary, fed by a water budget that always puts plants first.</p>
+          </div>
+        </article>
+
+        <article class="card card--d" data-reveal [style.--d]="'.1s'">
+          <svg class="art art--round" viewBox="-100 -100 200 200" aria-hidden="true">
+            <circle r="92" fill="none" stroke="rgba(255,244,232,.3)" />
+            <polygon class="spin" [attr.points]="mini8" fill="none" stroke="#fff4e8" stroke-width="1.6" />
+            <polygon class="spin-r" [attr.points]="mini6" fill="none" stroke="#fff4e8" stroke-width="1.6" opacity=".75" />
+            <circle r="4" fill="#fff4e8" />
+          </svg>
+          <div>
+            <h3>Heritage, computed.</h3>
+            <p>Qallaline and asanoha become parametric geometry, blended under engineering constraints and always credited to their traditions.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="finale" id="cta">
+    <svg class="finale__lattice" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <rect width="1200" height="600" fill="#fff" opacity=".07" mask="url(#mStar)" />
+    </svg>
+    <div class="wrap finale__inner">
+      <h2 data-reveal>Find your place<br /><em>in between.</em></h2>
+      <a class="btn btn--light" href="#top" data-reveal [style.--d]="'.15s'">
+        <span>Design your screen</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>InBetween · Kizuna 2026 · Tunisia × Japan</span>
+  <span>Concept stage. All performance figures require experimental validation.</span>
+</footer>
