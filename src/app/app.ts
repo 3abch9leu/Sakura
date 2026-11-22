@@ -7,10 +7,11 @@ import { DesignComponent } from './design/design';
 import { SpaceComponent } from './space/space';
 import { PlantComponent } from './plant.component/plant.component';
 import { ChatComponent } from './chat/chat';
+import { TunisiaMapComponent } from './tunisia-map/tunisia-map';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, HomeComponent, LoginComponent, DesignComponent, SpaceComponent, PlantComponent, ChatComponent],
+  imports: [RouterOutlet, HomeComponent, LoginComponent, DesignComponent, SpaceComponent, PlantComponent, ChatComponent, TunisiaMapComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

@@ -1,0 +1,182 @@
+<section class="mapsec" id="tunisia">
+  <div class="wrap">
+    <header class="head">
+      <p class="eyebrow" data-reveal>04 — Built with InBetween</p>
+      <h2 class="h2" data-reveal>Across Tunisia,<br /><em>the load came down.</em></h2>
+      <p class="sub" data-reveal>
+        Apartments, companies and farms that already run our screens. Tap a pin to see what it changed.
+      </p>
+    </header>
+
+    <div class="stage">
+      <div class="mapbox" data-reveal>
+        <svg class="map" viewBox="0 0 600 760" role="img"
+             aria-label="Stylised map of Tunisia with partner sites marked: amber pins for apartments and companies, green pins for farms">
+          <defs>
+            <linearGradient id="tmLand" x1="0" y1="0" x2="0.4" y2="1">
+              <stop offset="0" stop-color="#f0e3c8" />
+              <stop offset="0.55" stop-color="#e6d4b2" />
+              <stop offset="1" stop-color="#dcc8a1" />
+            </linearGradient>
+            <linearGradient id="tmSea" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#e3e7d9" />
+              <stop offset="1" stop-color="#d7e0d2" />
+            </linearGradient>
+            <pattern id="tmStar" width="100" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(.7)">
+              <polygon points="50,10 60,40 90,50 60,60 50,90 40,60 10,50 40,40" fill="#c4693f" opacity=".16" />
+              <circle cx="0" cy="0" r="9" fill="#c4693f" opacity=".16" />
+            </pattern>
+            <filter id="tmShadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#6b4a36" flood-opacity=".28" />
+            </filter>
+            <filter id="tmSoft" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="6" />
+            </filter>
+          </defs>
+
+          <!-- sea: dotted swells -->
+          <g class="sea" aria-hidden="true">
+            @for (y of graticule; track y) {
+              <line [attr.x1]="40" [attr.x2]="560" [attr.y1]="y" [attr.y2]="y" />
+            }
+            @for (y of graticule; track y) {
+              <line [attr.x1]="70" [attr.x2]="70" [attr.y1]="y" [attr.y2]="y + 60" />
+            }
+          </g>
+
+          <!-- land -->
+          <g class="land" filter="url(#tmShadow)">
+            <path [attr.d]="coast" fill="url(#tmLand)" />
+          </g>
+          <path [attr.d]="coast" fill="url(#tmStar)" aria-hidden="true" />
+          <path [attr.d]="coast" class="outline" aria-hidden="true" />
+
+          <!-- Djerba & Kerkennah -->
+          <ellipse class="island" cx="432" cy="508" rx="27" ry="16" transform="rotate(-16 432 508)" />
+          <ellipse class="island" cx="418" cy="382" rx="12" ry="6" transform="rotate(22 418 382)" />
+
+          <!-- labels -->
+          <text class="geo" x="72" y="330" transform="rotate(-90 72 330)">ALGERIA</text>
+          <text class="geo" x="250" y="730">LIBYA</text>
+          <text class="geo geo--sea" x="470" y="240" transform="rotate(72 470 240)">MEDITERRANEAN</text>
+
+          <!-- pins -->
+          <g class="pins">
+            @for (s of sites; track s.id) {
+              <g class="pin"
+                 [class.pin--urban]="s.kind === 'urban'"
+                 [class.pin--farm]="s.kind === 'farm'"
+                 [class.pin--on]="active() === s.id"
+                 [attr.transform]="'translate(' + s.x + ' ' + s.y + ')'"
+                 role="button" tabindex="0"
+                 [attr.aria-label]="s.name + ', ' + s.city + '. ' + drop(s) + '% less energy use.'"
+                 [attr.aria-pressed]="active() === s.id"
+                 (click)="pick(s.id)" (keydown)="onKey($event, s)">
+                <circle class="halo" r="15" />
+                <circle class="pulse" r="7.5" />
+                <circle class="dot" r="6.5" />
+                <circle class="core" r="2.2" />
+                <text class="pin__label" y="-19">{{ s.city }}</text>
+              </g>
+            }
+          </g>
+        </svg>
+
+        <div class="legend">
+          <span class="lg"><i class="k-urban"></i>Apartments &amp; companies</span>
+          <span class="lg"><i class="k-farm"></i>Farms</span>
+        </div>
+        <p class="hint"><i></i>{{ active() ? 'Tap the pin again to close' : 'Tap a pin to open its card' }}</p>
+      </div>
+
+      <aside class="detail" [class.open]="selected() !== null" aria-live="polite">
+        @if (selected(); as s) {
+          <article class="dc" [attr.data-k]="s.kind">
+            <button type="button" class="dc__x" (click)="close()" aria-label="Close the card">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg>
+            </button>
+
+            <p class="dc__tag"><i></i>{{ s.kind === 'urban' ? 'Urban' : 'Farm' }} · {{ s.category }}</p>
+            <h3>{{ s.name }}</h3>
+            <p class="dc__city">{{ s.city }} · since {{ s.since }}</p>
+
+            <div class="dc__figure">
+              <div class="donut">
+                <svg viewBox="0 0 64 64" aria-hidden="true">
+                  <circle class="donut__t" cx="32" cy="32" [attr.r]="ringR_" />
+                  <circle class="donut__b" cx="32" cy="32" [attr.r]="ringR_"
+                          [attr.stroke-dasharray]="ring" [attr.stroke-dashoffset]="ringOffset(s)" />
+                </svg>
+                <div class="donut__txt"><b>−{{ drop(s) }}%</b><small>energy use</small></div>
+              </div>
+              <div class="figside">
+                <span class="k">Plants installed</span>
+                <b class="big">{{ num(s.plants) }}</b>
+                <span class="k">{{ num(s.area) }} m² {{ s.kind === 'farm' ? 'farm' : 'floor area' }}</span>
+              </div>
+            </div>
+
+            <div class="bars">
+              <div class="bar">
+                <span class="bar__l">Before</span>
+                <b class="bar__v">{{ before(s) }}<small>{{ unit }}</small></b>
+                <i class="bar__track"><i class="bar__fill bar__fill--before"></i></i>
+                <span class="bar__sub">{{ num(s.kwhBefore) }} kWh / month</span>
+              </div>
+              <div class="bar">
+                <span class="bar__l">With InBetween</span>
+                <b class="bar__v">{{ after(s) }}<small>{{ unit }}</small></b>
+                <i class="bar__track"><i class="bar__fill bar__fill--after" [style.width.%]="keep(s)"></i></i>
+                <span class="bar__sub">{{ num(s.kwhAfter) }} kWh / month</span>
+              </div>
+            </div>
+
+            <p class="dc__note">{{ s.note }}</p>
+            <p class="dc__formula">{{ unit }} = monthly kWh ÷ {{ s.kind === 'farm' ? 'farm' : 'apartment' }} size in m²</p>
+          </article>
+        } @else {
+          <div class="empty">
+            <svg class="empty__art" viewBox="-70 -70 140 140" aria-hidden="true">
+              <circle r="64" fill="none" stroke="rgba(196,105,63,.3)" stroke-dasharray="3 7" />
+              <circle class="ebb" r="40" fill="none" stroke="rgba(47,90,63,.35)" />
+              <path d="M0 26c0-24 15-41 44-43 0 26-15 43-40 43-.7 0-1.4 0-2.7-.6" fill="#2f5a3f" opacity=".85" />
+              <circle class="ebb ebb--2" r="22" fill="none" stroke="rgba(245,184,90,.6)" />
+            </svg>
+            <b>Pick a place.</b>
+            <span>Every pin holds a real ratio: monthly kWh divided by the size in square metres, before and after.</span>
+            <ul class="key">
+              <li><i class="k-urban"></i>Apartments &amp; companies</li>
+              <li><i class="k-farm"></i>Farms</li>
+            </ul>
+          </div>
+        }
+      </aside>
+    </div>
+
+    <dl class="totals" data-reveal>
+      <div>
+        <dt>Sites on the map</dt>
+        <dd>{{ totals().n }}</dd>
+      </div>
+      <div>
+        <dt>Plants installed</dt>
+        <dd>{{ num(totals().plants) }}</dd>
+      </div>
+      <div>
+        <dt>Average energy cut</dt>
+        <dd class="dd--moss">−{{ totals().drop }}%</dd>
+      </div>
+      <div>
+        <dt>Monthly kWh avoided</dt>
+        <dd>{{ num(totals().saved) }}</dd>
+      </div>
+    </dl>
+
+    <p class="footnote" data-reveal>
+      Locations are illustrative, positioned by city rather than by address. Figures are concept-stage estimates, not measured bills.
+    </p>
+  </div>
+
+  <!-- mobile scrim -->
+  <div class="scrim" [class.on]="selected() !== null" (click)="onBackdrop($event)" aria-hidden="true"></div>
+</section>
