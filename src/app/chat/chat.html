@@ -94,8 +94,8 @@
       class="mic"
       type="button"
       (click)="openVoice()"
-      aria-label="احكي مع InBetween بالدارجة"
-      title="مكالمة صوتية بالدارجة"
+      aria-label="Open voice conversation and choose a language"
+      title="Voice conversation · Darija or Japanese"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <rect x="9" y="3.5" width="6" height="11" rx="3" fill="currentColor" />
@@ -127,6 +127,6 @@
   <p class="foot">Concept-stage answers · figures are illustrative</p>
 
   @if (voiceOpen()) {
-    <app-voice-panel [systemPrompt]="voicePrompt" (closed)="closeVoice()" />
+    <app-voice-panel [systemPrompt]="voicePrompt" [japanesePrompt]="japaneseVoicePrompt" (closed)="closeVoice()" />
   }
 </section>

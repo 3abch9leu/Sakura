@@ -12,6 +12,10 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Voice conversations
+
+Start the voice relay in a second terminal with `npm run voice:server`. Add `PUNICA_API_KEY` for Tunisian Derja and `GEMINI_API_KEY` from Google AI Studio for Japanese voice to `server/.env`. The voice panel lets the user choose either language. Gemini Live uses native audio and a short-lived token issued by the relay; keep the API key out of the Angular environment files.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

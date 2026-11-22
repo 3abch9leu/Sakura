@@ -568,6 +568,256 @@ export class VoiceCall {
   }
 }
 
+/** One continuous Gemini Live session for natural, Japanese audio conversation. */
+export class GeminiLiveCall {
+  private ws: WebSocket | null = null;
+  private mic: MediaStream | null = null;
+  private capture: AudioContext | null = null;
+  private processor: ScriptProcessorNode | null = null;
+  private source: MediaStreamAudioSourceNode | null = null;
+  private playback: AudioContext | null = null;
+  private nextAudioAt = 0;
+  private pending: number[] = [];
+  private outputText = '';
+  private startedAt = 0;
+  private disposed = false;
+  private phase: VoicePhase = 'idle';
+  private connectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(private readonly cb: VoiceCallbacks) {}
+
+  async start(system: string): Promise<void> {
+    if (this.disposed) return;
+    this.setState('connecting');
+    try {
+      this.playback = new AudioContext({ sampleRate: 24_000 });
+      await this.playback.resume();
+      await this.openMic();
+
+      const base = (environment.punicaLiveServer || '').trim().replace(/\/+$/, '');
+      if (!base) throw new Error('Voice relay is not configured.');
+      const response = await fetch(`${base}/api/gemini/live-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(20_000),
+      });
+      const data = await response.json().catch(() => null) as { token?: string; message?: string } | null;
+      if (!response.ok || !data?.token) {
+        throw new Error(data?.message || `Gemini voice setup failed (${response.status}).`);
+      }
+
+      const ws = new WebSocket(
+        `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=${encodeURIComponent(data.token)}`,
+      );
+      ws.binaryType = 'arraybuffer';
+      this.ws = ws;
+      this.connectTimer = setTimeout(() => {
+        const message = ws.readyState === WebSocket.OPEN
+          ? 'Gemini connected but did not acknowledge voice setup. Check model availability and retry.'
+          : 'Could not open the Gemini voice connection. Check that WebSockets are allowed on this network and retry.';
+        this.fail(message);
+      }, 45_000);
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          setup: {
+            model: 'models/gemini-3.8-live',
+            generationConfig: {
+              responseModalities: ['AUDIO'],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } },
+            },
+            inputAudioTranscription: {},
+            outputAudioTranscription: {},
+            systemInstruction: { parts: [{ text: system }] },
+          },
+        }));
+      };
+      ws.onmessage = (event) => { void this.readMessage(event.data); };
+      ws.onerror = () => this.fail('Could not connect to Gemini voice. Check the network and API key.');
+      ws.onclose = (event) => {
+        if (!this.disposed && this.phase !== 'error') {
+          const details = event.reason ? `: ${event.reason}` : '';
+          this.fail(`Gemini ended the voice connection (code ${event.code})${details}`);
+        }
+      };
+    } catch (error) {
+      this.fail(messageOf(error));
+    }
+  }
+
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    if (this.connectTimer) clearTimeout(this.connectTimer);
+    this.connectTimer = null;
+    this.stopMic();
+    const ws = this.ws;
+    this.ws = null;
+    if (ws) {
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+      try { ws.close(); } catch { /* already closed */ }
+    }
+    this.playback?.close().catch(() => undefined);
+    this.playback = null;
+    if (this.startedAt) this.cb.onBilled(Math.ceil((Date.now() - this.startedAt) / 1000));
+    this.setState('idle');
+  }
+
+  private async openMic(): Promise<void> {
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('This browser cannot access a microphone.');
+    try {
+      this.mic = await navigator.mediaDevices.getUserMedia({
+        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+    } catch {
+      throw new Error('Allow microphone access to start the Japanese conversation.');
+    }
+    const ctx = new AudioContext({ sampleRate: 16_000 });
+    this.capture = ctx;
+    await ctx.resume();
+    const source = ctx.createMediaStreamSource(this.mic);
+    const processor = ctx.createScriptProcessor(2048, 1, 1);
+    const mute = ctx.createGain();
+    mute.gain.value = 0;
+    processor.onaudioprocess = (event) => {
+      const input = event.inputBuffer.getChannelData(0);
+      const ratio = ctx.sampleRate / 16_000;
+      for (let i = 0; i * ratio < input.length; i++) {
+        const sample = Math.max(-1, Math.min(1, input[Math.floor(i * ratio)]));
+        this.pending.push((sample < 0 ? sample * 32768 : sample * 32767) | 0);
+      }
+      while (this.pending.length >= 1600) {
+        const samples = this.pending.splice(0, 1600);
+        this.sendAudio(samples);
+      }
+    };
+    source.connect(processor);
+    processor.connect(mute);
+    mute.connect(ctx.destination);
+    this.source = source;
+    this.processor = processor;
+  }
+
+  private sendAudio(samples: number[]): void {
+    if (this.ws?.readyState !== WebSocket.OPEN || this.phase !== 'listening') return;
+    const pcm = new Int16Array(samples);
+    const bytes = new Uint8Array(pcm.buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + 0x8000, bytes.length)));
+    }
+    this.ws.send(JSON.stringify({
+      realtimeInput: { audio: { mimeType: 'audio/pcm;rate=16000', data: btoa(binary) } },
+    }));
+  }
+
+  private async readMessage(data: string | Blob | ArrayBuffer | ArrayBufferView): Promise<void> {
+    try {
+      if (typeof data === 'string') {
+        this.onMessage(data);
+      } else if (data instanceof Blob) {
+        this.onMessage(await data.text());
+      } else if (data instanceof ArrayBuffer) {
+        this.onMessage(new TextDecoder().decode(data));
+      } else {
+        this.onMessage(new TextDecoder().decode(data));
+      }
+    } catch {
+      /* Ignore a non-JSON control frame; the setup timeout reports missing acknowledgement. */
+    }
+  }
+
+  private onMessage(raw: string): void {
+    let message: any;
+    try { message = JSON.parse(raw); } catch { return; }
+    if (message.setupComplete) {
+      if (this.connectTimer) clearTimeout(this.connectTimer);
+      this.connectTimer = null;
+      this.startedAt = Date.now();
+      this.setState('listening');
+      return;
+    }
+    if (message.error) {
+      this.fail(message.error.message || 'Gemini returned a voice error.');
+      return;
+    }
+
+    const content = message.serverContent;
+    const input = content?.inputTranscription?.text;
+    if (input) this.cb.onHeard(input, true);
+    const output = content?.outputTranscription?.text;
+    if (output) this.outputText += output;
+
+    for (const part of content?.modelTurn?.parts ?? []) {
+      const encoded = part.inlineData?.data;
+      if (encoded) {
+        this.setState('speaking');
+        this.playPcm(encoded);
+      }
+      if (part.text && !part.thought) this.outputText += part.text;
+    }
+
+    if (content?.turnComplete) {
+      const answer = this.outputText.trim();
+      this.outputText = '';
+      if (answer) this.cb.onReply(answer);
+      this.setState('listening');
+    }
+  }
+
+  private playPcm(encoded: string): void {
+    const ctx = this.playback;
+    if (!ctx) return;
+    const binary = atob(encoded);
+    const count = Math.floor(binary.length / 2);
+    const pcm = new Int16Array(count);
+    for (let i = 0; i < count; i++) {
+      const value = binary.charCodeAt(i * 2) | (binary.charCodeAt(i * 2 + 1) << 8);
+      pcm[i] = value > 32767 ? value - 65536 : value;
+    }
+    const buffer = ctx.createBuffer(1, count, 24_000);
+    const channel = buffer.getChannelData(0);
+    for (let i = 0; i < count; i++) channel[i] = pcm[i] / 32768;
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    const when = Math.max(ctx.currentTime + 0.03, this.nextAudioAt);
+    source.start(when);
+    this.nextAudioAt = when + buffer.duration;
+  }
+
+  private stopMic(): void {
+    if (this.processor) {
+      this.processor.onaudioprocess = null;
+      this.processor.disconnect();
+      this.processor = null;
+    }
+    this.source?.disconnect();
+    this.source = null;
+    this.mic?.getTracks().forEach((track) => track.stop());
+    this.mic = null;
+    this.capture?.close().catch(() => undefined);
+    this.capture = null;
+    this.pending = [];
+  }
+
+  private setState(state: VoicePhase): void {
+    if (this.phase === state) return;
+    this.phase = state;
+    this.cb.onState(state);
+  }
+
+  private fail(message: string): void {
+    if (this.disposed) return;
+    this.cb.onError(message);
+    this.setState('error');
+    this.dispose();
+    this.setState('error');
+  }
+}
+
 function messageOf(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
   return 'صار مشكل في المكالمة. عاود جرّب.';

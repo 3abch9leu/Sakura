@@ -52,6 +52,7 @@ const ALLOWED = (
   .filter(Boolean);
 
 const apiKey = () => (process.env.PUNICA_API_KEY || '').trim();
+const geminiApiKey = () => (process.env.GEMINI_API_KEY || '').trim();
 
 /** Two rapid clicks must not open two billed calls. */
 let lastSessionAt = 0;
@@ -100,7 +101,57 @@ const server = createServer(async (req, res) => {
   }
 
   if (url.pathname === '/health' && req.method === 'GET') {
-    reply(res, 200, { configured: Boolean(apiKey()), origins: ALLOWED }, origin);
+    reply(res, 200, {
+      configured: Boolean(apiKey()),
+      punicaConfigured: Boolean(apiKey()),
+      geminiConfigured: Boolean(geminiApiKey()),
+      origins: ALLOWED,
+    }, origin);
+    return;
+  }
+
+  if (url.pathname === '/api/gemini/live-token' && req.method === 'POST') {
+    if (!origin || !ALLOWED.includes(origin)) {
+      reply(res, 403, { error: 'origin_not_allowed', message: 'This app origin is not allowed.' }, origin);
+      return;
+    }
+    if (!geminiApiKey()) {
+      reply(res, 503, {
+        error: 'missing_key',
+        message: 'GEMINI_API_KEY is not set. Add it to server/.env and restart npm run voice:server.',
+      }, origin);
+      return;
+    }
+
+    try {
+      const now = Date.now();
+      const upstream = await fetch('https://generativelanguage.googleapis.com/v1beta/auth_tokens', {
+        method: 'POST',
+        headers: {
+          'x-goog-api-key': geminiApiKey(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uses: 1,
+          expireTime: new Date(now + 30 * 60_000).toISOString(),
+          newSessionExpireTime: new Date(now + 60_000).toISOString(),
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+      const data = await upstream.json().catch(() => null);
+      if (!upstream.ok || !data?.name) {
+        console.error('[gemini-live] token refused', upstream.status, data?.error?.status ?? '');
+        reply(res, upstream.ok ? 502 : upstream.status, {
+          error: 'token_failed',
+          message: data?.error?.message ?? 'Gemini could not create a live voice session.',
+        }, origin);
+        return;
+      }
+      reply(res, 200, { token: data.name }, origin);
+    } catch (error) {
+      console.error('[gemini-live] token request failed:', error?.message ?? error);
+      reply(res, 502, { error: 'upstream_unreachable', message: 'Could not reach Gemini. Check the network and try again.' }, origin);
+    }
     return;
   }
 
@@ -246,5 +297,8 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`Punica Live relay: http://127.0.0.1:${PORT}`);
   if (!apiKey()) {
     console.log('PUNICA_API_KEY missing: add it to server/.env, then restart.');
+  }
+  if (!geminiApiKey()) {
+    console.log('GEMINI_API_KEY missing: Japanese Gemini Live voice is unavailable until it is added to server/.env.');
   }
 });

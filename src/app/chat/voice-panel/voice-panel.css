@@ -104,6 +104,46 @@ h3 em {
   padding: 22px 18px 14px;
 }
 
+.language-choices {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  margin: auto 0;
+}
+
+.language-choices button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 16px;
+  border: 1px solid rgba(47, 90, 63, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink, #1d2b24);
+  font: inherit;
+  cursor: pointer;
+}
+
+.language-choices button:hover {
+  border-color: var(--clay, #c4693f);
+  background: #fff;
+}
+
+.language-choices small {
+  color: var(--muted, #6b746e);
+  font-size: 0.68rem;
+}
+
+.change-language {
+  border: 0;
+  background: transparent;
+  color: var(--muted, #6b746e);
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
 .orb {
   position: relative;
   display: grid;

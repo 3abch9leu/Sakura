@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { VoiceCall, VoicePhase, VoiceTurn } from '../voice-live';
+import { GeminiLiveCall, VoiceCall, VoiceCallbacks, VoicePhase, VoiceTurn } from '../voice-live';
 
 interface Quota {
   day: string;
@@ -56,14 +56,16 @@ function readQuota(): Quota {
 })
 export class VoicePanelComponent implements OnInit, OnDestroy {
   readonly systemPrompt = input.required<string>();
+  readonly japanesePrompt = input.required<string>();
   readonly closed = output<void>();
+  readonly mode = signal<'darija' | 'japanese' | null>(null);
 
   readonly phase = signal<VoicePhase>('idle');
   readonly heard = signal('');
   readonly reply = signal('');
   readonly error = signal<string | null>(null);
   readonly quota = signal<Quota>(readQuota());
-  readonly configured = signal<boolean | null>(null);
+  readonly configured = signal<{ punica: boolean; gemini: boolean } | null>(null);
 
   readonly maxSeconds = MAX_SECONDS;
   readonly maxTurns = MAX_TURNS;
@@ -82,17 +84,37 @@ export class VoicePanelComponent implements OnInit, OnDestroy {
       this.phase() === 'speaking',
   );
   readonly canTalk = computed(
-    () =>
-      this.turnsLeft() > 0 &&
-      this.secondsLeft() > 0 &&
-      this.configured() !== false &&
-      this.phase() !== 'connecting',
+    () => {
+      const mode = this.mode();
+      const configured = this.configured();
+      return Boolean(mode && configured && configured[mode === 'darija' ? 'punica' : 'gemini']) &&
+        !this.setupMissing() &&
+        (mode === 'japanese' || (this.turnsLeft() > 0 && this.secondsLeft() > 0)) &&
+        this.phase() !== 'connecting';
+    },
   );
-  readonly setupMissing = computed(() => this.configured() === false);
+  readonly setupMissing = computed(() => {
+    const configured = this.configured();
+    const mode = this.mode();
+    return Boolean(configured && mode && !configured[mode === 'darija' ? 'punica' : 'gemini']);
+  });
   readonly status = computed(() => {
-    if (this.setupMissing()) return 'خدمة الصوت موش مربوطة.';
-    if (this.turnsLeft() === 0) return 'وصلت للحد اليومي. نجم نحكيو غدوة.';
-    if (this.secondsLeft() === 0) return 'الحد اليومي متاع الثواني تكمل.';
+    if (!this.mode()) return 'Choose a conversation language.';
+    if (this.setupMissing()) return this.mode() === 'japanese'
+      ? 'Gemini音声が設定されていません。'
+      : 'Punica Live is not configured.';
+    if (this.mode() === 'darija' && this.turnsLeft() === 0) return 'Daily Darija call limit reached.';
+    if (this.mode() === 'darija' && this.secondsLeft() === 0) return 'Daily Darija time limit reached.';
+
+    if (this.mode() === 'japanese') {
+      switch (this.phase()) {
+        case 'connecting': return 'Geminiに接続しています…';
+        case 'listening': return '日本語で話してください。会話を終えるにはマイクを押します。';
+        case 'speaking': return '回答しています…';
+        case 'error': return '音声セッションで問題が発生しました。もう一度お試しください。';
+        default: return 'マイクを押して日本語で会話を始めます。';
+      }
+    }
 
     switch (this.phase()) {
       case 'connecting':
@@ -110,7 +132,7 @@ export class VoicePanelComponent implements OnInit, OnDestroy {
     }
   });
 
-  private call: VoiceCall | null = null;
+  private call: VoiceCall | GeminiLiveCall | null = null;
   private turns: VoiceTurn[] = [];
   private counted = false;
 
@@ -143,12 +165,36 @@ export class VoicePanelComponent implements OnInit, OnDestroy {
   }
 
   toggle(): void {
-    if (this.phase() === 'listening') {
-      this.call?.finalize();
+    if (
+      this.mode() === 'japanese' &&
+      this.call &&
+      ['listening', 'thinking', 'speaking'].includes(this.phase())
+    ) {
+      this.call.dispose();
+      this.call = null;
+      this.phase.set('idle');
       return;
     }
+    if (this.phase() === 'listening') {
+      if (this.mode() === 'darija' && this.call instanceof VoiceCall) this.call.finalize();
+      else {
+        this.call?.dispose();
+        this.call = null;
+        this.phase.set('idle');
+      }
+      return;
+    }
+    if (!this.mode()) return;
     if (this.busy() || !this.canTalk() || this.setupMissing()) return;
     void this.beginTurn();
+  }
+
+  choose(mode: 'darija' | 'japanese'): void {
+    this.call?.dispose();
+    this.call = null;
+    this.mode.set(mode);
+    this.error.set(null);
+    this.phase.set('idle');
   }
 
   close(): void {
@@ -163,7 +209,7 @@ export class VoicePanelComponent implements OnInit, OnDestroy {
     this.reply.set('');
     this.counted = false;
 
-    const call = new VoiceCall({
+    const callbacks: VoiceCallbacks = {
       onState: (phase) => {
         this.phase.set(phase);
         if (phase === 'listening' && !this.counted) {
@@ -185,10 +231,15 @@ export class VoicePanelComponent implements OnInit, OnDestroy {
         this.error.set(message);
         this.phase.set('error');
       },
-    });
+    };
+
+    const call = this.mode() === 'japanese'
+      ? new GeminiLiveCall(callbacks)
+      : new VoiceCall(callbacks);
 
     this.call = call;
-    await call.startTurn(this.turns.slice(-8), this.systemPrompt());
+    if (call instanceof GeminiLiveCall) await call.start(this.japanesePrompt());
+    else await call.startTurn(this.turns.slice(-8), this.systemPrompt());
   }
 
   private remember(role: VoiceTurn['role'], content: string): void {
@@ -223,19 +274,22 @@ export class VoicePanelComponent implements OnInit, OnDestroy {
   private async checkRelay(): Promise<void> {
     const base = (environment.punicaLiveServer || '').trim().replace(/\/+$/, '');
     if (!base) {
-      this.configured.set(false);
+      this.configured.set({ punica: false, gemini: false });
       return;
     }
     try {
       const response = await fetch(`${base}/health`, { cache: 'no-store' });
       if (!response.ok) {
-        this.configured.set(false);
+        this.configured.set({ punica: false, gemini: false });
         return;
       }
-      const data = (await response.json()) as { configured?: boolean };
-      this.configured.set(Boolean(data?.configured));
+      const data = (await response.json()) as { configured?: boolean; punicaConfigured?: boolean; geminiConfigured?: boolean };
+      this.configured.set({
+        punica: Boolean(data?.punicaConfigured ?? data?.configured),
+        gemini: Boolean(data?.geminiConfigured),
+      });
     } catch {
-      this.configured.set(false);
+      this.configured.set({ punica: false, gemini: false });
     }
   }
 }
