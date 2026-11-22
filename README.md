@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./hero.svg" width="100%" alt="Sakura🌸 - Many blossoms. One bond. Kizuna 2026"/>
+<img src="./hero (2).svg" width="100%" alt="Sakura🌸 - Many blossoms. One bond. Kizuna 2026"/>
 
 <a href="https://git.io/typing-svg">
   <img src="https://readme-typing-svg.demolab.com?font=Noto+Serif+JP&weight=500&size=21&pause=1300&color=FFB7C5&center=true&vCenter=true&width=820&height=50&lines=Many+blossoms.+One+bond.;%E7%B5%86+%C2%B7+Kizuna+means+%22bond%22;Dev+%C2%B7+AI+%C2%B7+Systems+builders;Water+%C2%B7+Energy+%C2%B7+Agriculture;Ready+to+conquer+Kizuna+2026+%F0%9F%8C%B8" alt="typing" />
