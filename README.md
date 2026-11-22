@@ -1,9 +1,9 @@
 <div align="center">
 
-<img src="./hero (2).svg" width="100%" alt="Sakura🌸 - Many blossoms. One bond. Kizuna 2026"/>
+<img src="./hero.svg" width="100%" alt="Sakura🌸 - Many blossoms. One bond. Kizuna 2026"/>
 
 <a href="https://git.io/typing-svg">
-  <img src="https://readme-typing-svg.demolab.com?font=Noto+Serif+JP&weight=500&size=21&pause=1300&color=FFB7C5&center=true&vCenter=true&width=820&height=50&lines=Balanced+forces.+Unstoppable+drive.;%E7%B5%86+%C2%B7+Kizuna+means+%22bond%22;Dev+%C2%B7+AI+%C2%B7+Systems+builders;Water+%C2%B7+Energy+%C2%B7+Agriculture;Ready+to+conquer+Kizuna+2026+%F0%9F%8C%B8" alt="typing" />
+  <img src="https://readme-typing-svg.demolab.com?font=Noto+Serif+JP&weight=500&size=21&pause=1300&color=FFB7C5&center=true&vCenter=true&width=820&height=50&lines=Many+blossoms.+One+bond.;%E7%B5%86+%C2%B7+Kizuna+means+%22bond%22;Dev+%C2%B7+AI+%C2%B7+Systems+builders;Water+%C2%B7+Energy+%C2%B7+Agriculture;Ready+to+conquer+Kizuna+2026+%F0%9F%8C%B8" alt="typing" />
 </a>
 
 <br/>
@@ -31,7 +31,7 @@
 | 👥 **Members** | 4 / 4, all from ESPRIT |
 | 🎯 **Domains** | Water · Energy · Agriculture |
 | 🔒 **Project** | *Revealed at kickoff* |
-| ⏳ **The hunt begins** | Sat 21 Nov · 11:00 |
+| ⏳ **The hunt** | Started Sat 21 Nov · 11:00 |
 
 <br/>
 
@@ -61,8 +61,8 @@ Like cherry blossoms, we bloom strongest together.
 </div>
 
 <table>
-  <tr>
-    <td width="50%" valign="top">
+<tr>
+<td width="50%" valign="top">
 
 ### 👑 `AZIZ NASRI`
 **Founder** · ESPRIT
@@ -74,8 +74,8 @@ Like cherry blossoms, we bloom strongest together.
 [![GitHub](https://img.shields.io/badge/GitHub-3abch9leu-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/3abch9leu)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Aziz%20Nasri-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/aziz-nasri-0a279a271)
 
-    </td>
-    <td width="50%" valign="top">
+</td>
+<td width="50%" valign="top">
 
 ### 🌸 `MOLKA.MAKRI`
 **Member** · ESPRIT
@@ -87,10 +87,10 @@ Like cherry blossoms, we bloom strongest together.
 [![GitHub](https://img.shields.io/badge/GitHub-molka--makri-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/molka-makri)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Molka%20Makri-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/molkamakri)
 
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
 ### 🎋 `MEHDI.ABBES`
 **Member** · ESPRIT
@@ -102,8 +102,8 @@ Like cherry blossoms, we bloom strongest together.
 [![GitHub](https://img.shields.io/badge/GitHub-abbes02-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/abbes02)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Mehdi%20Abbes-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mehdi-abbes)
 
-    </td>
-    <td width="50%" valign="top">
+</td>
+<td width="50%" valign="top">
 
 ### ⛩️ `AMEN.NAFFETI`
 **Member** · ESPRIT
@@ -115,8 +115,8 @@ Like cherry blossoms, we bloom strongest together.
 [![GitHub](https://img.shields.io/badge/GitHub-amennaffeti-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/amennaffeti)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Amen%20Naffeti-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/amen-naffeti-5166152b8)
 
-    </td>
-  </tr>
+</td>
+</tr>
 </table>
 
 <div align="center">
@@ -167,9 +167,9 @@ Like cherry blossoms, we bloom strongest together.
 ```diff
 + [DONE]     Team formed. 4 builders, 1 mission.
 + [DONE]     Team marked READY on the platform.
-! [PENDING]  Sat 21 Nov · 11:00  →  the hunt begins.
-! [PENDING]  Build. Break. Rebuild. Repeat.
-- [REDACTED] The project reveal.
++ [DONE]     Sat 21 Nov · 11:00  →  the hunt began.
+! [ACTIVE]   Build. Break. Rebuild. Repeat.
++ [DONE]     The project reveal.
 + [GOAL]     Win Kizuna 2026. 🏆
 ```
 
