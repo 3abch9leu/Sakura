@@ -57,3 +57,24 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Branch `final`: the complete INBETWEEN platform
+
+This branch contains the whole working project:
+
+- **Frontend** (this folder, Angular): landing page, design studio with the photo-like preview, digital twin,
+  plant health, plant camera and live gallery, AI weather & climate, water quality, STEG energy companion,
+  scenarios map, and the InBetween chat assistant (text + voice).
+- **Backend** (`backend/`, FastAPI): `uvicorn api:app --port 8000` from `backend/` after `pip install -r requirements.txt`.
+
+Integrated team branches: `chatbot` (assistant + voice relay in `server/`), `weather_prediction`
+(model in `backend/rootcode/models/hweh-446k`, routes under `/api/weather`, `/api/iot`, `/api/climate`,
+ESP32 firmware in `backend/arduino/esp32-inbetween`), `water_monitoring` (`public/water-monitor/`) and the
+plant gallery and map from `front`.
+
+Not in git (too large or secret):
+- `backend/rootcode/models/deeplabv3_model.pth` (168 MB, leaf disease model): copy it there by hand.
+- `backend/.env` and `server/.env`: API keys stay local (see `server/.env.example`).
+
+Run: `npm install && ng serve` (site on http://localhost:4200), the API on port 8000, and optionally
+`npm run voice:setup` then `npm run voice:server` for the live assistant.

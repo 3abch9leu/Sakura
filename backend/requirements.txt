@@ -1,0 +1,31 @@
+numpy
+scipy
+pandas
+matplotlib
+pvlib>=0.11
+pymoo>=0.6.1
+fastapi
+uvicorn
+openai>=1.40
+opencv-python
+pillow
+python-multipart
+# FacadeVision deep learning (GPU): install torch from pytorch.org for your CUDA version, then:
+# transformers>=4.56   (SAM 2; older versions automatically fall back to SAM 1)
+# Stage 2 AI render (SD 1.5 + ControlNet Canny), weights ~2.9 GB cached in ../hf_cache
+# diffusers>=0.30
+# accelerate
+# Energy & Comfort Companion: bill OCR (PaddleOCR PP-OCR models on onnxruntime), PDF input
+rapidocr>=3.10
+python-bidi
+pdfplumber
+pypdfium2
+
+# Studio + digital twin: polygon geometry for the cultural design generator
+shapely>=2.0
+# optional, only for arduino/sensor_bridge.py (serial link to the board)
+# pyserial
+
+# AI weather prediction (weather_prediction branch: DistilHweh-446k, CPU) - torch/transformers as above
+safetensors>=0.4
+httpx>=0.27

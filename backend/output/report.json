@@ -1,0 +1,367 @@
+{
+  "context": {
+    "plants": [
+      "mint",
+      "basil",
+      "strawberry",
+      "lettuce"
+    ],
+    "lat": 36.81,
+    "lon": 10.18,
+    "facade": "W",
+    "date": "2026-07-15",
+    "rh": 0.55,
+    "window_w": 1.2,
+    "window_h": 1.4,
+    "root_tiles": 4,
+    "water_available_l_day": 6.0
+  },
+  "designs": {
+    "water_saver": {
+      "design": {
+        "plants": [
+          "mint",
+          "basil",
+          "strawberry",
+          "lettuce"
+        ],
+        "widths_mm": [
+          0.698294856449706,
+          0.6120038157413729,
+          1.448970968533971,
+          0.9389318392899453
+        ],
+        "cool_width_mm": 0.2563141846642895,
+        "water_l_day": 0.8602538395451367,
+        "porosity": 0.2583025668864861,
+        "aperture_mm": 9.711774455215018,
+        "layers": 3,
+        "screen_depth_mm": 9.0,
+        "cooling_open": false
+      },
+      "result": {
+        "objectives": {
+          "water_l_day": 3.4410153581805467,
+          "heat_kwh_day": 0.8446735609302576,
+          "plant_deficit": 0.09597775358751331
+        },
+        "constraints": {
+          "porosity_ok": true,
+          "water_ok": true,
+          "slow_drip_ok": true,
+          "laminar_ok": true
+        },
+        "panel": {
+          "n_tiles": 20,
+          "root_tiles": 4,
+          "shade_tiles": 16,
+          "heat_unshaded_kwh_day": 5.061019613973922,
+          "heat_reduction_pct": 83.31020969375342,
+          "evaporative_cooling_kwh_day": 0.0,
+          "water_drained_l_day": 0.0,
+          "effective_porosity": 0.20061499361517088
+        },
+        "pockets": [
+          {
+            "plant": "mint",
+            "received_l": 0.2412779350148481,
+            "need_l": 0.2504170558328159,
+            "ratio": 0.963504399540304
+          },
+          {
+            "plant": "basil",
+            "received_l": 0.17627494263723534,
+            "need_l": 0.20033364466625275,
+            "ratio": 0.8799068320795632
+          },
+          {
+            "plant": "strawberry",
+            "received_l": 0.2905319334315906,
+            "need_l": 0.3005004669993791,
+            "ratio": 0.9668268949219001
+          },
+          {
+            "plant": "lettuce",
+            "received_l": 0.1521690284614627,
+            "need_l": 0.20033364466625275,
+            "ratio": 0.7595779965715184
+          }
+        ],
+        "distribution_cv": 0.09440378594475525,
+        "cooling_water_l_tile": 0.0,
+        "hydraulics": {
+          "drain_time_min": 20.016744627823705,
+          "reynolds_max": 425.7362846895497,
+          "laminar": true
+        },
+        "litres_per_branch": {
+          "pocket_0": 0.2412779350148481,
+          "pocket_1": 0.17627494263723534,
+          "pocket_2": 0.2905319334315906,
+          "pocket_3": 0.1521690284614627
+        },
+        "facade_irradiation_kwh_m2_day": 4.016682233312638
+      }
+    },
+    "shade_maximizer": {
+      "design": {
+        "plants": [
+          "mint",
+          "basil",
+          "strawberry",
+          "lettuce"
+        ],
+        "widths_mm": [
+          0.613287517063062,
+          0.6034206258262976,
+          1.326800221981338,
+          0.9571182509394487
+        ],
+        "cool_width_mm": 0.6287816874973999,
+        "water_l_day": 1.1657543413150278,
+        "porosity": 0.258652569853265,
+        "aperture_mm": 8.000267478124167,
+        "layers": 4,
+        "screen_depth_mm": 12.0,
+        "cooling_open": true
+      },
+      "result": {
+        "objectives": {
+          "water_l_day": 4.663017365260111,
+          "heat_kwh_day": 0.6545999764233748,
+          "plant_deficit": 0.0
+        },
+        "constraints": {
+          "porosity_ok": true,
+          "water_ok": true,
+          "slow_drip_ok": true,
+          "laminar_ok": true
+        },
+        "panel": {
+          "n_tiles": 20,
+          "root_tiles": 4,
+          "shade_tiles": 16,
+          "heat_unshaded_kwh_day": 5.061019613973922,
+          "heat_reduction_pct": 87.06584786559675,
+          "evaporative_cooling_kwh_day": 0.035795488257020086,
+          "water_drained_l_day": 0.2320725230660905,
+          "effective_porosity": 0.2008868292527025
+        },
+        "pockets": [
+          {
+            "plant": "mint",
+            "received_l": 0.2540585207385438,
+            "need_l": 0.2504170558328159,
+            "ratio": 1.0145416009848747
+          },
+          {
+            "plant": "basil",
+            "received_l": 0.24340445875008487,
+            "need_l": 0.20033364466625275,
+            "ratio": 1.214995410059984
+          },
+          {
+            "plant": "strawberry",
+            "received_l": 0.35174672257795225,
+            "need_l": 0.3005004669993791,
+            "ratio": 1.1705363591953388
+          },
+          {
+            "plant": "lettuce",
+            "received_l": 0.21469529837128742,
+            "need_l": 0.20033364466625275,
+            "ratio": 1.0716886758036104
+          }
+        ],
+        "distribution_cv": 0.07073998480426845,
+        "cooling_water_l_tile": 0.10184934087715947,
+        "hydraulics": {
+          "drain_time_min": 25.969316344977997,
+          "reynolds_max": 394.4357084880178,
+          "laminar": true
+        },
+        "litres_per_branch": {
+          "pocket_0": 0.2540585207385438,
+          "pocket_1": 0.24340445875008487,
+          "pocket_2": 0.35174672257795225,
+          "pocket_3": 0.21469529837128742,
+          "cooling": 0.10184934087715947
+        },
+        "facade_irradiation_kwh_m2_day": 4.016682233312638
+      }
+    },
+    "balanced": {
+      "design": {
+        "plants": [
+          "mint",
+          "basil",
+          "strawberry",
+          "lettuce"
+        ],
+        "widths_mm": [
+          0.6534002755185547,
+          0.6013039299852148,
+          1.3419183335597524,
+          0.9900218401998803
+        ],
+        "cool_width_mm": 0.26897798547562635,
+        "water_l_day": 0.9654923534885095,
+        "porosity": 0.25785709384429273,
+        "aperture_mm": 9.672379954054442,
+        "layers": 4,
+        "screen_depth_mm": 12.0,
+        "cooling_open": false
+      },
+      "result": {
+        "objectives": {
+          "water_l_day": 3.861969413954038,
+          "heat_kwh_day": 0.7452876566093445,
+          "plant_deficit": 0.002485685672081183
+        },
+        "constraints": {
+          "porosity_ok": true,
+          "water_ok": true,
+          "slow_drip_ok": true,
+          "laminar_ok": true
+        },
+        "panel": {
+          "n_tiles": 20,
+          "root_tiles": 4,
+          "shade_tiles": 16,
+          "heat_unshaded_kwh_day": 5.061019613973922,
+          "heat_reduction_pct": 85.27396229503755,
+          "evaporative_cooling_kwh_day": 0.0,
+          "water_drained_l_day": 0.0,
+          "effective_porosity": 0.20026900955240068
+        },
+        "pockets": [
+          {
+            "plant": "mint",
+            "received_l": 0.2516680967222626,
+            "need_l": 0.2504170558328159,
+            "ratio": 1.0049958293986248
+          },
+          {
+            "plant": "basil",
+            "received_l": 0.20406107054237166,
+            "need_l": 0.20033364466625275,
+            "ratio": 1.018606090266708
+          },
+          {
+            "plant": "strawberry",
+            "received_l": 0.31179488229099034,
+            "need_l": 0.3005004669993791,
+            "ratio": 1.037585350213897
+          },
+          {
+            "plant": "lettuce",
+            "received_l": 0.1979683039328849,
+            "need_l": 0.20033364466625275,
+            "ratio": 0.9881929930576144
+          }
+        ],
+        "distribution_cv": 0.017900866001469534,
+        "cooling_water_l_tile": 0.0,
+        "hydraulics": {
+          "drain_time_min": 23.43766900718791,
+          "reynolds_max": 402.5061055125184,
+          "laminar": true
+        },
+        "litres_per_branch": {
+          "pocket_0": 0.2516680967222626,
+          "pocket_1": 0.20406107054237166,
+          "pocket_2": 0.31179488229099034,
+          "pocket_3": 0.1979683039328849
+        },
+        "facade_irradiation_kwh_m2_day": 4.016682233312638
+      }
+    },
+    "baseline": {
+      "design": {
+        "plants": [
+          "mint",
+          "basil",
+          "strawberry",
+          "lettuce"
+        ],
+        "widths_mm": [
+          1.5,
+          1.5,
+          1.5,
+          1.5
+        ],
+        "cool_width_mm": 1.5,
+        "water_l_day": 0.9654923534885095,
+        "porosity": 0.5,
+        "aperture_mm": 20.0,
+        "layers": 1,
+        "screen_depth_mm": 3.0,
+        "cooling_open": true
+      },
+      "result": {
+        "objectives": {
+          "water_l_day": 3.861969413954038,
+          "heat_kwh_day": 2.224397674999426,
+          "plant_deficit": 0.29424439092139404
+        },
+        "constraints": {
+          "porosity_ok": true,
+          "water_ok": true,
+          "slow_drip_ok": false,
+          "laminar_ok": true
+        },
+        "panel": {
+          "n_tiles": 20,
+          "root_tiles": 4,
+          "shade_tiles": 16,
+          "heat_unshaded_kwh_day": 5.061019613973922,
+          "heat_reduction_pct": 56.04842809030679,
+          "evaporative_cooling_kwh_day": 0.035795488257020086,
+          "water_drained_l_day": 0.35556451606050177,
+          "effective_porosity": 0.3883333333333333
+        },
+        "pockets": [
+          {
+            "plant": "mint",
+            "received_l": 0.3114339291631877,
+            "need_l": 0.2504170558328159,
+            "ratio": 1.2436610123357892
+          },
+          {
+            "plant": "basil",
+            "received_l": 0.3114339291631877,
+            "need_l": 0.20033364466625275,
+            "ratio": 1.5545762654197364
+          },
+          {
+            "plant": "strawberry",
+            "received_l": 0.1104178091000902,
+            "need_l": 0.3005004669993791,
+            "ratio": 0.36744638104112615
+          },
+          {
+            "plant": "lettuce",
+            "received_l": 0.1104178091000902,
+            "need_l": 0.20033364466625275,
+            "ratio": 0.5511695715616892
+          }
+        ],
+        "distribution_cv": 0.5240382952469083,
+        "cooling_water_l_tile": 0.12178887696195376,
+        "hydraulics": {
+          "drain_time_min": 7.143168049365547,
+          "reynolds_max": 978.7492675701743,
+          "laminar": true
+        },
+        "litres_per_branch": {
+          "pocket_0": 0.3114339291631877,
+          "pocket_1": 0.3114339291631877,
+          "pocket_2": 0.1104178091000902,
+          "pocket_3": 0.1104178091000902,
+          "cooling": 0.12178887696195376
+        },
+        "facade_irradiation_kwh_m2_day": 4.016682233312638
+      }
+    }
+  }
+}

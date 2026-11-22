@@ -1,1 +1,6 @@
-<router-outlet />
+<div class="appshell" [class.appshell--nav]="showNav()">
+  @if (showNav()) { <app-nav /> }
+  <div class="appmain"><router-outlet /></div>
+</div>
+<!-- the assistant loads once the page is idle: it never delays the first paint -->
+@if (showChat()) { @defer (on idle) { <app-chat /> } }

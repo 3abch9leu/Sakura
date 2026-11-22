@@ -1,0 +1,56 @@
+<div class="lat" #root>
+  <section class="lat__viewer" aria-label="Interactive 3D model of the INBETWEEN living lattice">
+    <div id="stage"></div>
+    @if (state() !== 'ready') {
+      <div class="lat__loading">{{ state() === 'error' ? 'The model could not be loaded.' : 'Loading the model…' }}</div>
+    }
+    <div class="lat__tabs">
+      <div class="seg" role="group" aria-label="Visualization mode" id="modes">
+        <button data-mode="architecture" aria-pressed="true">Architecture</button>
+        <button data-mode="planting" aria-pressed="false">Planting pockets</button>
+        <button data-mode="water" aria-pressed="false">Water distribution</button>
+        <button data-mode="solar" aria-pressed="false">Solar shading</button>
+        <button data-mode="exploded" aria-pressed="false">Exploded view</button>
+      </div>
+      <div class="seg small" role="group" aria-label="Camera" id="cams">
+        <button data-cam="three">3/4</button><button data-cam="front">Front</button><button data-cam="side">Side</button><button data-cam="rear">Rear</button>
+      </div>
+      <div class="seg small" role="group" aria-label="Setting" id="ctx">
+        <button data-ctx="standalone" aria-pressed="true">Standalone</button><button data-ctx="wall" aria-pressed="false">On a wall</button>
+      </div>
+    </div>
+    <div class="toolbar" id="tb-solar" hidden>
+      <label class="slider" for="sun">Time
+        <input id="sun" type="range" min="5.5" max="20" step="0.25" value="16">
+        <output id="sun-out">16:30</output>
+      </label>
+      <label class="src" for="orient">Facing
+        <select id="orient"><option value="W">West</option><option value="S">South</option><option value="E">East</option></select>
+      </label>
+    </div>
+    <div class="toolbar" id="tb-water" hidden>
+      <button id="btn-tuned" aria-pressed="true">AI-tuned inlets</button>
+      <button id="btn-sim" aria-pressed="false">Simulate days passing</button>
+      <span class="src" id="sim-clock">Day 0.0 · simulation</span>
+    </div>
+  </section>
+
+  <aside class="lat__aside">
+    <p class="lede">An interconnected geometric structure inspired by nature and Tunisian–Japanese heritage. Its empty spaces become
+      growing cells, while hidden irrigation channels and integrated water-storage compartments distribute water passively.</p>
+    <div class="panel" id="panel" aria-live="polite"></div>
+    <div class="legend">
+      <p class="eyebrow">Technical legend</p>
+      <ul>
+        <li><span class="sw" style="background:#a8794c"></span><span><b>Cultural geometric framework.</b> Asanoha (hemp-leaf) triangular lattice in treated wood, joined by eight-point-star connectors from Tunisian mashrabiya.</span></li>
+        <li><span class="sw" style="background:#3d7838"></span><span><b>Integrated planting cells.</b> Cells with a flat floor hold a removable terracotta insert, growing medium and room for roots.</span></li>
+        <li><span class="sw" style="background:#c9b79f"></span><span><b>Open shading and ventilation cells.</b> Pointed cells stay open for light and air, or carry asanoha fins and sakura blossoms that cast patterned shade.</span></li>
+        <li><span class="sw" style="background:#2a86c4"></span><span><b>Concealed gravity-fed channels.</b> 4 mm channels inside the struts, routed only downward or level from one supply tube at the top.</span></li>
+        <li><span class="sw" style="background:#7fb6dc"></span><span><b>Distributed water storage.</b> A waterproof compartment in the floor beam of each planting cell, filled through a labyrinth inlet sized by the AI.</span></li>
+        <li><span class="sw" style="background:#efe9dd; border:1px solid #c8bfb0"></span><span><b>Capillary delivery.</b> A cotton wick lifts water from the compartment into the roots, so soil takes only what it can hold.</span></li>
+        <li><span class="sw" style="background:#8d9aa0"></span><span><b>Drainage.</b> Each compartment overflows down its own strut to a covered tray and jar at the base.</span></li>
+        <li><span class="sw" style="background:#1d6f8a"></span><span><b>Optional monitoring.</b> A level probe and a small station. The structure works without them.</span></li>
+      </ul>
+    </div>
+  </aside>
+</div>

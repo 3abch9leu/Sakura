@@ -1,0 +1,122 @@
+<main class="wrap">
+  <header class="head">
+    <p class="eyebrow">Weather & climate</p>
+    <h1>The next 12 hours, <em>for your plants.</em></h1>
+    <p class="sub">A small AI model trained by our team forecasts Tunis hour by hour from the last 72 hours of observations.
+      It runs on the server's CPU in a fraction of a second.</p>
+  </header>
+
+  @if (loading()) {
+    <div class="card muted"><span class="spin"></span> Computing the forecast{{ waited() > 3 ? ' (the first one takes about 15 s: the model loads and the last 72 h of weather are fetched)' : '' }}… {{ waited() }} s</div>
+  }
+  @if (error()) {
+    <div class="card err" role="alert">Forecast unavailable: {{ error() }} <button type="button" class="link" (click)="load()">Try again</button></div>
+  }
+
+  @if (fc(); as F) {
+    <section class="top">
+      @if (focus(); as N) {
+        <div class="card now">
+          <p class="eyebrow">{{ hover() === null ? 'Next hour' : 'At ' + hhmm(N.time_local) }} · {{ F.city }}</p>
+          <div class="now__main">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="skyPath(N.weather_class)" /></svg>
+            <b>{{ N.temperature_c | number: '1.0-0' }}°</b>
+            <span>{{ N.weather_class }}<small>feels {{ N.apparent_temperature_c | number: '1.0-0' }}°</small></span>
+          </div>
+          <dl class="kv">
+            <div><dt>Rain chance</dt><dd>{{ N.rain_probability * 100 | number: '1.0-0' }} %</dd></div>
+            <div><dt>Humidity</dt><dd>{{ N.humidity_pct | number: '1.0-0' }} %</dd></div>
+            <div><dt>Wind</dt><dd>{{ N.wind_speed_kmh | number: '1.0-0' }} km/h</dd></div>
+            <div><dt>Clouds</dt><dd>{{ N.cloud_cover_pct | number: '1.0-0' }} %</dd></div>
+          </dl>
+        </div>
+      }
+      @if (waterTip(); as Wt) {
+        <div class="card tip" [attr.data-tone]="Wt.tone">
+          <p class="eyebrow">For the living wall</p>
+          <p class="tip__txt">{{ Wt.text }}</p>
+          <p class="muted small">A simple rule on the forecast. The digital twin also uses the forecast for each reservoir's refill threshold.</p>
+          <a class="link" routerLink="/dashboard">Open the digital twin →</a>
+        </div>
+      }
+    </section>
+
+    @if (chart(); as G) {
+      <section class="card chartcard">
+        <h2>Temperature, next 12 hours <small>°C</small></h2>
+        <svg class="chart" [attr.viewBox]="'0 0 ' + G.W + ' ' + G.H" role="img" aria-label="Forecast temperature for the next 12 hours"
+             (pointerleave)="hover.set(null)">
+          @for (t of G.yTicks; track t.v) {
+            <line class="grid" [attr.x1]="G.L" [attr.x2]="G.W - G.R" [attr.y1]="t.y" [attr.y2]="t.y" />
+            <text class="ax" [attr.x]="G.L - 8" [attr.y]="t.y + 4" text-anchor="end">{{ t.v }}°</text>
+          }
+          <path class="area" [attr.d]="G.area" />
+          <path class="line" [attr.d]="G.line" />
+          @for (p of G.pts; track p.i) {
+            @if (p.i % 2 === 0) { <text class="ax" [attr.x]="p.x" [attr.y]="G.H - 6" text-anchor="middle">{{ p.t }}</text> }
+            @if (hover() === p.i) {
+              <line class="cross" [attr.x1]="p.x" [attr.x2]="p.x" y1="10" [attr.y2]="G.H - G.B" />
+              <circle class="dot" [attr.cx]="p.x" [attr.cy]="p.y" r="5" />
+            }
+            <rect class="hit" [attr.x]="p.x - G.hit / 2" y="0" [attr.width]="G.hit" [attr.height]="G.H" (pointerenter)="hover.set(p.i)" />
+          }
+        </svg>
+        <h2 class="h2b">Chance of rain <small>%</small></h2>
+        <svg class="chart chart--rain" [attr.viewBox]="'0 0 ' + G.W + ' 84'" role="img" aria-label="Chance of rain per hour" (pointerleave)="hover.set(null)">
+          <line class="grid" [attr.x1]="G.L" [attr.x2]="G.W - G.R" y1="70" y2="70" />
+          <text class="ax" [attr.x]="G.L - 8" y="74" text-anchor="end">0</text>
+          <text class="ax" [attr.x]="G.L - 8" y="14" text-anchor="end">100</text>
+          @for (b of G.bars; track b.i) {
+            <rect class="rbar" [class.on]="hover() === b.i" [attr.x]="b.x" [attr.y]="70 - b.h" [attr.width]="b.w" [attr.height]="b.h + 0.01" rx="2" />
+            <rect class="hit" [attr.x]="b.x + b.w / 2 - G.hit / 2" y="0" [attr.width]="G.hit" height="84" (pointerenter)="hover.set(b.i)" />
+          }
+        </svg>
+        <table class="sr">
+          <caption>Hourly forecast</caption>
+          <tr><th>Time</th><th>°C</th><th>Rain %</th><th>Sky</th></tr>
+          @for (h of hours(); track h.lead_hours) {
+            <tr><td>{{ hhmm(h.time_local) }}</td><td>{{ h.temperature_c | number: '1.0-1' }}</td><td>{{ h.rain_probability * 100 | number: '1.0-0' }}</td><td>{{ h.weather_class }}</td></tr>
+          }
+        </table>
+        <p class="muted small">Hover an hour to see its details above. Model: {{ F.model }}, input {{ F.history_hours }} h of Open-Meteo observations for {{ F.city }}.</p>
+      </section>
+    }
+
+    @if (acc(); as A) {
+      <section class="card acc">
+        <h2>How accurate is it?</h2>
+        <p class="muted">Measured by our team: {{ A.samples }} past forecasts compared with what was then observed{{ A.period ? ' (' + A.period[0].slice(0, 10) + ' to ' + A.period[1].slice(0, 10) + ')' : '' }}. Average error:</p>
+        <div class="accrow">
+          @if (A.metrics['temperature']; as M) { <div><b>± {{ M.mae | number: '1.1-1' }} °C</b><small>temperature</small></div> }
+          @if (A.metrics['humidity']; as M) { <div><b>± {{ M.mae | number: '1.0-0' }} %</b><small>humidity</small></div> }
+          @if (A.metrics['wind']; as M) { <div><b>± {{ M.mae | number: '1.0-0' }} km/h</b><small>wind</small></div> }
+        </div>
+        <p class="muted small">A short validation window (two days, Tunis). It shows the order of magnitude of the error, not a guarantee.</p>
+      </section>
+    }
+  }
+
+  <section class="card sensors">
+    <div class="sensors__head">
+      <h2>Greenhouse sensors <small>ESP32</small></h2>
+      <span class="pill" [attr.data-s]="advice()?.sensor_status ?? 'offline'">{{ advice()?.sensor_status === 'online' ? 'Live' : 'No device connected' }}</span>
+    </div>
+    @if (advice()?.current_conditions; as C) {
+      <dl class="kv kv--4">
+        <div><dt>Inside</dt><dd>{{ C.temperature_c | number: '1.0-1' }} °C</dd></div>
+        <div><dt>Humidity</dt><dd>{{ C.humidity_pct | number: '1.0-0' }} %</dd></div>
+        <div><dt>Soil moisture</dt><dd>{{ C.soil_moisture_pct | number: '1.0-0' }} %</dd></div>
+        <div><dt>Reservoir</dt><dd>{{ C.water_level_low ? 'Low' : 'OK' }}</dd></div>
+      </dl>
+      <ul class="acts">
+        @for (a of advice()!.actions; track a.action) {
+          <li [class.go]="isGo(a.recommendation)"><b>{{ actionLabel(a.action) }}</b><span class="rec">{{ recLabel(a.recommendation) }}</span><small>{{ a.reason }}</small></li>
+        }
+      </ul>
+      <p class="muted small">Recommendations only: nothing is switched on automatically. {{ advice()!.safety_constraints[0] }}</p>
+    } @else {
+      <p class="muted">When the ESP32 of the greenhouse kit is on, it sends temperature, humidity, light, soil moisture and the reservoir level here,
+        and the advice (ventilate, water, cool, shade) appears with its reason. The firmware is in <code>arduino/esp32-inbetween</code>.</p>
+    }
+  </section>
+</main>

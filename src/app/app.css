@@ -1,0 +1,8 @@
+/* App shell: global navigation on the left, the page on the right (landing and sign-in have no shell). */
+.appshell--nav { display: flex; align-items: flex-start; min-height: 100vh; }
+.appmain { min-width: 0; }
+.appshell--nav .appmain { flex: 1; }
+@media (max-width: 900px) {
+  .appshell--nav { display: block; }
+  .appshell--nav .appmain { padding-top: 59px; }
+}

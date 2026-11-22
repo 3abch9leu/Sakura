@@ -31,6 +31,16 @@
     </div>
   }
 
+  @if (setting === 'farm') {
+    <div class="banner banner--info" role="note">
+      <div>
+        <b>INBETWEEN Agro is an extension in development.</b>
+        <span>For now the studio designs the façade and window model. Photograph a farmhouse window or wall to try it; elevated growing structures will come next.</span>
+      </div>
+      <a class="btn btn--ghost btn--sm" routerLink="/space">Change setting</a>
+    </div>
+  }
+
   <!-- ROADMAP -->
   <nav class="road" aria-label="Progress">
     @for (s of steps; track s.t; let i = $index) {

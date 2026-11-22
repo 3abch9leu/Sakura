@@ -268,6 +268,11 @@ export interface AskResponse {
   llm_error?: string;
 }
 
+import type {
+  AreaResponse, Branch, GenDesign, PreviewResponse, SegmentResponse, SensorReading, SolarDay, StylesResponse, UploadResponse,
+  WaterResponse,
+} from './twin/types';
+
 /* ------------------------------------------------------------------ service */
 const DEFAULT_URL = 'http://localhost:8000';
 
@@ -351,8 +356,9 @@ export class Api {
     return this.json('/bill/verify', { bill }, 30000);
   }
 
-  billExplain(bill: BillFields, lang: BillLang, useLlm = true): Promise<BillExplainResponse> {
-    return this.json('/bill/explain', { bill, lang, use_llm: useLlm }, 150000);
+  /** useLlm=false: instant deterministic text. useLlm=true: the AI rewrite (server caps it at ~45 s). */
+  billExplain(bill: BillFields, lang: BillLang, useLlm = false): Promise<BillExplainResponse> {
+    return this.json('/bill/explain', { bill, lang, use_llm: useLlm }, useLlm ? 60000 : 15000);
   }
 
   billAdvice(body: AdviceRequest): Promise<AdviceResponse> {
@@ -361,6 +367,97 @@ export class Api {
 
   billAsk(question: string, history: ChatMessage[], bill: BillFields | null, lang?: BillLang): Promise<AskResponse> {
     return this.json('/bill/ask', { question, history, bill, lang }, 150000);
+  }
+
+  /* ---------------- Studio: space -> sun -> styles -> preview ---------------- */
+  spaceUpload(file: Blob, name = 'photo.jpg'): Promise<UploadResponse> {
+    const f = new FormData();
+    f.append('image', file, name);
+    f.append('suggest', 'true');
+    return this.req('/space/upload', { method: 'POST', body: f }, 180000);
+  }
+
+  spaceSegment(body: { image_id: string; mode: 'click' | 'polygon' | 'rect'; points?: number[][]; labels?: number[];
+    polygon?: number[][]; rect?: number[] }): Promise<SegmentResponse> {
+    return this.json('/space/segment', body, 90000);
+  }
+
+  spaceArea(body: { image_id: string; selection: unknown[]; obstacles: number[][][];
+    reference: { p1?: number[]; p2?: number[]; edge?: 'width' | 'height'; length_m: number };
+    height_m?: number | null }): Promise<AreaResponse> {
+    return this.json('/space/area', body, 30000);
+  }
+
+  solarDay(azimuth: number, lat: number, lon: number, date: string, stepMin = 30): Promise<SolarDay> {
+    const q = new URLSearchParams({ azimuth: String(azimuth), lat: String(lat), lon: String(lon), date, step_min: String(stepMin) });
+    return this.req(`/solar/day?${q}`, { method: 'GET' }, 30000);
+  }
+
+  studioStyles(body: { area: unknown; plants: string[]; styles: string[]; facade_azimuth: number; lat: number; lon: number;
+    water_available_l_day: number | null; greenery: string; prices?: Record<string, number> | null }): Promise<StylesResponse> {
+    return this.json('/studio/styles', body, 180000);
+  }
+
+  studioPreview(body: { image_id: string; area: unknown; design: GenDesign; realistic: boolean; ai?: boolean; seed?: number }): Promise<PreviewResponse> {
+    return this.json('/studio/preview', body, body.ai ? 300000 : 60000);
+  }
+
+  /** Small drawing of every cultural pattern (real generator output), for the pattern picker. */
+  studioPatterns(): Promise<{ id: string; name: string; culture: string; text: string; svg: string | null }[]> {
+    return this.req('/studio/patterns', { method: 'GET' }, 30000);
+  }
+
+  installationDemo(): Promise<GenDesign> {
+    return this.req('/installation/demo', { method: 'GET' }, 30000);
+  }
+
+  /* ---------------- Digital twin: water + sensors ---------------- */
+  waterStatus(body: { branches: Branch[]; levels: Record<string, number>; sensor_branch?: number | null; lat: number; lon: number;
+    hours_to_refill: number; safety_margin: number; losses: number; collector_m2: number }): Promise<WaterResponse> {
+    return this.json('/water/status', body, 30000);
+  }
+
+  sensorsPost(r: { source: string; branch: number | null; level_raw?: number; level_frac?: number; temp_c?: number | null; humidity?: number | null }): Promise<SensorReading> {
+    return this.json('/sensors', r, 10000);
+  }
+
+  sensorsGet(): Promise<{ reading: SensorReading | null; history: SensorReading[] }> {
+    return this.req('/sensors', { method: 'GET' }, 10000);
+  }
+
+  /* ---------------- Leaf health (team DeepLabV3) + phone camera ---------------- */
+  leafAnalyze(file: Blob, plant: string | null, cell: number | null, loc?: { lat: number; lon: number } | null): Promise<LeafResult> {
+    const f = new FormData();
+    f.append('file', file, 'leaf.jpg');
+    if (plant) f.append('plant', plant);
+    if (cell != null) f.append('cell', String(cell));
+    if (loc) { f.append('lat', String(loc.lat)); f.append('lon', String(loc.lon)); }
+    return this.req('/leaf/analyze', { method: 'POST', body: f }, 90000);
+  }
+
+  leafAnalyzePhoto(id: string, plant: string | null, loc?: { lat: number; lon: number } | null): Promise<LeafResult> {
+    const f = new FormData();
+    if (plant) f.append('plant', plant);
+    if (loc) { f.append('lat', String(loc.lat)); f.append('lon', String(loc.lon)); }
+    return this.req(`/api/camera/photos/${encodeURIComponent(id)}/analyze`, { method: 'POST', body: f }, 90000);
+  }
+
+  cameraPhotos(cell: number | null): Promise<CameraPhoto[]> {
+    const q = cell != null ? `?cell=${cell}&limit=12` : '?limit=12';
+    return this.req(`/api/camera/photos${q}`, { method: 'GET' }, 10000);
+  }
+
+  /* ---------------- AI weather prediction + ESP32 climate (weather_prediction branch) ---------------- */
+  weatherForecast(): Promise<WeatherForecast> {
+    return this.req('/api/weather/forecast', { method: 'GET' }, 90000);
+  }
+
+  weatherAccuracy(): Promise<WeatherAccuracy> {
+    return this.req('/api/weather/accuracy', { method: 'GET' }, 15000);
+  }
+
+  climateRecommendations(): Promise<ClimateAdvice> {
+    return this.req('/api/climate/recommendations', { method: 'GET' }, 90000);
   }
 
   private json<T>(path: string, body: unknown, timeout: number): Promise<T> {
@@ -409,6 +506,33 @@ export class Api {
   }
 }
 
+export interface LeafResult {
+  image_size: [number, number];
+  original_jpg_base64: string;
+  overlay_jpg_base64: string;
+  affected_share: number;
+  lesion_share_of_image: number;
+  leaf_share_of_image: number;
+  spots: number;
+  regions_ignored: number;
+  mean_confidence: number | null;
+  severity: 'none' | 'low' | 'moderate' | 'high';
+  label: string;
+  recommendations: string[];
+  warnings: string[];
+  plant: string | null;
+  cell: number | null;
+  model: { name: string; device: string; input: string; validation: string };
+  timing_ms: { decode: number; inference: number; post: number; total: number; includes_model_load: boolean };
+  disclaimer: string;
+  camera_photo?: { id: string; ts: number };
+  care: { summary: string; today: string[]; week: string[]; prevention: string[]; expert: string | null; why: string[]; plant_note: string | null };
+  measurements: { lesion_tone: string | null; yellowing_share: number; mean_area_share: number; largest_area_share: number };
+  weather_used: boolean;
+}
+
+export interface CameraPhoto { id: string; ts: number; cell: number | null; thumb_jpg_base64: string }
+
 /* ------------------------------------------------------------------ image helpers */
 /** Downscale to <= maxSide and re-encode as JPEG, so the API never rescales (keeps pixel coords 1:1). */
 export async function prepareImage(file: File, maxSide = 1600): Promise<{ blob: Blob; url: string; w: number; h: number }> {
@@ -426,3 +550,23 @@ export async function prepareImage(file: File, maxSide = 1600): Promise<{ blob: 
 }
 
 export const png = (b64: string) => `data:image/png;base64,${b64}`;
+
+
+/* ---------------- weather / climate types ---------------- */
+export interface WeatherHour {
+  lead_hours: number; time_local: string; temperature_c: number; humidity_pct: number; apparent_temperature_c: number;
+  precipitation_mm: number; cloud_cover_pct: number; wind_speed_kmh: number; rain_probability: number;
+  weather_class: string; weather_probabilities: Record<string, number>;
+}
+export interface WeatherForecast { city: string; model: string; history_hours: number; forecast_hours: number; forecast: WeatherHour[] }
+export interface WeatherAccuracy {
+  samples: number; source: string; period?: string[];
+  metrics: Record<string, { mae: number; rmse: number; n: number }>;
+}
+export interface ClimateAction { action: string; recommendation: string; reason: string; actuator_command?: string }
+export interface ClimateAdvice {
+  status: string; sensor_status?: string; actions: ClimateAction[]; safety_constraints: string[];
+  current_conditions: { temperature_c: number; humidity_pct: number; light_adc: number; soil_moisture_pct: number;
+    water_level_low: boolean; timestamp: string; device_id: string } | null;
+  forecast_error?: string;
+}

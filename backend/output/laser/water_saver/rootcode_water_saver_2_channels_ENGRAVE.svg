@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300.0mm" height="300.0mm" viewBox="0 0 300.0 300.0" >
+<rect x="0.00" y="0.00" width="300.00" height="300.00" rx="4" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<circle cx="8" cy="8" r="2.5" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<circle cx="8" cy="292.0" r="2.5" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<circle cx="292.0" cy="8" r="2.5" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<circle cx="292.0" cy="292.0" r="2.5" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<rect x="10.00" y="27.00" width="280.00" height="8.00" rx="0" fill="#0000FF" stroke="none"/>
+<circle cx="150.0" cy="31.000000000000004" r="3" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<polyline points="75.00,35.00 75.00,70.00" fill="none" stroke="#0000FF" stroke-width="0.70" stroke-linejoin="round"/>
+<circle cx="75.00" cy="70.00" r="1.5" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<text x="75.0" y="95.0" font-size="4" fill="#0000FF" text-anchor="middle">mint 0.70mm</text>
+<polyline points="225.00,35.00 225.00,70.00" fill="none" stroke="#0000FF" stroke-width="0.61" stroke-linejoin="round"/>
+<circle cx="225.00" cy="70.00" r="1.5" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<text x="225.0" y="95.0" font-size="4" fill="#0000FF" text-anchor="middle">basil 0.61mm</text>
+<polyline points="39.00,35.00 39.00,182.00 75.00,182.00 75.00,190.00" fill="none" stroke="#0000FF" stroke-width="1.45" stroke-linejoin="round"/>
+<circle cx="75.00" cy="190.00" r="1.5" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<text x="75.0" y="215.0" font-size="4" fill="#0000FF" text-anchor="middle">strawberry 1.45mm</text>
+<polyline points="261.00,35.00 261.00,182.00 225.00,182.00 225.00,190.00" fill="none" stroke="#0000FF" stroke-width="0.94" stroke-linejoin="round"/>
+<circle cx="225.00" cy="190.00" r="1.5" fill="none" stroke="#FF0000" stroke-width="0.01"/>
+<text x="225.0" y="215.0" font-size="4" fill="#0000FF" text-anchor="middle">lettuce 0.94mm</text>
+</svg>

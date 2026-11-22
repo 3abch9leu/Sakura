@@ -1,0 +1,76 @@
+<section class="call" [class.call--live]="phase() === 'listening'">
+  <header class="top">
+    <div class="top__copy">
+      <p class="eyebrow">{{ mode() === 'japanese' ? 'Gemini Live · 日本語' : mode() === 'darija' ? 'Punica Live · Derja' : 'Voice conversation' }}</p>
+      <h3>{{ mode() === 'japanese' ? '日本語で話す' : mode() === 'darija' ? 'احكي مع' : 'Talk with' }} <em>InBetween</em></h3>
+    </div>
+    <button class="close" type="button" (click)="close()" aria-label="اسكر المكالمة">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+      </svg>
+    </button>
+  </header>
+
+  <div class="stage">
+    @if (!mode()) {
+      <p class="state">Choose the language for this conversation.</p>
+      <div class="language-choices">
+        <button type="button" (click)="choose('darija')">🇹🇳 Tunisian Darija <small>Punica Live</small></button>
+        <button type="button" (click)="choose('japanese')">🇯🇵 日本語 <small>Gemini Live</small></button>
+      </div>
+    } @else {
+    <button
+      class="orb"
+      type="button"
+      (click)="toggle()"
+      [disabled]="(mode() === 'darija' ? busy() : phase() === 'connecting') || !canTalk() || setupMissing()"
+      [attr.aria-pressed]="phase() === 'listening' || (mode() === 'japanese' && phase() === 'speaking')"
+      [attr.aria-label]="(phase() === 'listening' || (mode() === 'japanese' && phase() === 'speaking')) ? (mode() === 'japanese' ? '会話を終了' : 'Stop recording') : 'Start voice conversation'"
+      [class.orb--listening]="phase() === 'listening' || (mode() === 'japanese' && phase() === 'speaking')"
+      [class.orb--busy]="busy()"
+    >
+      <span class="orb__ring" aria-hidden="true"></span>
+      <span class="orb__ring orb__ring--inner" aria-hidden="true"></span>
+      @if (phase() === 'listening' || (mode() === 'japanese' && phase() === 'speaking')) {
+        <svg class="orb__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="7" y="7" width="10" height="10" rx="2.5" fill="currentColor" />
+        </svg>
+      } @else {
+        <svg class="orb__icon" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="9" y="3.5" width="6" height="11" rx="3" fill="currentColor" />
+          <path d="M6 11.5a6 6 0 0 0 12 0M12 17.5V21M9 21h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+        </svg>
+      }
+    </button>
+
+    <p class="state" role="status">{{ status() }}</p>
+    <p class="hint">{{ mode() === 'japanese' ? '日本語だけで会話します。InBetweenについて質問できます。' : 'Short answers in Tunisian Derja · each answer closes its call' }}</p>
+    <button class="change-language" type="button" (click)="choose(mode() === 'japanese' ? 'darija' : 'japanese')">{{ mode() === 'japanese' ? 'Switch to Tunisian Darija' : '日本語に切り替える' }}</button>
+
+    @if (heard()) {
+      <div class="bubble bubble--me">{{ heard() }}</div>
+    }
+    @if (reply()) {
+      <div class="bubble bubble--ai">{{ reply() }}</div>
+    }
+    @if (error()) {
+      <p class="err" role="alert">{{ error() }}</p>
+    }
+
+    @if (setupMissing()) {
+      <div class="setup">
+        <b>{{ mode() === 'japanese' ? 'Gemini Live is not configured.' : 'Punica Live is not configured.' }}</b>
+        <p>{{ mode() === 'japanese' ? 'Add GEMINI_API_KEY to server/.env, then restart:' : 'Add PUNICA_API_KEY to server/.env, then restart:' }}</p>
+        <code class="cmd">npm run voice:server</code>
+      </div>
+    }
+    }
+  </div>
+
+  @if (mode() === 'darija') {
+  <footer class="meter">
+    <span><b>{{ turnsLeft() }}</b> / {{ maxTurns }} أسئلة اليوم</span>
+    <span><b>{{ spentSeconds() }}</b> / {{ maxSeconds }} ثانية</span>
+  </footer>
+  }
+</section>

@@ -1,0 +1,234 @@
+<div class="shell">
+  <main class="main">
+    <header class="top">
+      <div>
+        <p class="eyebrow">Digital twin @if (isDemo()) { <span class="tag tag--demo">Demo installation · no design saved yet</span> }</p>
+        <h1>{{ design()?.name ?? 'Your installation' }}
+          @if (install(); as I) { <small>{{ I.context.city }} · façade {{ I.context.facade_azimuth | number: '1.0-0' }}°</small> }</h1>
+      </div>
+      @if (totals(); as T) {
+        <dl class="kpis">
+          <div><dt>Water stored</dt><dd>{{ T.rem | number: '1.1-1' }}<small> / {{ T.cap | number: '1.1-1' }} L</small></dd></div>
+          <div><dt>Plants need today</dt><dd>{{ T.need | number: '1.2-2' }}<small> L</small></dd></div>
+          <div><dt>Shortest autonomy</dt><dd>{{ hours(T.aut) }}</dd></div>
+          <div><dt>Alerts</dt><dd [class.warn]="alerts().length">{{ alerts().length }}</dd></div>
+        </dl>
+      }
+    </header>
+    @if (loadError()) { <p class="err">{{ loadError() }}</p> }
+
+    <section class="stage">
+      @if (design(); as D) {
+        <app-twin3d class="viewport" [design]="D" [view]="view()" [showChannels]="channels()" [sun]="twinSun()"
+                    [levels]="levels()" [thresholds]="thresholds()" [selected]="selectedCell()" (cellPick)="onPick($event)" />
+      }
+      <div class="stage__bar">
+        <div class="seg">
+          <button type="button" [class.on]="view() === 'architecture'" (click)="view.set('architecture')">Architectural</button>
+          <button type="button" [class.on]="view() === 'hydraulic'" (click)="view.set('hydraulic')">Hydraulic</button>
+          <button type="button" [class.on]="view() === 'environment'" (click)="view.set('environment')">Environmental</button>
+        </div>
+        <label class="toggle"><input type="checkbox" [checked]="channels()" (change)="channels.set(!channels())" /> Internal irrigation channels</label>
+      </div>
+      @if (view() === 'environment' && sunDay(); as S) {
+        <div class="sunbar">
+          <div class="seg seg--sm">
+            <button type="button" [class.on]="season() === 'summer'" (click)="season.set('summer')">Summer</button>
+            <button type="button" [class.on]="season() === 'winter'" (click)="season.set('winter')">Winter</button>
+          </div>
+          <input type="range" min="0" [max]="S.times.length - 1" [value]="tIndex()" (input)="tIndex.set($any($event.target).valueAsNumber)" aria-label="Time of day" />
+          <span class="sunbar__t">{{ S.times[tIndex()] }} · sun {{ S.sun_elevation[tIndex()] | number: '1.0-0' }}° · {{ S.facing[tIndex()] ? (S.beam_w_m2[tIndex()] | number: '1.0-0') + ' W/m² direct' : 'façade in shade' }}</span>
+          <small>Computed sun (pvlib, clear sky). Cell colours = modelled direct sun, not a measurement.</small>
+        </div>
+      }
+      <p class="stage__hint">Drag to rotate · scroll to zoom · click a planting cell to inspect its reservoir</p>
+    </section>
+
+    <!-- water branches -->
+    <section class="panel">
+      <div class="panel__head"><h2>Integrated reservoirs</h2>
+        <small>{{ water()?.weather_source }}</small></div>
+      @if (waterError()) { <p class="err">{{ waterError() }}</p> }
+      <div class="branches">
+        @for (b of water()?.branches ?? []; track b.id) {
+          <button type="button" class="br" [class.on]="selBranch()?.id === b.id" [class]="'br br--' + b.status" (click)="selectBranch(b.id)">
+            <span class="br__name">Branch {{ b.id + 1 }}<small>{{ plantsOf(b) }}</small></span>
+            <span class="gauge"><i [style.height.%]="b.level_frac * 100"></i><em [style.bottom.%]="b.dynamic_threshold_frac * 100"></em></span>
+            <span class="br__num">{{ b.remaining_l | number: '1.2-2' }} L<small>{{ hours(b.autonomy_hours) }}</small></span>
+            <span class="src" [class.src--sim]="b.level_source.includes('simulated')">{{ b.level_source }}</span>
+          </button>
+        }
+      </div>
+      <p class="muted">Bars: water level. Marker: the dynamic warning threshold = water the plants of this branch need until the next refill
+        (plants, sun, forecast heat, losses, rain, +{{ settings().safety_margin * 100 | number: '1.0-0' }} % margin). It moves with the weather; it is never a fixed level.</p>
+    </section>
+  </main>
+
+  <!-- contextual panel -->
+  <aside class="ctx">
+    @if (cell(); as C) {
+      <section class="card">
+        <p class="eyebrow">{{ C.role === 'plant' ? 'Planting cell' : 'Open cell' }} #{{ C.id }}</p>
+        @if (C.role === 'plant') {
+          <h2>{{ plantLabel[C.plant!] || C.plant }}</h2>
+          <dl class="kv">
+            <div><dt>Sun exposure</dt><dd>{{ C.exposure_kwh_m2 | number: '1.1-1' }} kWh/m²/day <small>({{ C.zone }})</small></dd></div>
+            <div><dt>Need</dt><dd>{{ C.need_l_day | number: '1.2-2' }} L/day</dd></div>
+            <div><dt>Cell reservoir</dt><dd>{{ C.reservoir?.capacity_l | number: '1.2-2' }} L</dd></div>
+            <div><dt>Branch</dt><dd>{{ (C.branch ?? 0) + 1 }}</dd></div>
+          </dl>
+
+          <div class="leafhealth">
+            <p class="eyebrow">Leaf health</p>
+            @if (leaf(); as L) {
+              <div class="lh__img">
+                <img [src]="jpg(leafView() === 'overlay' ? L.overlay_jpg_base64 : L.original_jpg_base64)"
+                     [alt]="leafView() === 'overlay' ? 'Leaf photo with the areas the model marks as damaged' : 'Original leaf photo'" />
+                <div class="lh__switch">
+                  <button type="button" [class.on]="leafView() === 'original'" (click)="leafView.set('original')">Photo</button>
+                  <button type="button" [class.on]="leafView() === 'overlay'" (click)="leafView.set('overlay')">Marked areas</button>
+                </div>
+              </div>
+              <div [class]="'lh__head lh--' + L.severity">
+                <b>{{ L.label }}</b>
+                <span>{{ L.affected_share * 100 | number: '1.0-1' }} % of the visible leaf · {{ L.spots }} {{ L.spots === 1 ? 'area' : 'areas' }}</span>
+              </div>
+              @for (w of L.warnings; track w) { <p class="note">{{ w }}</p> }
+              <p class="lh__sum">{{ L.care.summary }}</p>
+              <ul class="care">@for (r of L.care.today; track r) { <li>{{ r }}</li> }</ul>
+              @if (L.care.expert) { <p class="note">{{ L.care.expert }}</p> }
+              <a class="lh__cam" routerLink="/plant-health">Full care plan and history →</a>
+              <p class="muted">{{ L.disclaimer }}</p>
+              <p class="lh__meta">{{ L.model.name }} · {{ L.model.device }} · {{ L.timing_ms.total | number: '1.0-0' }} ms{{ L.timing_ms.includes_model_load ? ' (first run, model loaded)' : '' }}</p>
+            } @else {
+              <p class="muted">Check a leaf of this {{ plantLabel[C.plant!] || 'plant' }} for spots. One leaf filling the frame, in daylight, works best.</p>
+            }
+            @if (leafError()) { <p class="note">{{ leafError() }}</p> }
+            <div class="lh__actions">
+              <label class="btn btn--line btn--sm" [class.busy]="leafBusy()" [class.over]="leafDrag()"
+                     (dragover)="$event.preventDefault(); leafDrag.set(true)" (dragleave)="leafDrag.set(false)" (drop)="onLeafDrop($event)">
+                <input type="file" accept="image/*" capture="environment" (change)="onLeafFile($event)" hidden [disabled]="leafBusy()" />
+                {{ leafBusy() ? 'Analysing…' : (leaf() ? 'Drop or choose another photo' : 'Drop or choose a leaf photo') }}
+              </label>
+              <a class="lh__cam" routerLink="/camera" [queryParams]="{ cell: C.id }">Use a phone as this cell&#39;s camera</a>
+            </div>
+            @if (camPhotos().length) {
+              <p class="lh__sub">From the plant camera</p>
+              <div class="lh__roll">
+                @for (p of camPhotos(); track p.id) {
+                  <button type="button" (click)="analyzeCamPhoto(p)" [disabled]="leafBusy()" aria-label="Check this camera photo">
+                    <img [src]="jpg(p.thumb_jpg_base64)" alt="" />
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <h2>Light and air</h2>
+          <p class="muted">This opening stays empty: it lets light, air and view through and keeps the composition balanced. Exposure {{ C.exposure_kwh_m2 | number: '1.1-1' }} kWh/m²/day.</p>
+        }
+      </section>
+    }
+    @if (selBranch(); as B) {
+      <section class="card card--res">
+        <p class="eyebrow">Reservoir · branch {{ B.id + 1 }}</p>
+        <div class="res">
+          <div class="res__tank" [class.low]="B.level_frac < B.dynamic_threshold_frac">
+            <i [style.height.%]="B.level_frac * 100"></i>
+            <em [style.bottom.%]="B.dynamic_threshold_frac * 100"></em>
+          </div>
+          <dl class="kv">
+            <div><dt>Current level</dt><dd>{{ B.level_frac * 100 | number: '1.0-0' }} %</dd></div>
+            <div><dt>Capacity</dt><dd>{{ B.capacity_l | number: '1.2-2' }} L</dd></div>
+            <div><dt>Remaining</dt><dd>{{ B.remaining_l | number: '1.2-2' }} L</dd></div>
+            <div><dt>Need today</dt><dd>{{ B.need_today_l | number: '1.2-2' }} L</dd></div>
+            <div><dt>Autonomy</dt><dd>{{ hours(B.autonomy_hours) }}</dd></div>
+            <div><dt>Threshold</dt><dd>{{ B.dynamic_threshold_frac * 100 | number: '1.0-0' }} %</dd></div>
+          </dl>
+        </div>
+        <p class="muted">Supplies {{ plantsOf(B) }} · level {{ B.level_source }}</p>
+        @if (B.refill_l > 0) { <p class="note">Add about <b>{{ B.refill_l | number: '1.2-2' }} L</b> to cover the next {{ settings().hours_to_refill }} h with the margin.</p> }
+        <button type="button" class="btn btn--line btn--sm" (click)="refilled(B.id)">I refilled this reservoir</button>
+        @if (projection(); as P) {
+          <svg class="proj" [attr.viewBox]="'0 0 ' + P.W + ' ' + P.H" role="img" aria-label="Projected water over 72 hours">
+            <line [attr.x1]="36" [attr.x2]="P.W - 14" [attr.y1]="P.y0" [attr.y2]="P.y0" class="axis" />
+            <line [attr.x1]="36" [attr.x2]="P.W - 14" [attr.y1]="P.ty" [attr.y2]="P.ty" class="thr" />
+            <line [attr.x1]="P.refill" [attr.x2]="P.refill" [attr.y1]="P.y1" [attr.y2]="P.y0" class="refill" />
+            <path [attr.d]="P.d" class="line" />
+            @for (t of P.ticks; track t.h) { <text [attr.x]="t.x" [attr.y]="P.H - 6" text-anchor="middle">{{ t.h }} h</text> }
+            <text x="4" [attr.y]="P.y1 + 4">{{ P.cap | number: '1.1-1' }} L</text><text x="4" [attr.y]="P.y0">0 L</text>
+            <text [attr.x]="P.refill + 4" [attr.y]="P.y1 + 10" class="lbl">planned refill</text>
+            <text [attr.x]="40" [attr.y]="P.ty - 4" class="lbl lbl--t">dynamic threshold</text>
+          </svg>
+        }
+      </section>
+    } @else if (!cell()) {
+      <section class="card">
+        <p class="eyebrow">Inspect</p>
+        <h2>Select a planting cell</h2>
+        <p class="muted">Click a cell in the model to see its reservoir: level, capacity, the plants it supplies, autonomy and refill advice.</p>
+      </section>
+    }
+
+    <section class="card">
+      <p class="eyebrow">Alerts</p>
+      @if (!alerts().length) { <p class="muted">No alert: every reservoir covers its plants until the planned refill.</p> }
+      <ul class="alerts">
+        @for (a of alerts(); track $index) {
+          <li [class]="'al al--' + a.level"><b>{{ a.title }}</b> <small>branch {{ a.branch + 1 }}</small><span>{{ a.text }}</span></li>
+        }
+      </ul>
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">Sensors</p>
+      @if (reading(); as R) {
+        <div class="sensor">
+          <span class="src" [class.src--sim]="isSimulated(R)">{{ isSimulated(R) ? 'SIMULATED' : R.source }}</span>
+          <span>level {{ (R.level_frac ?? 0) * 100 | number: '1.0-0' }} % · {{ R.temp_c != null ? (R.temp_c | number: '1.0-1') + ' °C' : 'no temperature' }}
+            {{ R.humidity != null ? '· ' + (R.humidity * 100 | number: '1.0-0') + ' % RH' : '' }}</span>
+          <small>{{ R.stale ? 'stale · ' : '' }}{{ sensorAge(R) }}</small>
+        </div>
+      } @else {
+        <p class="muted">No sensor connected. Run <code>python arduino/sensor_bridge.py --port COM5</code> with the INBETWEEN Arduino, or use the simulation below.</p>
+      }
+      <label class="row">Level sensor in
+        <select [value]="sensorBranch() ?? ''" (change)="setSensorBranch($any($event.target).value)">
+          @for (b of design()?.branches ?? []; track b.id) { <option [value]="b.id">branch {{ b.id + 1 }}</option> }
+        </select>
+      </label>
+      <label class="toggle"><input type="checkbox" [checked]="simOn()" (change)="toggleSim()" /> Simulate the sensor (potentiometer)</label>
+      @if (simOn()) {
+        <div class="sim">
+          <label>Potentiometer {{ simRaw() }} / 1023
+            <input type="range" min="0" max="1023" [value]="simRaw()" (input)="simInput($any($event.target).valueAsNumber, simTemp())" /></label>
+          <label>Temperature {{ simTemp() }} °C
+            <input type="range" min="10" max="45" [value]="simTemp()" (input)="simInput(simRaw(), $any($event.target).valueAsNumber)" /></label>
+          <p class="muted">Simulated values are labelled as such in every panel and alert.</p>
+        </div>
+      }
+      @if (water()?.device; as Dv) {
+        <div class="lcd" [class.lcd--buzz]="Dv.buzz" aria-label="Arduino LCD">
+          <span>{{ Dv.line1 }}</span><span>{{ Dv.line2 }}</span>
+        </div>
+        <small class="muted">Arduino LCD 16×2 · buzzer {{ Dv.buzz ? 'ON (critical alert)' : 'off' }}</small>
+      }
+    </section>
+
+    <section class="card">
+      <p class="eyebrow">Weather & refill plan</p>
+      <div class="wx">
+        @for (d of water()?.weather ?? []; track $index) {
+          <div><small>{{ d.date ?? 'today' }}</small><b>{{ d.tmax_c != null ? (d.tmax_c | number: '1.0-0') + '°' : '—' }}</b><span>{{ d.rain_mm != null ? (d.rain_mm | number: '1.0-1') + ' mm' : '' }}</span></div>
+        }
+      </div>
+      <div class="settings">
+        <label>Next refill in <span><input type="number" min="1" [value]="settings().hours_to_refill" (change)="setSetting('hours_to_refill', $any($event.target).valueAsNumber)" /> h</span></label>
+        <label>Safety margin <span><input type="number" min="0" max="1" step="0.05" [value]="settings().safety_margin" (change)="setSetting('safety_margin', $any($event.target).valueAsNumber)" /></span></label>
+        <label>Losses <span><input type="number" min="0" max="0.6" step="0.05" [value]="settings().losses" (change)="setSetting('losses', $any($event.target).valueAsNumber)" /></span></label>
+        <label>Rain collector <span><input type="number" min="0" step="0.1" [value]="settings().collector_m2" (change)="setSetting('collector_m2', $any($event.target).valueAsNumber)" /> m²</span></label>
+      </div>
+      <p class="muted">{{ water()?.model }}</p>
+    </section>
+  </aside>
+</div>

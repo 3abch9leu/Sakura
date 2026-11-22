@@ -86,6 +86,10 @@ export class EnergyComponent implements OnInit, OnDestroy {
   readonly result = signal<BillVerifyResponse | null>(null);
   readonly explanation = signal<BillExplainResponse | null>(null);
   readonly explaining = signal(false);
+  /** The optional AI rewrite runs on demand, never blocking the instant explanation. */
+  readonly rewriting = signal(false);
+  readonly rewriteNote = signal('');
+  private readonly explainCache = new Map<string, BillExplainResponse>();
   readonly bandHover = signal<number | null>(null);
   readonly showMethod = signal(false);
 
@@ -369,15 +373,44 @@ export class EnergyComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Instant: the deterministic explanation (numbers from the bill and the tariff calculator). */
   async explain(): Promise<void> {
     if (!this.result()) return;
+    this.rewriteNote.set('');
+    const key = JSON.stringify(this.bill()) + '|' + this.lang();
+    const ai = this.explainCache.get(key + '|llm');
+    const hit = ai ?? this.explainCache.get(key);
+    if (hit) { this.explanation.set(hit); return; }
     this.explaining.set(true);
     try {
-      this.explanation.set(await this.api.billExplain(this.bill(), this.lang()));
+      const r = await this.api.billExplain(this.bill(), this.lang(), false);
+      this.explainCache.set(key, r);
+      this.explanation.set(r);
     } catch {
       this.explanation.set(null);
     } finally {
       this.explaining.set(false);
+    }
+  }
+
+  /** Optional: ask the AI assistant to rephrase. The instant text stays visible meanwhile. */
+  async rewriteWithAi(): Promise<void> {
+    if (!this.result() || this.rewriting()) return;
+    const key = JSON.stringify(this.bill()) + '|' + this.lang() + '|llm';
+    this.rewriting.set(true);
+    this.rewriteNote.set('');
+    try {
+      const r = await this.api.billExplain(this.bill(), this.lang(), true);
+      if (r.mode === 'llm') {
+        this.explainCache.set(key, r);
+        this.explanation.set(r);
+      } else {
+        this.rewriteNote.set('The AI assistant is not available right now. The explanation above is complete and uses your checked numbers.');
+      }
+    } catch {
+      this.rewriteNote.set('The AI assistant took too long. The explanation above is complete and uses your checked numbers.');
+    } finally {
+      this.rewriting.set(false);
     }
   }
 

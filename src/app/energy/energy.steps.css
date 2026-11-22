@@ -179,3 +179,8 @@
 .partlist[dir='rtl'] .part[data-st='uncertain'] { border-left: 1px solid var(--line); border-right: 3px solid var(--amber); }
 .partlist[dir='rtl'] .other, .partlist[dir='rtl'] .missing { text-align: right; }
 .partlist[dir='rtl'] .part__value span, .partlist[dir='rtl'] input { direction: ltr; }
+
+/* optional AI rephrase under the instant explanation */
+.explain__ai { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
+.explain__ai .btn--ghost { margin-top: 0; }
+.explain__ai small { color: var(--muted, #6b6f63); font-size: 0.8rem; }

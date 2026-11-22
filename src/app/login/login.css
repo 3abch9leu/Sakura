@@ -1,17 +1,17 @@
 :host {
-  --cream: #f4efe6;
-  --sand: #ebe2d1;
-  --clay: #c4693f;
-  --clay-deep: #9c4a2a;
-  --moss: #2f5a3f;
-  --moss-deep: #234632;
-  --ink: #1d2b24;
-  --muted: #6b746e;
-  --sun: #f5b85a;
+  --cream: #f7f5ef;
+  --sand: #eeeadf;
+  --clay: #b77b59;
+  --clay-deep: #8e5a3e;
+  --moss: #414b30;
+  --moss-deep: #323a25;
+  --ink: #252822;
+  --muted: #6d7067;
+  --sun: #d9b77a;
   --error: #b4412b;
-  --line: rgba(29, 43, 36, 0.14);
-  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --line: rgba(37, 40, 34, 0.13);
+  --serif: 'Inter Tight', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   display: block;
   font-family: var(--sans);
@@ -47,9 +47,15 @@
   text-transform: uppercase;
 }
 
-.logo svg {
-  width: 28px;
-  height: 28px;
+.logo svg, .logo img {
+  width: 34px;
+  height: 34px;
+}
+
+.logo--light img {
+  padding: 3px;
+  border-radius: 4px;
+  background: rgba(244, 239, 230, 0.92);
 }
 
 .logo--light {
@@ -278,7 +284,7 @@
   justify-content: center;
   padding: 48px clamp(24px, 5vw, 72px);
   background:
-    radial-gradient(500px circle at 100% 0%, rgba(196, 105, 63, 0.12), transparent 60%),
+    radial-gradient(500px circle at 100% 0%, rgba(183, 123, 89, 0.12), transparent 60%),
     linear-gradient(180deg, var(--cream), #efe6d6);
 }
 
@@ -380,7 +386,7 @@
 .field input:focus {
   background: #fff;
   border-color: var(--moss);
-  box-shadow: 0 0 0 4px rgba(47, 90, 63, 0.14);
+  box-shadow: 0 0 0 4px rgba(65, 75, 48, 0.14);
 }
 
 .field label {
@@ -433,7 +439,7 @@
 }
 
 .eye:hover {
-  background: rgba(47, 90, 63, 0.1);
+  background: rgba(65, 75, 48, 0.1);
   color: var(--moss);
 }
 
@@ -463,7 +469,7 @@
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 16px 32px -16px rgba(31, 77, 52, 0.75);
+  box-shadow: 0 16px 32px -16px rgba(50, 58, 37, 0.75);
   transition: transform 0.25s, background 0.25s, box-shadow 0.25s;
 }
 
@@ -474,7 +480,7 @@
 }
 
 .btn:hover {
-  background: #1f4d34;
+  background: #323a25;
   transform: translateY(-2px);
 }
 
@@ -487,7 +493,7 @@
 }
 
 .btn:focus-visible {
-  outline: 3px solid rgba(196, 105, 63, 0.55);
+  outline: 3px solid rgba(183, 123, 89, 0.55);
   outline-offset: 3px;
 }
 

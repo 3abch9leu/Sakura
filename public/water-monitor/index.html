@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ROOTCODE Water Monitor</title>
+<style>
+:root{
+  --bg:#f6f1e8; --bg-alt:#fffdf8; --panel:#fffdf9;
+  --ink:#241c16; --muted:#77695d; --line:#e6dbcd;
+  --terra:#b4532d; --terra-soft:#f7e2d6;
+  --teal:#0f766e; --teal-soft:#dcefe9;
+  --ok:#2f7d57; --ok-soft:#dff0e2;
+  --warn:#a4740d; --warn-soft:#fbeecb;
+  --danger:#a52f26; --danger-soft:#f8ddd8;
+  --sim:#6b4aa3; --sim-soft:#ece3f9;
+  --radius:14px;
+  --hero-bg:#dff0e2; --hero-ink:#2f7d57;
+}
+[data-theme="dark"]{
+  --bg:#1a1510; --bg-alt:#221c15; --panel:#2a2318;
+  --ink:#f0ead8; --muted:#a89c8e; --line:#3d3028;
+  --terra:#d4733d; --terra-soft:#3d2518;
+  --teal:#2ab8a8; --teal-soft:#0d3530;
+  --ok:#4aaf78; --ok-soft:#0d3022;
+  --warn:#d4a030; --warn-soft:#3d2e08;
+  --danger:#e05548; --danger-soft:#3d1510;
+  --sim:#a06be0; --sim-soft:#2a1848;
+  --hero-bg:#0d3022; --hero-ink:#4aaf78;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;transition:background .3s,color .3s}
+a{color:var(--teal)}
+/* HEADER */
+#header{background:var(--panel);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+#header h1{font-size:1.1rem;font-weight:700;color:var(--terra);flex:1;min-width:160px}
+#header h1 span{color:var(--teal)}
+.hdr-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lang-btn{padding:4px 10px;border:1px solid var(--line);border-radius:20px;background:var(--bg-alt);color:var(--ink);cursor:pointer;font-size:.8rem;transition:.2s}
+.lang-btn.active{background:var(--terra);color:#fff;border-color:var(--terra)}
+.theme-btn{padding:4px 10px;border:1px solid var(--line);border-radius:20px;background:var(--bg-alt);color:var(--ink);cursor:pointer;font-size:.8rem}
+/* HERO */
+#hero{padding:28px 20px;text-align:center;background:var(--hero-bg);border-bottom:3px solid var(--hero-border,#b8d8c8);transition:background .3s,border-color .3s}
+#hero.verdict-clean{background:#dff0e2;border-color:#a4d4b4;--hero-ink:#2f7d57}
+#hero.verdict-warn{background:#fbeecb;border-color:#e8d090;--hero-ink:#a4740d}
+#hero.verdict-bad{background:#f8ddd8;border-color:#e8b0a8;--hero-ink:#a52f26}
+#hero.verdict-unknown{background:#f0ece4;border-color:#ccc4b4;--hero-ink:#77695d}
+#hero.verdict-sim{background:#ece3f9;border-color:#c4aaec;--hero-ink:#6b4aa3}
+#hero-emoji{font-size:clamp(2.5rem,8vw,5rem);line-height:1}
+#hero-verdict{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;color:var(--hero-ink);margin:10px 0 6px}
+#hero-reason{font-size:1rem;color:var(--hero-ink);opacity:.85;max-width:620px;margin:0 auto 12px}
+#hero-action{font-size:1.2rem;font-weight:700;color:var(--hero-ink);margin-bottom:12px}
+#hero-confidence{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.85rem;font-weight:600;background:rgba(255,255,255,.35);color:var(--hero-ink)}
+#hero-no-data{font-size:1.1rem;color:var(--muted);padding:16px 0}
+/* MAIN */
+main{max-width:1200px;margin:0 auto;padding:20px}
+.section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:20px;overflow:hidden}
+.section-header{padding:14px 18px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;border-bottom:1px solid var(--line)}
+.section-header h2{font-size:1rem;font-weight:700;flex:1}
+.section-header .toggle-icon{font-size:1.1rem;transition:transform .3s}
+.section-header.open .toggle-icon{transform:rotate(180deg)}
+.section-body{padding:18px}
+.section-body.collapsed{display:none}
+/* SOURCE CARDS */
+#source-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:20px}
+.src-card{background:var(--panel);border:2px solid var(--line);border-radius:var(--radius);padding:16px;transition:border-color .3s}
+.src-card.verdict-clean{border-color:#a4d4b4}
+.src-card.verdict-warn{border-color:#e8d090}
+.src-card.verdict-bad{border-color:#e8b0a8}
+.src-card.verdict-unknown{border-color:var(--line)}
+.src-card-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.src-card-header .src-emoji{font-size:1.5rem}
+.src-card-header .src-name{font-weight:700;font-size:.95rem}
+.src-verdict{font-size:1.1rem;font-weight:800;margin-bottom:6px}
+.src-reason{font-size:.82rem;color:var(--muted);margin-bottom:10px;line-height:1.4}
+.src-no-data{font-size:.85rem;color:var(--muted);font-style:italic}
+/* PARAM TABLE */
+.param-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:8px}
+.param-table th{text-align:left;color:var(--muted);font-weight:600;padding:3px 4px;border-bottom:1px solid var(--line)}
+.param-table td{padding:3px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+/* CHIPS */
+.chip{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.chip-measured{background:var(--teal-soft);color:var(--teal)}
+.chip-manual{background:var(--terra-soft);color:var(--terra)}
+.chip-simulated{background:var(--sim-soft);color:var(--sim)}
+.chip-ok{background:var(--ok-soft);color:var(--ok)}
+.chip-warn{background:var(--warn-soft);color:var(--warn)}
+.chip-bad{background:var(--danger-soft);color:var(--danger)}
+.chip-info{background:var(--teal-soft);color:var(--teal)}
+.chip-invalid{background:#f8ddd8;color:#a52f26}
+.chip-high{background:var(--ok-soft);color:var(--ok)}
+.chip-medium{background:var(--warn-soft);color:var(--warn)}
+.chip-low{background:var(--danger-soft);color:var(--danger)}
+/* STATUS CHIPS */
+.supply-chip{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:600}
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tab-btn{padding:10px 18px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-weight:600;font-size:.88rem;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:.2s}
+.tab-btn.active{color:var(--terra);border-bottom-color:var(--terra)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+/* FORM */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:16px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:.82rem;font-weight:600;color:var(--muted)}
+.form-group input,.form-group select{padding:8px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg-alt);color:var(--ink);font-size:.9rem;transition:.2s;width:100%}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--teal)}
+.form-group .hint{font-size:.72rem;color:var(--muted)}
+.btn{padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.88rem;transition:.2s}
+.btn-primary{background:var(--terra);color:#fff}
+.btn-primary:hover{opacity:.88}
+.btn-secondary{background:var(--bg-alt);border:1.5px solid var(--line);color:var(--ink)}
+.btn-secondary:hover{border-color:var(--terra)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-sm{padding:5px 12px;font-size:.8rem}
+/* LIVE PREVIEW */
+#live-preview{background:var(--bg-alt);border:1.5px dashed var(--line);border-radius:var(--radius);padding:14px;margin-top:14px}
+#live-preview-title{font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+/* TEST CASES */
+.test-cases-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.test-btn{padding:10px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg-alt);color:var(--ink);cursor:pointer;text-align:left;font-size:.83rem;transition:.2s;font-weight:600}
+.test-btn:hover{border-color:var(--terra);background:var(--terra-soft)}
+.test-btn .tc-label{color:var(--muted);font-weight:400;font-size:.76rem;margin-top:3px}
+/* THRESHOLDS TABLE */
+.thresh-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.thresh-table th{background:var(--bg);text-align:left;padding:8px 10px;border-bottom:2px solid var(--line);font-size:.78rem;color:var(--muted)}
+.thresh-table td{padding:6px 10px;border-bottom:1px solid var(--line)}
+.thresh-table input{width:70px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg-alt);color:var(--ink);font-size:.82rem}
+/* CHART */
+#history-chart{width:100%;height:280px;background:var(--bg-alt);border-radius:10px;display:block}
+.chart-controls{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.chart-controls select,.chart-controls input{padding:6px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg-alt);color:var(--ink);font-size:.83rem}
+/* CSV */
+.csv-drop{border:2px dashed var(--line);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.2s;color:var(--muted);margin-bottom:12px}
+.csv-drop:hover,.csv-drop.drag-over{border-color:var(--teal);background:var(--teal-soft)}
+.csv-drop input[type="file"]{display:none}
+.csv-textarea{width:100%;height:120px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg-alt);color:var(--ink);font-size:.8rem;padding:10px;font-family:monospace;resize:vertical}
+#csv-results{margin-top:14px}
+.csv-result-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:.85rem}
+/* BUDGET */
+.budget-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.budget-card{background:var(--bg-alt);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:center}
+.budget-card .bv{font-size:1.8rem;font-weight:800;color:var(--terra)}
+.budget-card .bl{font-size:.78rem;color:var(--muted);margin-top:4px}
+/* LOG */
+.log-entry{padding:8px 10px;border-bottom:1px solid var(--line);font-size:.83rem;display:flex;gap:10px;align-items:flex-start}
+.log-entry .le-time{color:var(--muted);white-space:nowrap;min-width:100px}
+.log-entry .le-src{font-weight:600}
+.log-entries-list{max-height:200px;overflow-y:auto;margin-bottom:12px}
+/* DEMO WARNING */
+.demo-warning{background:var(--sim-soft);border:2px solid var(--sim);border-radius:10px;padding:14px;text-align:center;margin-bottom:16px;color:var(--sim);font-weight:700}
+/* FOOTER */
+footer{background:var(--panel);border-top:1px solid var(--line);padding:16px 20px;text-align:center;font-size:.8rem;color:var(--muted);margin-top:20px}
+/* EXPORT */
+.export-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+/* MISSING LIST */
+.missing-list{color:var(--danger);font-size:.8rem;margin-top:4px}
+/* RESPONSIVE */
+@media(max-width:600px){
+  #source-cards{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .test-cases-grid{grid-template-columns:1fr 1fr}
+}
+/* RTL */
+[dir="rtl"] .src-card-header,.src-param-row{direction:rtl}
+[dir="rtl"] .param-table th,[dir="rtl"] .param-table td{text-align:right}
+/* Transitions */
+.src-card,.section,.btn{transition:all .2s}
+/* verdict colors in table */
+td.status-ok{color:var(--ok);font-weight:700}
+td.status-warn{color:var(--warn);font-weight:700}
+td.status-bad{color:var(--danger);font-weight:700}
+td.status-info{color:var(--teal)}
+td.status-invalid{color:var(--danger);font-weight:700}
+/* Lock icon for greywater */
+.lock-badge{font-size:.85rem;margin-left:4px}
+/* History legend */
+.chart-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px;font-size:.78rem;color:var(--muted)}
+.legend-item{display:flex;align-items:center;gap:4px}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+/* Additional */
+.row-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.info-note{font-size:.8rem;color:var(--muted);background:var(--bg-alt);border-left:3px solid var(--line);padding:8px 12px;border-radius:0 8px 8px 0;margin-top:10px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>ROOTCODE <span>Water Monitor</span></h1>
+  <div class="hdr-controls">
+    <div class="lang-btn-group" style="display:flex;gap:4px">
+      <button class="lang-btn active" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" onclick="setLang('fr')">FR</button>
+      <button class="lang-btn" onclick="setLang('ar')">AR</button>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
+  </div>
+</div>
+
+<!-- HERO VERDICT BANNER -->
+<div id="hero">
+  <div id="hero-no-data" data-i18n="hero_no_data">No data loaded yet — enter values below or load a test case</div>
+  <div id="hero-content" style="display:none">
+    <div id="hero-emoji">❔</div>
+    <div id="hero-verdict"></div>
+    <div id="hero-reason"></div>
+    <div id="hero-action"></div>
+    <div id="hero-confidence" class="chip"></div>
+  </div>
+</div>
+
+<main>
+
+<!-- SOURCE CARDS -->
+<div id="source-cards">
+  <!-- Cards injected by JS -->
+</div>
+
+<!-- DATA INPUT -->
+<div class="section">
+  <div class="section-header open" onclick="toggleSection(this)" style="cursor:default;border-bottom:1px solid var(--line)">
+    <h2 data-i18n="data_input">📥 Data Input</h2>
+  </div>
+  <div class="section-body">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('manual',this)" data-i18n="tab_manual">Manual Entry</button>
+      <button class="tab-btn" onclick="switchTab('csv',this)" data-i18n="tab_csv">CSV Import</button>
+      <button class="tab-btn" onclick="switchTab('demo',this)" data-i18n="tab_demo">Demo ⚠️</button>
+    </div>
+
+    <!-- MANUAL TAB -->
+    <div class="tab-pane active" id="tab-manual">
+      <div class="form-grid">
+        <div class="form-group">
+          <label data-i18n="lbl_source">Source</label>
+          <select id="f-source" onchange="liveAnalyze()">
+            <option value="clean">💧 Clean water</option>
+            <option value="rain">🌧️ Rainwater</option>
+            <option value="ac">❄️ AC condensate</option>
+            <option value="grey">🪣 Greywater</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_type">Entry type</label>
+          <select id="f-type" onchange="liveAnalyze()">
+            <option value="MEASURED">MEASURED</option>
+            <option value="MANUAL">MANUAL TEST</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>pH</label>
+          <input type="number" id="f-ph" step="0.01" min="0" max="14" placeholder="6.5–8.4" oninput="liveAnalyze()"/>
+          <span class="hint">Range 0–14</span>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_turb">Turbidity (NTU)</label>
+          <input type="number" id="f-turb" step="0.1" min="0" placeholder="≤5 clean" oninput="liveAnalyze()"/>
+          <span class="hint">≥0</span>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_ec">EC (µS/cm)</label>
+          <input type="number" id="f-ec" step="1" min="0" placeholder="≤700 clean" oninput="liveAnalyze()"/>
+          <span class="hint">≥0</span>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_temp">Temperature (°C)</label>
+          <input type="number" id="f-temp" step="0.1" placeholder="10–30 clean" oninput="liveAnalyze()"/>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_level">Tank level (%)</label>
+          <input type="number" id="f-level" step="1" min="0" max="100" placeholder="0–100" oninput="liveAnalyze()"/>
+          <span class="hint">Supply status only</span>
+        </div>
+        <div class="form-group">
+          <label data-i18n="lbl_orp">ORP (mV) <small style="font-weight:400;color:var(--muted)">optional</small></label>
+          <input type="number" id="f-orp" step="1" placeholder="Informational only" oninput="liveAnalyze()"/>
+          <span class="hint">Not used in verdict</span>
+        </div>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-primary" onclick="saveReading()" data-i18n="btn_save">💾 Save reading</button>
+        <button class="btn btn-secondary" onclick="clearForm()" data-i18n="btn_clear">Clear</button>
+      </div>
+      <div id="live-preview">
+        <div id="live-preview-title" data-i18n="live_preview">LIVE PREVIEW</div>
+        <div id="live-preview-body"><span style="color:var(--muted);font-size:.85rem" data-i18n="enter_values">Enter values above to see instant analysis</span></div>
+      </div>
+    </div>
+
+    <!-- CSV TAB -->
+    <div class="tab-pane" id="tab-csv">
+      <div class="csv-drop" id="csv-drop" onclick="document.getElementById('csv-file').click()" ondragover="csvDragOver(event)" ondragleave="csvDragLeave(event)" ondrop="csvDrop(event)">
+        <input type="file" id="csv-file" accept=".csv,.txt" onchange="csvFileSelected(event)"/>
+        <div>📂 <span data-i18n="csv_drop">Drop CSV file here or click to browse</span></div>
+        <div style="font-size:.78rem;margin-top:6px;color:var(--muted)" data-i18n="csv_hint">Columns: timestamp, source, ph, turbidity_ntu, ec_us_cm, temp_c, level_pct, orp_mv</div>
+      </div>
+      <label style="font-size:.82rem;font-weight:600;color:var(--muted);display:block;margin-bottom:6px" data-i18n="csv_paste">Or paste CSV text:</label>
+      <textarea class="csv-textarea" id="csv-text" placeholder="timestamp,source,ph,turbidity_ntu,ec_us_cm,temp_c,level_pct,orp_mv&#10;2024-01-15T10:00:00,clean,7.2,2,450,22,80,250" oninput="csvTextChanged()"></textarea>
+      <div class="row-actions" style="margin-top:10px">
+        <button class="btn btn-primary" onclick="parseAndImportCSV()" data-i18n="btn_import">📊 Import & Analyze</button>
+        <button class="btn btn-secondary" onclick="clearCSV()">Clear</button>
+      </div>
+      <div id="csv-results"></div>
+    </div>
+
+    <!-- DEMO TAB -->
+    <div class="tab-pane" id="tab-demo">
+      <div class="demo-warning">
+        ⚠️ <span data-i18n="demo_warn">SIMULATED DATA — This mode never produces a ✅ CLEAN verdict. For demonstration only.</span>
+      </div>
+      <div class="row-actions">
+        <button class="btn btn-primary" onclick="generateDemo()" data-i18n="btn_gen_demo">🎲 Generate Demo Data</button>
+        <button class="btn btn-danger" onclick="clearDemo()" data-i18n="btn_clear_demo">🗑️ Clear Demo</button>
+      </div>
+      <div id="demo-results" style="margin-top:14px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TEST CASES -->
+<div class="section">
+  <div class="section-header open" onclick="toggleSection(this)">
+    <h2 data-i18n="test_cases">🧪 Test Cases</h2>
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="section-body">
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:12px" data-i18n="tc_desc">Click a test case to load it into the form and see the instant result.</p>
+    <div class="test-cases-grid">
+      <button class="test-btn" onclick="loadTestCase(0)">
+        1. All Clean ✅
+        <div class="tc-label">pH 7.2 · turb 2 · EC 450 · 22°C · Clean water</div>
+      </button>
+      <button class="test-btn" onclick="loadTestCase(1)">
+        2. One Warning ⚠️
+        <div class="tc-label">pH 7.0 · turb 8 · EC 400 · 20°C · Rainwater</div>
+      </button>
+      <button class="test-btn" onclick="loadTestCase(2)">
+        3. Bad Value ❌
+        <div class="tc-label">turb 32 NTU · Clean water</div>
+      </button>
+      <button class="test-btn" onclick="loadTestCase(3)">
+        4. Missing Data ❔
+        <div class="tc-label">pH 7.0 only · no turb/EC/temp</div>
+      </button>
+      <button class="test-btn" onclick="loadTestCase(4)">
+        5. Greywater ❌
+        <div class="tc-label">Any values · Greywater source</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ADVANCED THRESHOLDS -->
+<div class="section">
+  <div class="section-header" onclick="toggleSection(this)">
+    <h2 data-i18n="adv_thresh">⚙️ Advanced Thresholds</h2>
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="section-body collapsed">
+    <p class="info-note" data-i18n="thresh_note">Built-in defaults follow FAO Irrigation &amp; Drainage Paper 29 and WHO guidance. Changes take effect instantly.</p>
+    <div style="overflow-x:auto;margin-top:14px">
+    <table class="thresh-table" id="thresh-table">
+      <thead>
+        <tr>
+          <th data-i18n="th_param">Parameter</th>
+          <th data-i18n="th_clean_lo">Clean low</th>
+          <th data-i18n="th_clean_hi">Clean high</th>
+          <th data-i18n="th_warn_lo">Warn low</th>
+          <th data-i18n="th_warn_hi">Warn high</th>
+          <th data-i18n="th_bad_lo">Bad low</th>
+          <th data-i18n="th_bad_hi">Bad high</th>
+          <th data-i18n="th_ref">Reference</th>
+        </tr>
+      </thead>
+      <tbody id="thresh-tbody"></tbody>
+    </table>
+    </div>
+    <div class="row-actions" style="margin-top:14px">
+      <button class="btn btn-secondary" onclick="resetThresholds()" data-i18n="btn_reset_thresh">↩ Reset to defaults</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY CHART -->
+<div class="section">
+  <div class="section-header" onclick="toggleSection(this)">
+    <h2 data-i18n="history_chart">📈 History Chart</h2>
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="section-body collapsed">
+    <div class="chart-controls">
+      <select id="chart-param" onchange="drawChart()">
+        <option value="ph">pH</option>
+        <option value="turbidity_ntu">Turbidity (NTU)</option>
+        <option value="ec_us_cm">EC (µS/cm)</option>
+        <option value="temp_c">Temperature (°C)</option>
+        <option value="level_pct">Tank Level (%)</option>
+        <option value="orp_mv">ORP (mV)</option>
+      </select>
+      <select id="chart-source" onchange="drawChart()">
+        <option value="all">All sources</option>
+        <option value="clean">Clean water</option>
+        <option value="rain">Rainwater</option>
+        <option value="ac">AC condensate</option>
+        <option value="grey">Greywater</option>
+      </select>
+      <select id="chart-range" onchange="drawChart()">
+        <option value="all">All time</option>
+        <option value="7">Last 7 days</option>
+        <option value="30">Last 30 days</option>
+        <option value="1">Last 24 hours</option>
+      </select>
+    </div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--ok)"></div> Clean</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--warn)"></div> Caution</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div> Not clean</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div> Unknown</div>
+      <div class="legend-item">● MEASURED &nbsp; ■ MANUAL &nbsp; ▲ SIMULATED</div>
+    </div>
+    <canvas id="history-chart"></canvas>
+  </div>
+</div>
+
+<!-- MICROBIOLOGY LOG -->
+<div class="section">
+  <div class="section-header" onclick="toggleSection(this)">
+    <h2 data-i18n="micro_log">🦠 Microbiology Log <span style="font-weight:400;font-size:.82rem;color:var(--muted)">(optional)</span></h2>
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="section-body collapsed">
+    <p class="info-note" data-i18n="micro_note">Microbiology affects confidence badge only. A PASS upgrades confidence to HIGH; a FAIL forces ❌ NOT CLEAN verdict.</p>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="form-group">
+        <label data-i18n="lbl_micro_src">Source</label>
+        <select id="micro-src">
+          <option value="clean">Clean water</option>
+          <option value="rain">Rainwater</option>
+          <option value="ac">AC condensate</option>
+          <option value="grey">Greywater</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_micro_result">Result</label>
+        <select id="micro-result">
+          <option value="pass">PASS (no coliforms)</option>
+          <option value="fail">FAIL (coliforms detected)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_micro_date">Date</label>
+        <input type="date" id="micro-date"/>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_micro_notes">Notes</label>
+        <input type="text" id="micro-notes" placeholder="Lab, method, etc."/>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="addMicroEntry()" data-i18n="btn_add_micro">Add entry</button>
+    <div class="log-entries-list" id="micro-list" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- CALIBRATION LOG -->
+<div class="section">
+  <div class="section-header" onclick="toggleSection(this)">
+    <h2 data-i18n="cal_log">🔧 Calibration Log <span style="font-weight:400;font-size:.82rem;color:var(--muted)">(optional)</span></h2>
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="section-body collapsed">
+    <p class="info-note" data-i18n="cal_note">Recent calibration entries increase measurement confidence. No effect on the verdict.</p>
+    <div class="form-grid" style="margin-top:14px">
+      <div class="form-group">
+        <label data-i18n="lbl_cal_sensor">Sensor</label>
+        <select id="cal-sensor">
+          <option value="ph">pH</option>
+          <option value="turbidity">Turbidity</option>
+          <option value="ec">EC</option>
+          <option value="temp">Temperature</option>
+          <option value="orp">ORP</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_cal_date">Date</label>
+        <input type="date" id="cal-date"/>
+      </div>
+      <div class="form-group">
+        <label data-i18n="lbl_cal_notes">Notes</label>
+        <input type="text" id="cal-notes" placeholder="Standard used, offset, etc."/>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="addCalEntry()" data-i18n="btn_add_cal">Add entry</button>
+    <div class="log-entries-list" id="cal-list" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- WATER BUDGET -->
+<div class="section">
+  <div class="section-header" onclick="toggleSection(this)">
+    <h2 data-i18n="water_budget">💧 Water Budget</h2>
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="section-body collapsed">
+    <div class="budget-grid" id="budget-grid">
+      <div class="budget-card"><div class="bv" id="bv-level">—</div><div class="bl" data-i18n="bl_level">Tank Level</div></div>
+      <div class="budget-card"><div class="bv" id="bv-trend">—</div><div class="bl" data-i18n="bl_trend">Trend (last 5)</div></div>
+      <div class="budget-card"><div class="bv" id="bv-tte">—</div><div class="bl" data-i18n="bl_tte">Est. time to empty</div></div>
+      <div class="budget-card"><div class="bv" id="bv-readings">0</div><div class="bl" data-i18n="bl_readings">Total readings</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT -->
+<div class="section">
+  <div class="section-header" onclick="toggleSection(this)">
+    <h2 data-i18n="export">📤 Export</h2>
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="section-body collapsed">
+    <div class="export-row">
+      <button class="btn btn-primary" onclick="exportCSV()" data-i18n="btn_export_csv">⬇️ Export all readings as CSV</button>
+      <button class="btn btn-secondary" onclick="clearAllData()" style="color:var(--danger)" data-i18n="btn_clear_all">🗑️ Clear all stored data</button>
+    </div>
+    <div id="export-status" style="margin-top:10px;font-size:.83rem;color:var(--muted)"></div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <span data-i18n="footer_disclaimer">⚠️ Based on sensor readings only. Sensors cannot detect bacteria, so this is a screening result for plant irrigation, not a drinking-water certificate. Always combine with laboratory microbiology testing for critical decisions.</span>
+</footer>
+
+<script>
+// ============================================================
+// TRANSLATIONS
+// ============================================================
+const TRANSLATIONS = {
+  en: {
+    hero_no_data: "No data loaded yet — enter values below or load a test case",
+    data_input: "📥 Data Input",
+    tab_manual: "Manual Entry",
+    tab_csv: "CSV Import",
+    tab_demo: "Demo ⚠️",
+    lbl_source: "Source",
+    lbl_type: "Entry type",
+    lbl_turb: "Turbidity (NTU)",
+    lbl_ec: "EC (µS/cm)",
+    lbl_temp: "Temperature (°C)",
+    lbl_level: "Tank level (%)",
+    lbl_orp: "ORP (mV)",
+    btn_save: "💾 Save reading",
+    btn_clear: "Clear",
+    live_preview: "LIVE PREVIEW",
+    enter_values: "Enter values above to see instant analysis",
+    test_cases: "🧪 Test Cases",
+    tc_desc: "Click a test case to load it into the form and see the instant result.",
+    adv_thresh: "⚙️ Advanced Thresholds",
+    thresh_note: "Built-in defaults follow FAO Irrigation & Drainage Paper 29 and WHO guidance. Changes take effect instantly.",
+    th_param: "Parameter", th_clean_lo: "Clean low", th_clean_hi: "Clean high",
+    th_warn_lo: "Warn low", th_warn_hi: "Warn high", th_bad_lo: "Bad low", th_bad_hi: "Bad high", th_ref: "Reference",
+    history_chart: "📈 History Chart",
+    micro_log: "🦠 Microbiology Log",
+    micro_note: "Microbiology affects confidence badge only. A PASS upgrades confidence to HIGH; a FAIL forces ❌ NOT CLEAN verdict.",
+    lbl_micro_src: "Source", lbl_micro_result: "Result", lbl_micro_date: "Date", lbl_micro_notes: "Notes",
+    btn_add_micro: "Add entry",
+    cal_log: "🔧 Calibration Log",
+    cal_note: "Recent calibration entries increase measurement confidence. No effect on the verdict.",
+    lbl_cal_sensor: "Sensor", lbl_cal_date: "Date", lbl_cal_notes: "Notes",
+    btn_add_cal: "Add entry",
+    water_budget: "💧 Water Budget",
+    bl_level: "Tank Level", bl_trend: "Trend (last 5)", bl_tte: "Est. time to empty", bl_readings: "Total readings",
+    export: "📤 Export",
+    btn_export_csv: "⬇️ Export all readings as CSV",
+    btn_clear_all: "🗑️ Clear all stored data",
+    footer_disclaimer: "⚠️ Based on sensor readings only. Sensors cannot detect bacteria, so this is a screening result for plant irrigation, not a drinking-water certificate. Always combine with laboratory microbiology testing for critical decisions.",
+    csv_drop: "Drop CSV file here or click to browse",
+    csv_hint: "Columns: timestamp, source, ph, turbidity_ntu, ec_us_cm, temp_c, level_pct, orp_mv",
+    csv_paste: "Or paste CSV text:",
+    btn_import: "📊 Import & Analyze",
+    demo_warn: "SIMULATED DATA — This mode never produces a ✅ CLEAN verdict. For demonstration only.",
+    btn_gen_demo: "🎲 Generate Demo Data",
+    btn_clear_demo: "🗑️ Clear Demo",
+    btn_reset_thresh: "↩ Reset to defaults",
+    verdict_clean: "✅ CLEAN",
+    verdict_warn: "⚠️ ACCEPTABLE WITH CAUTION",
+    verdict_bad: "❌ NOT CLEAN",
+    verdict_unknown: "❔ CANNOT DECIDE",
+    action_use: "✅ OVERALL: USE this water for plant irrigation",
+    action_caution: "⚠️ OVERALL: Use WITH CAUTION for plant irrigation",
+    action_no_use: "❌ OVERALL: DO NOT USE this water for plant irrigation",
+    action_unknown: "❔ OVERALL: CANNOT DETERMINE suitability",
+    conf_high: "HIGH confidence",
+    conf_medium: "MEDIUM confidence",
+    conf_low: "LOW confidence",
+    source_clean: "💧 Clean water",
+    source_rain: "🌧️ Rainwater",
+    source_ac: "❄️ AC condensate",
+    source_grey: "🪣 Greywater",
+    no_data_src: "No data for this source",
+    supply_ok: "Supply OK",
+    supply_low: "Supply LOW",
+    supply_critical: "Supply CRITICAL",
+    supply_no_data: "Level unknown",
+  },
+  fr: {
+    hero_no_data: "Aucune donnée — saisir des valeurs ou charger un cas de test",
+    data_input: "📥 Saisie de données",
+    tab_manual: "Saisie manuelle",
+    tab_csv: "Import CSV",
+    tab_demo: "Démo ⚠️",
+    lbl_source: "Source",
+    lbl_type: "Type de saisie",
+    lbl_turb: "Turbidité (NTU)",
+    lbl_ec: "CE (µS/cm)",
+    lbl_temp: "Température (°C)",
+    lbl_level: "Niveau du réservoir (%)",
+    lbl_orp: "ORP (mV)",
+    btn_save: "💾 Enregistrer",
+    btn_clear: "Effacer",
+    live_preview: "APERÇU EN DIRECT",
+    enter_values: "Saisir des valeurs ci-dessus pour une analyse instantanée",
+    test_cases: "🧪 Cas de test",
+    tc_desc: "Cliquer sur un cas de test pour le charger et voir le résultat.",
+    adv_thresh: "⚙️ Seuils avancés",
+    thresh_note: "Les valeurs par défaut suivent les recommandations FAO et OMS.",
+    th_param: "Paramètre", th_clean_lo: "Propre bas", th_clean_hi: "Propre haut",
+    th_warn_lo: "Avert. bas", th_warn_hi: "Avert. haut", th_bad_lo: "Mauvais bas", th_bad_hi: "Mauvais haut", th_ref: "Référence",
+    history_chart: "📈 Historique",
+    micro_log: "🦠 Journal microbiologie",
+    micro_note: "La microbiologie affecte uniquement le badge de confiance.",
+    lbl_micro_src: "Source", lbl_micro_result: "Résultat", lbl_micro_date: "Date", lbl_micro_notes: "Notes",
+    btn_add_micro: "Ajouter",
+    cal_log: "🔧 Journal de calibration",
+    cal_note: "Les calibrations récentes augmentent la confiance. Aucun effet sur le verdict.",
+    lbl_cal_sensor: "Capteur", lbl_cal_date: "Date", lbl_cal_notes: "Notes",
+    btn_add_cal: "Ajouter",
+    water_budget: "💧 Budget eau",
+    bl_level: "Niveau réservoir", bl_trend: "Tendance (5 derniers)", bl_tte: "Durée estimée", bl_readings: "Lectures totales",
+    export: "📤 Exporter",
+    btn_export_csv: "⬇️ Exporter en CSV",
+    btn_clear_all: "🗑️ Effacer toutes les données",
+    footer_disclaimer: "⚠️ Basé sur les lectures de capteurs uniquement. Les capteurs ne détectent pas les bactéries — ceci est un résultat de dépistage pour l'irrigation, pas un certificat d'eau potable.",
+    csv_drop: "Déposer un fichier CSV ici ou cliquer pour parcourir",
+    csv_hint: "Colonnes: timestamp, source, ph, turbidity_ntu, ec_us_cm, temp_c, level_pct, orp_mv",
+    csv_paste: "Ou coller le texte CSV:",
+    btn_import: "📊 Importer & Analyser",
+    demo_warn: "DONNÉES SIMULÉES — Ce mode ne produit jamais un verdict ✅ PROPRE.",
+    btn_gen_demo: "🎲 Générer des données démo",
+    btn_clear_demo: "🗑️ Effacer la démo",
+    btn_reset_thresh: "↩ Réinitialiser",
+    verdict_clean: "✅ PROPRE",
+    verdict_warn: "⚠️ ACCEPTABLE AVEC PRÉCAUTION",
+    verdict_bad: "❌ NON PROPRE",
+    verdict_unknown: "❔ INDÉTERMINÉ",
+    action_use: "✅ GLOBAL: UTILISER cette eau pour l'irrigation",
+    action_caution: "⚠️ GLOBAL: Utiliser AVEC PRÉCAUTION pour l'irrigation",
+    action_no_use: "❌ GLOBAL: NE PAS UTILISER cette eau pour l'irrigation",
+    action_unknown: "❔ GLOBAL: IMPOSSIBLE DE DÉTERMINER la convenance",
+    conf_high: "Confiance ÉLEVÉE",
+    conf_medium: "Confiance MOYENNE",
+    conf_low: "Confiance FAIBLE",
+    source_clean: "💧 Eau propre",
+    source_rain: "🌧️ Eau de pluie",
+    source_ac: "❄️ Condensat CA",
+    source_grey: "🪣 Eaux grises",
+    no_data_src: "Aucune donnée pour cette source",
+    supply_ok: "Approvisionnement OK",
+    supply_low: "Approvisionnement faible",
+    supply_critical: "Approvisionnement critique",
+    supply_no_data: "Niveau inconnu",
+  },
+  ar: {
+    hero_no_data: "لا توجد بيانات — أدخل القيم أو حمّل حالة اختبار",
+    data_input: "📥 إدخال البيانات",
+    tab_manual: "إدخال يدوي",
+    tab_csv: "استيراد CSV",
+    tab_demo: "تجريبي ⚠️",
+    lbl_source: "المصدر",
+    lbl_type: "نوع الإدخال",
+    lbl_turb: "العكارة (NTU)",
+    lbl_ec: "الموصلية (µS/cm)",
+    lbl_temp: "درجة الحرارة (°C)",
+    lbl_level: "مستوى الخزان (%)",
+    lbl_orp: "ORP (mV)",
+    btn_save: "💾 حفظ القراءة",
+    btn_clear: "مسح",
+    live_preview: "معاينة فورية",
+    enter_values: "أدخل القيم أعلاه لرؤية التحليل الفوري",
+    test_cases: "🧪 حالات الاختبار",
+    tc_desc: "انقر على حالة اختبار لتحميلها والاطلاع على النتيجة الفورية.",
+    adv_thresh: "⚙️ العتبات المتقدمة",
+    thresh_note: "القيم الافتراضية تتبع إرشادات منظمة FAO وWHO.",
+    th_param: "المعامل", th_clean_lo: "نظيف منخفض", th_clean_hi: "نظيف مرتفع",
+    th_warn_lo: "تحذير منخفض", th_warn_hi: "تحذير مرتفع", th_bad_lo: "سيء منخفض", th_bad_hi: "سيء مرتفع", th_ref: "المرجع",
+    history_chart: "📈 مخطط التاريخ",
+    micro_log: "🦠 سجل الميكروبيولوجيا",
+    micro_note: "تؤثر الميكروبيولوجيا على شارة الثقة فقط.",
+    lbl_micro_src: "المصدر", lbl_micro_result: "النتيجة", lbl_micro_date: "التاريخ", lbl_micro_notes: "ملاحظات",
+    btn_add_micro: "إضافة",
+    cal_log: "🔧 سجل المعايرة",
+    cal_note: "تزيد معايرات الاستشعار من الثقة. لا تأثير على الحكم.",
+    lbl_cal_sensor: "المستشعر", lbl_cal_date: "التاريخ", lbl_cal_notes: "ملاحظات",
+    btn_add_cal: "إضافة",
+    water_budget: "💧 ميزانية المياه",
+    bl_level: "مستوى الخزان", bl_trend: "الاتجاه (آخر 5)", bl_tte: "الوقت المقدر للنضوب", bl_readings: "إجمالي القراءات",
+    export: "📤 تصدير",
+    btn_export_csv: "⬇️ تصدير جميع القراءات كـ CSV",
+    btn_clear_all: "🗑️ مسح جميع البيانات المخزنة",
+    footer_disclaimer: "⚠️ بناءً على قراءات المستشعرات فقط. لا تكشف المستشعرات عن البكتيريا — هذه نتيجة فرز لأغراض الري وليست شهادة مياه شرب.",
+    csv_drop: "أفلت ملف CSV هنا أو انقر للاختيار",
+    csv_hint: "الأعمدة: timestamp, source, ph, turbidity_ntu, ec_us_cm, temp_c, level_pct, orp_mv",
+    csv_paste: "أو الصق نص CSV:",
+    btn_import: "📊 استيراد وتحليل",
+    demo_warn: "بيانات مُحاكاة — هذا الوضع لا ينتج أبدًا حكم ✅ نظيف.",
+    btn_gen_demo: "🎲 توليد بيانات تجريبية",
+    btn_clear_demo: "🗑️ مسح التجريبي",
+    btn_reset_thresh: "↩ إعادة التعيين",
+    verdict_clean: "✅ نظيف",
+    verdict_warn: "⚠️ مقبول مع تحفظ",
+    verdict_bad: "❌ غير نظيف",
+    verdict_unknown: "❔ لا يمكن التحديد",
+    action_use: "✅ إجمالي: استخدم هذا الماء لري النباتات",
+    action_caution: "⚠️ إجمالي: استخدم بحذر لري النباتات",
+    action_no_use: "❌ إجمالي: لا تستخدم هذا الماء لري النباتات",
+    action_unknown: "❔ إجمالي: لا يمكن تحديد الصلاحية",
+    conf_high: "ثقة عالية",
+    conf_medium: "ثقة متوسطة",
+    conf_low: "ثقة منخفضة",
+    source_clean: "💧 ماء نظيف",
+    source_rain: "🌧️ ماء مطر",
+    source_ac: "❄️ تكثيف مكيف",
+    source_grey: "🪣 مياه رمادية",
+    no_data_src: "لا توجد بيانات لهذا المصدر",
+    supply_ok: "الإمداد جيد",
+    supply_low: "الإمداد منخفض",
+    supply_critical: "الإمداد حرج",
+    supply_no_data: "المستوى غير معروف",
+  }
+};
+
+let currentLang = 'en';
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || TRANSLATIONS['en'][key] || key;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.lang-btn').forEach(b => { if(b.textContent.trim() === lang.toUpperCase()) b.classList.add('active'); });
+  applyTranslations();
+  updateHero();
+  renderSourceCards();
+  liveAnalyze();
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+}
+
+// ============================================================
+// THRESHOLDS (default & live)
+// ============================================================
+const DEFAULT_THRESHOLDS = {
+  ph:   { cleanLo:6.5, cleanHi:8.4, warnLo:6.0, warnHi:9.0, badLo:0, badHi:14, ref:'FAO 29', absMin:0, absMax:14 },
+  turbidity_ntu: { cleanLo:0, cleanHi:5, warnLo:0, warnHi:25, badLo:null, badHi:999999, ref:'WHO', absMin:0, absMax:null },
+  ec_us_cm: { cleanLo:0, cleanHi:700, warnLo:0, warnHi:3000, badLo:null, badHi:999999, ref:'FAO 29', absMin:0, absMax:null },
+  temp_c: { cleanLo:10, cleanHi:30, warnLo:5, warnHi:35, badLo:null, badHi:null, ref:'FAO', absMin:null, absMax:null },
+  level_pct: { cleanLo:20, cleanHi:100, warnLo:10, warnHi:20, badLo:0, badHi:10, ref:'—', absMin:0, absMax:100 },
+};
+
+let thresholds = JSON.parse(JSON.stringify(DEFAULT_THRESHOLDS));
+
+const PARAM_LABELS = {
+  ph: 'pH',
+  turbidity_ntu: 'Turbidity (NTU)',
+  ec_us_cm: 'EC (µS/cm)',
+  temp_c: 'Temperature (°C)',
+  level_pct: 'Tank level (%)',
+};
+
+const JUDGED_PARAMS = ['ph','turbidity_ntu','ec_us_cm','temp_c'];
+
+// ============================================================
+// DATA STORE
+// ============================================================
+const STORE_KEY = 'rootcode.water-analyzer.v2';
+
+function loadStore() {
+  try {
+    return JSON.parse(localStorage.getItem(STORE_KEY)) || { readings:[], microLog:[], calLog:[] };
+  } catch(e) { return { readings:[], microLog:[], calLog:[] }; }
+}
+
+function saveStore(store) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+
+let store = loadStore();
+
+// ============================================================
+// EC TEMPERATURE COMPENSATION
+// ============================================================
+function compensateEC(ec, temp) {
+  if (temp === null || temp === undefined || isNaN(temp)) return { ec: ec, compensated: false };
+  return { ec: ec / (1 + 0.02 * (temp - 25)), compensated: true };
+}
+
+// ============================================================
+// VERDICT ENGINE
+// ============================================================
+
+// Returns: 'ok'|'warn'|'bad'|'invalid'|'missing'
+function judgeParam(paramKey, value, tempForEC) {
+  if (value === null || value === undefined || value === '' || isNaN(value)) return { status: 'missing' };
+
+  const v = Number(value);
+  const th = thresholds[paramKey];
+
+  // Impossible value check
+  if (paramKey === 'ph') {
+    if (v < 0 || v > 14) return { status: 'invalid', reason: `pH ${v} outside 0–14 (impossible)` };
+  }
+  if (['turbidity_ntu','ec_us_cm'].includes(paramKey) && v < 0) {
+    return { status: 'invalid', reason: `${paramKey} negative (impossible)` };
+  }
+  if (paramKey === 'level_pct' && (v < 0 || v > 100)) {
+    return { status: 'invalid', reason: `Level ${v}% outside 0–100% (impossible)` };
+  }
+
+  // For EC, compensate if we have temperature
+  let judgedVal = v;
+  let ecNote = '';
+  if (paramKey === 'ec_us_cm' && tempForEC !== null && tempForEC !== undefined && !isNaN(tempForEC)) {
+    const comp = compensateEC(v, Number(tempForEC));
+    judgedVal = comp.ec;
+    ecNote = ` (comp. @25°C)`;
+  } else if (paramKey === 'ec_us_cm') {
+    ecNote = ` (not temp-compensated)`;
+  }
+
+  // pH special: clean range is [cleanLo, cleanHi], warn is [warnLo, cleanLo) or (cleanHi, warnHi], bad is <warnLo or >warnHi
+  if (paramKey === 'ph') {
+    if (judgedVal >= th.cleanLo && judgedVal <= th.cleanHi) return { status:'ok', note:'' };
+    if (judgedVal >= th.warnLo && judgedVal <= th.warnHi) return { status:'warn', note:'' };
+    return { status:'bad', note:'' };
+  }
+
+  // turbidity / ec: bad if > warnHi (badHi), warn if > cleanHi, ok if <= cleanHi
+  if (paramKey === 'turbidity_ntu' || paramKey === 'ec_us_cm') {
+    if (judgedVal <= th.cleanHi) return { status:'ok', note:ecNote };
+    if (judgedVal <= th.warnHi) return { status:'warn', note:ecNote };
+    return { status:'bad', note:ecNote };
+  }
+
+  // temp: same pattern with both sides
+  if (paramKey === 'temp_c') {
+    if (judgedVal >= th.cleanLo && judgedVal <= th.cleanHi) return { status:'ok', note:'' };
+    if (judgedVal >= th.warnLo && judgedVal <= th.warnHi) return { status:'warn', note:'' };
+    return { status:'bad', note:'' };
+  }
+
+  // level (supply only, not in verdict)
+  if (paramKey === 'level_pct') {
+    if (judgedVal >= th.cleanLo) return { status:'ok', note:'' };
+    if (judgedVal >= th.warnLo) return { status:'warn', note:'' };
+    return { status:'bad', note:'' };
+  }
+
+  return { status:'ok', note:'' };
+}
+
+// Compute verdict from a reading object
+function computeVerdict(reading) {
+  const { source, dataType } = reading;
+  const ph = reading.ph;
+  const turb = reading.turbidity_ntu;
+  const ec = reading.ec_us_cm;
+  const temp = reading.temp_c;
+  const level = reading.level_pct;
+  const orp = reading.orp_mv;
+  const isSimulated = dataType === 'SIMULATED';
+
+  // Greywater → always NOT CLEAN
+  if (source === 'grey') {
+    return {
+      verdict: 'bad',
+      emoji: '❌',
+      label: t('verdict_bad'),
+      reason: 'Greywater: not permitted for edible crops (FAO guidelines)',
+      confidence: 'MEDIUM',
+      paramResults: {},
+      missingParams: [],
+      hasInvalid: false,
+    };
+  }
+
+  // Judge each required param
+  const paramResults = {};
+  const missing = [];
+  let hasInvalid = false;
+  let hasBad = false;
+  let hasWarn = false;
+
+  for (const pk of JUDGED_PARAMS) {
+    const rawVal = reading[pk];
+    const tempVal = (pk === 'ec_us_cm') ? temp : null;
+    const result = judgeParam(pk, rawVal, tempVal);
+    paramResults[pk] = { ...result, raw: rawVal };
+    if (result.status === 'missing') missing.push(pk);
+    if (result.status === 'invalid') { hasInvalid = true; hasBad = true; }
+    if (result.status === 'bad') hasBad = true;
+    if (result.status === 'warn') hasWarn = true;
+  }
+
+  // Level (supply status, not verdict)
+  if (level !== null && level !== undefined && level !== '' && !isNaN(level)) {
+    paramResults['level_pct'] = { ...judgeParam('level_pct', level, null), raw: level };
+  }
+
+  // Microbiology check
+  const microEntries = store.microLog.filter(m => m.source === source);
+  const latestMicro = microEntries.sort((a,b) => new Date(b.date)-new Date(a.date))[0];
+  let microFail = false;
+  if (latestMicro && latestMicro.result === 'fail') microFail = true;
+
+  // Cannot decide if required params missing
+  if (missing.length > 0) {
+    return {
+      verdict: 'unknown',
+      emoji: '❔',
+      label: t('verdict_unknown'),
+      reason: `Missing required parameters: ${missing.map(p=>PARAM_LABELS[p]).join(', ')}`,
+      confidence: isSimulated ? 'LOW' : 'MEDIUM',
+      paramResults,
+      missingParams: missing,
+      hasInvalid,
+      isMissingData: true,
+      simulatedNote: isSimulated ? 'Data is SIMULATED — not a real measurement' : null,
+    };
+  }
+
+  // Simulated data → force CANNOT DECIDE
+  if (isSimulated) {
+    return {
+      verdict: 'unknown',
+      emoji: '❔',
+      label: t('verdict_unknown'),
+      reason: 'Data is SIMULATED — not a real measurement',
+      confidence: 'LOW',
+      paramResults,
+      missingParams: [],
+      hasInvalid,
+      simulatedNote: 'Data is SIMULATED — not a real measurement',
+    };
+  }
+
+  if (microFail) {
+    return {
+      verdict: 'bad',
+      emoji: '❌',
+      label: t('verdict_bad'),
+      reason: 'Microbiology FAIL: coliforms detected',
+      confidence: 'HIGH',
+      paramResults,
+      missingParams: [],
+      hasInvalid,
+    };
+  }
+
+  if (hasBad || hasInvalid) {
+    // Find first bad param for reason
+    let badParam = null, badVal = null;
+    for (const pk of JUDGED_PARAMS) {
+      const r = paramResults[pk];
+      if (r && (r.status === 'bad' || r.status === 'invalid')) {
+        badParam = pk; badVal = r.raw;
+        break;
+      }
+    }
+    const th = thresholds[badParam] || {};
+    let reason = '';
+    if (badParam && badVal !== null) {
+      if (badParam === 'turbidity_ntu') reason = `Turbidity ${badVal} NTU exceeds ${th.warnHi} NTU limit`;
+      else if (badParam === 'ph') reason = `pH ${badVal} outside acceptable range (${th.warnLo}–${th.warnHi})`;
+      else if (badParam === 'ec_us_cm') reason = `EC ${badVal} µS/cm exceeds ${th.warnHi} µS/cm limit`;
+      else if (badParam === 'temp_c') reason = `Temperature ${badVal}°C outside acceptable range (${th.warnLo}–${th.warnHi}°C)`;
+      else reason = `${PARAM_LABELS[badParam]} out of range`;
+    } else if (hasInvalid) {
+      reason = 'Impossible/invalid value detected';
+    }
+    return {
+      verdict: 'bad',
+      emoji: '❌',
+      label: t('verdict_bad'),
+      reason,
+      confidence: hasInvalid ? 'LOW' : (latestMicro && latestMicro.result==='pass' ? 'HIGH' : 'MEDIUM'),
+      paramResults,
+      missingParams: [],
+      hasInvalid,
+    };
+  }
+
+  if (hasWarn) {
+    // Find first warn param for reason
+    let warnParam = null, warnVal = null;
+    for (const pk of JUDGED_PARAMS) {
+      const r = paramResults[pk];
+      if (r && r.status === 'warn') { warnParam = pk; warnVal = r.raw; break; }
+    }
+    let reason = '';
+    if (warnParam && warnVal !== null) {
+      reason = `${PARAM_LABELS[warnParam]} ${warnVal} is in warning range`;
+    }
+    return {
+      verdict: 'warn',
+      emoji: '⚠️',
+      label: t('verdict_warn'),
+      reason,
+      confidence: latestMicro && latestMicro.result==='pass' ? 'HIGH' : 'MEDIUM',
+      paramResults,
+      missingParams: [],
+      hasInvalid: false,
+    };
+  }
+
+  // ALL OK
+  return {
+    verdict: 'ok',
+    emoji: '✅',
+    label: t('verdict_clean'),
+    reason: 'All parameters within clean range',
+    confidence: latestMicro && latestMicro.result==='pass' ? 'HIGH' : 'MEDIUM',
+    paramResults,
+    missingParams: [],
+    hasInvalid: false,
+  };
+}
+
+// ============================================================
+// CURRENT LIVE READING (from form or test case)
+// ============================================================
+let liveReadings = {}; // keyed by source, holds latest reading per source
+let liveFormReading = null; // the reading in the form right now
+
+function getFormReading() {
+  const src = document.getElementById('f-source').value;
+  const typ = document.getElementById('f-type').value;
+  const ph = parseFloat(document.getElementById('f-ph').value);
+  const turb = parseFloat(document.getElementById('f-turb').value);
+  const ec = parseFloat(document.getElementById('f-ec').value);
+  const temp = parseFloat(document.getElementById('f-temp').value);
+  const level = parseFloat(document.getElementById('f-level').value);
+  const orp = parseFloat(document.getElementById('f-orp').value);
+
+  return {
+    source: src,
+    dataType: typ,
+    ph: isNaN(ph) ? null : ph,
+    turbidity_ntu: isNaN(turb) ? null : turb,
+    ec_us_cm: isNaN(ec) ? null : ec,
+    temp_c: isNaN(temp) ? null : temp,
+    level_pct: isNaN(level) ? null : level,
+    orp_mv: isNaN(orp) ? null : orp,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+function hasAnyValue(reading) {
+  return ['ph','turbidity_ntu','ec_us_cm','temp_c','level_pct','orp_mv'].some(k => reading[k] !== null);
+}
+
+function liveAnalyze() {
+  const reading = getFormReading();
+  liveFormReading = reading;
+
+  // Update liveReadings for this source
+  if (hasAnyValue(reading)) {
+    liveReadings[reading.source] = reading;
+  }
+
+  updateLivePreview(reading);
+  updateHero();
+  renderSourceCards();
+  updateBudget();
+}
+
+function updateLivePreview(reading) {
+  const body = document.getElementById('live-preview-body');
+  if (!hasAnyValue(reading)) {
+    body.innerHTML = `<span style="color:var(--muted);font-size:.85rem">${t('enter_values')}</span>`;
+    return;
+  }
+  const verdict = computeVerdict(reading);
+  body.innerHTML = renderMiniCard(verdict, reading, true);
+}
+
+// ============================================================
+// HERO UPDATE
+// ============================================================
+function updateHero() {
+  const hero = document.getElementById('hero');
+  const heroContent = document.getElementById('hero-content');
+  const heroNoData = document.getElementById('hero-no-data');
+
+  // Collect all readings with data
+  const allReadings = Object.values(liveReadings).filter(r => hasAnyValue(r));
+  // Also include store readings (last per source)
+  const storeReadings = getLatestStoreReadings();
+  const allSrcs = new Set([...allReadings.map(r=>r.source), ...storeReadings.map(r=>r.source)]);
+
+  // Merge: prefer liveReadings, fallback to store
+  const finalReadings = [];
+  for (const src of allSrcs) {
+    const lr = liveReadings[src];
+    const sr = storeReadings.find(r=>r.source===src);
+    if (lr && hasAnyValue(lr)) finalReadings.push(lr);
+    else if (sr) finalReadings.push(sr);
+  }
+
+  if (finalReadings.length === 0) {
+    heroContent.style.display = 'none';
+    heroNoData.style.display = 'block';
+    hero.className = 'verdict-unknown';
+    return;
+  }
+
+  heroNoData.style.display = 'none';
+  heroContent.style.display = 'block';
+
+  // Compute verdict per source, find worst
+  const verdicts = finalReadings.map(r => ({ r, v: computeVerdict(r) }));
+  const worstOrder = ['bad','warn','ok','unknown'];
+  verdicts.sort((a,b) => worstOrder.indexOf(a.v.verdict) - worstOrder.indexOf(b.v.verdict));
+  const worst = verdicts[0];
+
+  document.getElementById('hero-emoji').textContent = worst.v.emoji;
+  document.getElementById('hero-verdict').textContent = worst.v.label;
+  document.getElementById('hero-reason').textContent = worst.v.reason;
+
+  let actionText = '';
+  if (worst.v.verdict === 'ok') actionText = t('action_use');
+  else if (worst.v.verdict === 'warn') actionText = t('action_caution');
+  else if (worst.v.verdict === 'bad') actionText = t('action_no_use');
+  else actionText = t('action_unknown');
+  document.getElementById('hero-action').textContent = actionText;
+
+  const confBadge = document.getElementById('hero-confidence');
+  const conf = worst.v.confidence || 'MEDIUM';
+  confBadge.textContent = t(`conf_${conf.toLowerCase()}`);
+  confBadge.className = `chip chip-${conf.toLowerCase()}`;
+
+  hero.className = '';
+  if (worst.v.verdict === 'ok') hero.classList.add('verdict-clean');
+  else if (worst.v.verdict === 'warn') hero.classList.add('verdict-warn');
+  else if (worst.v.verdict === 'bad') hero.classList.add('verdict-bad');
+  else hero.classList.add('verdict-unknown');
+}
+
+function getLatestStoreReadings() {
+  const sources = ['clean','rain','ac','grey'];
+  const result = [];
+  for (const src of sources) {
+    const srcReadings = store.readings.filter(r => r.source === src);
+    if (srcReadings.length > 0) {
+      srcReadings.sort((a,b) => new Date(b.timestamp)-new Date(a.timestamp));
+      result.push(srcReadings[0]);
+    }
+  }
+  return result;
+}
+
+// ============================================================
+// SOURCE CARDS
+// ============================================================
+const SOURCE_INFO = {
+  clean: { name: 'source_clean', emoji: '💧' },
+  rain:  { name: 'source_rain',  emoji: '🌧️' },
+  ac:    { name: 'source_ac',    emoji: '❄️' },
+  grey:  { name: 'source_grey',  emoji: '🪣' },
+};
+
+function renderSourceCards() {
+  const container = document.getElementById('source-cards');
+  container.innerHTML = '';
+
+  const storeReadings = getLatestStoreReadings();
+
+  for (const src of ['clean','rain','ac','grey']) {
+    const info = SOURCE_INFO[src];
+    const liveR = liveReadings[src];
+    const storeR = storeReadings.find(r=>r.source===src);
+    const reading = (liveR && hasAnyValue(liveR)) ? liveR : storeR;
+
+    const card = document.createElement('div');
+    card.className = 'src-card';
+
+    if (!reading || !hasAnyValue(reading)) {
+      card.innerHTML = `
+        <div class="src-card-header">
+          <span class="src-emoji">${info.emoji}</span>
+          <span class="src-name">${t(info.name)}</span>
+          ${src==='grey' ? '<span class="lock-badge">🔒</span>' : ''}
+        </div>
+        <div class="src-no-data">${t('no_data_src')}</div>
+      `;
+    } else {
+      const verdict = computeVerdict(reading);
+      card.classList.add(`verdict-${verdict.verdict==='ok'?'clean':verdict.verdict==='warn'?'warn':verdict.verdict==='bad'?'bad':'unknown'}`);
+
+      const dataTypeChip = `<span class="chip chip-${reading.dataType==='MEASURED'?'measured':reading.dataType==='MANUAL'?'manual':'simulated'}">${reading.dataType||'MEASURED'}</span>`;
+
+      // Param table rows
+      let paramRows = '';
+      for (const pk of JUDGED_PARAMS) {
+        const r = verdict.paramResults[pk];
+        const rawVal = reading[pk];
+        const displayVal = (rawVal===null||rawVal===undefined) ? '—' : rawVal;
+        let statusClass = 'status-info', statusText = '—';
+        let ruleText = '';
+        const th = thresholds[pk];
+        if (!r || r.status === 'missing') {
+          statusText = '❔ Missing';
+          statusClass = 'status-warn';
+          if (pk === 'ph') ruleText = `Clean: ${th.cleanLo}–${th.cleanHi}`;
+          else if (pk === 'turbidity_ntu') ruleText = `Clean: ≤${th.cleanHi}`;
+          else if (pk === 'ec_us_cm') ruleText = `Clean: ≤${th.cleanHi}`;
+          else if (pk === 'temp_c') ruleText = `Clean: ${th.cleanLo}–${th.cleanHi}°C`;
+        } else if (r.status === 'ok') {
+          statusText = '✅ OK'; statusClass = 'status-ok';
+        } else if (r.status === 'warn') {
+          statusText = '⚠️ Warn'; statusClass = 'status-warn';
+        } else if (r.status === 'bad') {
+          statusText = '❌ Bad'; statusClass = 'status-bad';
+        } else if (r.status === 'invalid') {
+          statusText = '⛔ Invalid'; statusClass = 'status-invalid';
+        }
+        if (pk === 'ph') ruleText = `${th.cleanLo}–${th.cleanHi} clean, ${th.warnLo}–${th.warnHi} warn`;
+        else if (pk === 'turbidity_ntu') ruleText = `≤${th.cleanHi} clean, ≤${th.warnHi} warn`;
+        else if (pk === 'ec_us_cm') ruleText = `≤${th.cleanHi} clean, ≤${th.warnHi} warn`;
+        else if (pk === 'temp_c') ruleText = `${th.cleanLo}–${th.cleanHi}°C clean`;
+        const noteStr = (r && r.note) ? ` <em style="color:var(--muted);font-size:.7rem">${r.note}</em>` : '';
+        paramRows += `<tr>
+          <td>${PARAM_LABELS[pk]}</td>
+          <td>${displayVal}${noteStr}</td>
+          <td class="${statusClass}">${statusText}</td>
+          <td style="color:var(--muted);font-size:.72rem">${ruleText}</td>
+        </tr>`;
+      }
+
+      // ORP row (informational)
+      if (reading.orp_mv !== null && reading.orp_mv !== undefined) {
+        paramRows += `<tr>
+          <td>ORP (mV)</td>
+          <td>${reading.orp_mv}</td>
+          <td class="status-info">ℹ️ Info</td>
+          <td style="color:var(--muted);font-size:.72rem">Not in verdict</td>
+        </tr>`;
+      }
+
+      // Level row (supply status)
+      let levelChip = '';
+      if (reading.level_pct !== null && reading.level_pct !== undefined) {
+        const lr = judgeParam('level_pct', reading.level_pct, null);
+        const lvlStatus = lr.status;
+        const lvlText = lvlStatus==='ok' ? t('supply_ok') : lvlStatus==='warn' ? t('supply_low') : t('supply_critical');
+        const lvlColor = lvlStatus==='ok' ? 'var(--ok)' : lvlStatus==='warn' ? 'var(--warn)' : 'var(--danger)';
+        levelChip = `<span class="supply-chip" style="background:${lvlStatus==='ok'?'var(--ok-soft)':lvlStatus==='warn'?'var(--warn-soft)':'var(--danger-soft)'};color:${lvlColor}">Tank: ${reading.level_pct}% — ${lvlText}</span>`;
+      } else {
+        levelChip = `<span class="supply-chip" style="background:var(--bg-alt);color:var(--muted)">${t('supply_no_data')}</span>`;
+      }
+
+      const confText = t(`conf_${(verdict.confidence||'MEDIUM').toLowerCase()}`);
+
+      card.innerHTML = `
+        <div class="src-card-header">
+          <span class="src-emoji">${info.emoji}</span>
+          <span class="src-name">${t(info.name)}</span>
+          ${src==='grey' ? '<span class="lock-badge">🔒</span>' : ''}
+        </div>
+        <div class="src-verdict">${verdict.emoji} ${verdict.label}</div>
+        <div class="src-reason">${verdict.reason}</div>
+        <table class="param-table">
+          <thead><tr><th>Param</th><th>Value</th><th>Status</th><th>Rule</th></tr></thead>
+          <tbody>${paramRows}</tbody>
+        </table>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px">
+          ${dataTypeChip}
+          <span class="chip chip-${(verdict.confidence||'MEDIUM').toLowerCase()}">${confText}</span>
+          ${levelChip}
+        </div>
+      `;
+    }
+    container.appendChild(card);
+  }
+}
+
+// ============================================================
+// MINI CARD (for live preview)
+// ============================================================
+function renderMiniCard(verdict, reading, isPreview) {
+  const info = SOURCE_INFO[reading.source] || { name:'source_clean', emoji:'💧' };
+  let bgColor = verdict.verdict==='ok' ? 'var(--ok-soft)' : verdict.verdict==='warn' ? 'var(--warn-soft)' : verdict.verdict==='bad' ? 'var(--danger-soft)' : 'var(--bg-alt)';
+  let inkColor = verdict.verdict==='ok' ? 'var(--ok)' : verdict.verdict==='warn' ? 'var(--warn)' : verdict.verdict==='bad' ? 'var(--danger)' : 'var(--muted)';
+
+  let missing = '';
+  if (verdict.missingParams && verdict.missingParams.length > 0) {
+    missing = `<div class="missing-list">Missing: ${verdict.missingParams.map(p=>PARAM_LABELS[p]).join(', ')}</div>`;
+  }
+  let simNote = '';
+  if (verdict.simulatedNote) {
+    simNote = `<div style="font-size:.78rem;color:var(--sim);margin-top:4px">${verdict.simulatedNote}</div>`;
+  }
+
+  return `
+    <div style="background:${bgColor};border-radius:10px;padding:12px;border:1.5px solid ${inkColor}20">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:1.2rem">${info.emoji}</span>
+        <span style="font-weight:700;color:${inkColor}">${verdict.emoji} ${verdict.label}</span>
+        <span class="chip chip-${(reading.dataType||'MEASURED').toLowerCase()}">${reading.dataType||'MEASURED'}</span>
+      </div>
+      <div style="font-size:.85rem;color:${inkColor};opacity:.85">${verdict.reason}</div>
+      ${missing}
+      ${simNote}
+    </div>
+  `;
+}
+
+// ============================================================
+// SAVE READING
+// ============================================================
+function saveReading() {
+  const reading = getFormReading();
+  if (!hasAnyValue(reading)) {
+    alert('Please enter at least one value before saving.');
+    return;
+  }
+  reading.id = Date.now() + '_' + Math.random().toString(36).slice(2,7);
+  store.readings.push(reading);
+  saveStore(store);
+  updateBudget();
+  drawChart();
+  showExportStatus(`Reading saved (${store.readings.length} total)`);
+}
+
+function clearForm() {
+  ['f-ph','f-turb','f-ec','f-temp','f-level','f-orp'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  const src = document.getElementById('f-source').value;
+  delete liveReadings[src];
+  liveFormReading = null;
+  updateLivePreview({ source: src, dataType: 'MEASURED', ph:null,turbidity_ntu:null,ec_us_cm:null,temp_c:null,level_pct:null,orp_mv:null });
+  updateHero();
+  renderSourceCards();
+}
+
+// ============================================================
+// TEST CASES
+// ============================================================
+const TEST_CASES = [
+  { label:'All Clean', source:'clean', dataType:'MEASURED', ph:7.2, turbidity_ntu:2, ec_us_cm:450, temp_c:22, level_pct:80, orp_mv:null },
+  { label:'One Warning', source:'rain', dataType:'MEASURED', ph:7.0, turbidity_ntu:8, ec_us_cm:400, temp_c:20, level_pct:60, orp_mv:null },
+  { label:'Bad Value', source:'clean', dataType:'MEASURED', ph:7.0, turbidity_ntu:32, ec_us_cm:400, temp_c:20, level_pct:70, orp_mv:null },
+  { label:'Missing Data', source:'clean', dataType:'MANUAL', ph:7.0, turbidity_ntu:null, ec_us_cm:null, temp_c:null, level_pct:null, orp_mv:null },
+  { label:'Greywater', source:'grey', dataType:'MEASURED', ph:7.0, turbidity_ntu:4, ec_us_cm:350, temp_c:22, level_pct:50, orp_mv:null },
+];
+
+function loadTestCase(idx) {
+  const tc = TEST_CASES[idx];
+  document.getElementById('f-source').value = tc.source;
+  document.getElementById('f-type').value = tc.dataType;
+  document.getElementById('f-ph').value = tc.ph !== null ? tc.ph : '';
+  document.getElementById('f-turb').value = tc.turbidity_ntu !== null ? tc.turbidity_ntu : '';
+  document.getElementById('f-ec').value = tc.ec_us_cm !== null ? tc.ec_us_cm : '';
+  document.getElementById('f-temp').value = tc.temp_c !== null ? tc.temp_c : '';
+  document.getElementById('f-level').value = tc.level_pct !== null ? tc.level_pct : '';
+  document.getElementById('f-orp').value = tc.orp_mv !== null ? tc.orp_mv : '';
+  // Switch to manual tab
+  switchTab('manual', document.querySelector('.tab-btn'));
+  liveAnalyze();
+  // Scroll to form
+  document.querySelector('#tab-manual').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+// ============================================================
+// THRESHOLDS TABLE
+// ============================================================
+function renderThresholdsTable() {
+  const tbody = document.getElementById('thresh-tbody');
+  tbody.innerHTML = '';
+
+  const rows = [
+    { key:'ph', label:'pH', fields:['cleanLo','cleanHi','warnLo','warnHi'], ref:'FAO 29' },
+    { key:'turbidity_ntu', label:'Turbidity (NTU)', fields:['cleanHi','warnHi'], ref:'WHO' },
+    { key:'ec_us_cm', label:'EC (µS/cm)', fields:['cleanHi','warnHi'], ref:'FAO 29' },
+    { key:'temp_c', label:'Temperature (°C)', fields:['cleanLo','cleanHi','warnLo','warnHi'], ref:'FAO' },
+    { key:'level_pct', label:'Tank level (%)', fields:['cleanLo','warnLo'], ref:'—' },
+  ];
+
+  for (const row of rows) {
+    const th = thresholds[row.key];
+    const makeInput = (field) => {
+      const val = th[field];
+      return `<input type="number" step="0.01" value="${val!==null&&val!==undefined?val:''}"
+        onchange="updateThreshold('${row.key}','${field}',this.value)"
+        style="width:70px;padding:4px 6px;border:1px solid var(--line);border-radius:5px;background:var(--bg-alt);color:var(--ink);font-size:.82rem"/>`;
+    };
+    const cells = [
+      makeInput('cleanLo'), makeInput('cleanHi'),
+      makeInput('warnLo'), makeInput('warnHi'),
+      makeInput('badLo'), makeInput('badHi'),
+    ];
+    tbody.innerHTML += `<tr>
+      <td style="font-weight:600">${row.label}</td>
+      ${cells.map(c=>`<td>${c}</td>`).join('')}
+      <td style="color:var(--muted);font-size:.78rem">${row.ref}</td>
+    </tr>`;
+  }
+}
+
+function updateThreshold(key, field, value) {
+  const v = parseFloat(value);
+  thresholds[key][field] = isNaN(v) ? null : v;
+  // Re-analyze with new thresholds
+  liveAnalyze();
+  updateHero();
+  renderSourceCards();
+}
+
+function resetThresholds() {
+  thresholds = JSON.parse(JSON.stringify(DEFAULT_THRESHOLDS));
+  renderThresholdsTable();
+  liveAnalyze();
+  updateHero();
+  renderSourceCards();
+}
+
+// ============================================================
+// CSV IMPORT
+// ============================================================
+const COL_ALIASES = {
+  'timestamp': 'timestamp',
+  'time': 'timestamp',
+  'date': 'timestamp',
+  'source': 'source',
+  'src': 'source',
+  'ph': 'ph',
+  'turbidity_ntu': 'turbidity_ntu',
+  'turbidity': 'turbidity_ntu',
+  'turb': 'turbidity_ntu',
+  'ec_us_cm': 'ec_us_cm',
+  'ec': 'ec_us_cm',
+  'conductivity': 'ec_us_cm',
+  'temp_c': 'temp_c',
+  'temp': 'temp_c',
+  'temperature': 'temp_c',
+  'level_pct': 'level_pct',
+  'level': 'level_pct',
+  'tank_level': 'level_pct',
+  'orp_mv': 'orp_mv',
+  'orp': 'orp_mv',
+};
+
+const SOURCE_ALIASES = {
+  'clean': 'clean', 'clean water': 'clean', 'tap': 'clean',
+  'rain': 'rain', 'rainwater': 'rain', 'rainfall': 'rain',
+  'ac': 'ac', 'ac condensate': 'ac', 'condensate': 'ac',
+  'grey': 'grey', 'greywater': 'grey', 'gray': 'grey', 'graywater': 'grey',
+};
+
+function parseCSVText(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim() && !l.startsWith('#'));
+  if (lines.length < 2) return { error: 'Need at least a header row and one data row.' };
+
+  const rawHeaders = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g,'_'));
+  const headers = rawHeaders.map(h => COL_ALIASES[h] || h);
+
+  const readings = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = lines[i].split(',').map(v => v.trim());
+    const row = {};
+    headers.forEach((h, idx) => { row[h] = vals[idx] !== undefined ? vals[idx] : ''; });
+
+    const src = SOURCE_ALIASES[(row.source||'').toLowerCase().trim()] || 'clean';
+    const parseNum = (k) => { const v = parseFloat(row[k]); return isNaN(v) ? null : v; };
+
+    readings.push({
+      id: Date.now() + '_csv_' + i,
+      timestamp: row.timestamp || new Date().toISOString(),
+      source: src,
+      dataType: 'MEASURED',
+      ph: parseNum('ph'),
+      turbidity_ntu: parseNum('turbidity_ntu'),
+      ec_us_cm: parseNum('ec_us_cm'),
+      temp_c: parseNum('temp_c'),
+      level_pct: parseNum('level_pct'),
+      orp_mv: parseNum('orp_mv'),
+    });
+  }
+  return { readings };
+}
+
+function csvTextChanged() {
+  // No auto-parse until user clicks import
+}
+
+function parseAndImportCSV() {
+  const text = document.getElementById('csv-text').value;
+  if (!text.trim()) { alert('Please paste CSV text or upload a file first.'); return; }
+  const result = parseCSVText(text);
+  if (result.error) { document.getElementById('csv-results').innerHTML = `<div style="color:var(--danger);padding:12px">${result.error}</div>`; return; }
+  importReadings(result.readings);
+}
+
+function importReadings(readings) {
+  store.readings.push(...readings);
+  saveStore(store);
+
+  // Update liveReadings with latest per source
+  const sources = ['clean','rain','ac','grey'];
+  for (const src of sources) {
+    const srcR = readings.filter(r=>r.source===src);
+    if (srcR.length > 0) {
+      srcR.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+      liveReadings[src] = srcR[0];
+    }
+  }
+
+  // Show results table
+  const container = document.getElementById('csv-results');
+  let html = `<div style="font-weight:700;margin-bottom:8px;color:var(--ok)">✅ Imported ${readings.length} reading(s)</div>`;
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr>';
+  html += '<th style="text-align:left;padding:6px;border-bottom:2px solid var(--line)">Timestamp</th>';
+  html += '<th style="text-align:left;padding:6px;border-bottom:2px solid var(--line)">Source</th>';
+  html += '<th style="text-align:left;padding:6px;border-bottom:2px solid var(--line)">Verdict</th>';
+  html += '<th style="text-align:left;padding:6px;border-bottom:2px solid var(--line)">Confidence</th>';
+  html += '</tr></thead><tbody>';
+  for (const r of readings) {
+    const v = computeVerdict(r);
+    const srcInfo = SOURCE_INFO[r.source] || { emoji:'💧' };
+    html += `<tr>
+      <td style="padding:5px 6px;border-bottom:1px solid var(--line)">${(r.timestamp||'').slice(0,19).replace('T',' ')}</td>
+      <td style="padding:5px 6px;border-bottom:1px solid var(--line)">${srcInfo.emoji} ${r.source}</td>
+      <td style="padding:5px 6px;border-bottom:1px solid var(--line)">${v.emoji} ${v.label}</td>
+      <td style="padding:5px 6px;border-bottom:1px solid var(--line)"><span class="chip chip-${(v.confidence||'MEDIUM').toLowerCase()}">${v.confidence}</span></td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+
+  updateHero();
+  renderSourceCards();
+  updateBudget();
+  drawChart();
+}
+
+function clearCSV() {
+  document.getElementById('csv-text').value = '';
+  document.getElementById('csv-results').innerHTML = '';
+}
+
+function csvDragOver(e) { e.preventDefault(); document.getElementById('csv-drop').classList.add('drag-over'); }
+function csvDragLeave(e) { document.getElementById('csv-drop').classList.remove('drag-over'); }
+function csvDrop(e) {
+  e.preventDefault();
+  document.getElementById('csv-drop').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) readCSVFile(file);
+}
+function csvFileSelected(e) {
+  const file = e.target.files[0];
+  if (file) readCSVFile(file);
+}
+function readCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('csv-text').value = e.target.result;
+    parseAndImportCSV();
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// DEMO
+// ============================================================
+function generateDemo() {
+  const sources = ['clean','rain','ac','grey'];
+  const demo = [];
+  const now = Date.now();
+  for (const src of sources) {
+    for (let i = 0; i < 3; i++) {
+      demo.push({
+        id: 'demo_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+        timestamp: new Date(now - i * 3600000).toISOString(),
+        source: src,
+        dataType: 'SIMULATED',
+        ph: 6.5 + Math.random() * 2,
+        turbidity_ntu: Math.random() * 30,
+        ec_us_cm: 300 + Math.random() * 2800,
+        temp_c: 10 + Math.random() * 25,
+        level_pct: Math.random() * 100,
+        orp_mv: 100 + Math.random() * 400,
+      });
+    }
+  }
+
+  for (const src of sources) {
+    const srcDemo = demo.filter(r=>r.source===src);
+    srcDemo.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+    if (srcDemo.length > 0) liveReadings[src] = srcDemo[0];
+  }
+
+  store.readings.push(...demo);
+  saveStore(store);
+
+  let html = `<div class="demo-warning" style="margin-bottom:12px">🎲 ${demo.length} simulated readings generated — all will be ❔ CANNOT DECIDE</div>`;
+  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr>';
+  html += '<th style="text-align:left;padding:5px;border-bottom:2px solid var(--line)">Source</th>';
+  html += '<th style="text-align:left;padding:5px;border-bottom:2px solid var(--line)">pH</th>';
+  html += '<th style="text-align:left;padding:5px;border-bottom:2px solid var(--line)">Turbidity</th>';
+  html += '<th style="text-align:left;padding:5px;border-bottom:2px solid var(--line)">Verdict</th>';
+  html += '</tr></thead><tbody>';
+  for (const r of demo.slice(0,8)) {
+    const v = computeVerdict(r);
+    html += `<tr>
+      <td style="padding:4px 5px;border-bottom:1px solid var(--line)">${SOURCE_INFO[r.source]?.emoji} ${r.source} <span class="chip chip-simulated">SIM</span></td>
+      <td style="padding:4px 5px;border-bottom:1px solid var(--line)">${r.ph?.toFixed(2)}</td>
+      <td style="padding:4px 5px;border-bottom:1px solid var(--line)">${r.turbidity_ntu?.toFixed(1)}</td>
+      <td style="padding:4px 5px;border-bottom:1px solid var(--line)">${v.emoji} ${v.label}</td>
+    </tr>`;
+  }
+  html += '</tbody></table></div>';
+  document.getElementById('demo-results').innerHTML = html;
+
+  updateHero();
+  renderSourceCards();
+  updateBudget();
+  drawChart();
+}
+
+function clearDemo() {
+  store.readings = store.readings.filter(r => r.dataType !== 'SIMULATED');
+  for (const src of ['clean','rain','ac','grey']) {
+    if (liveReadings[src] && liveReadings[src].dataType === 'SIMULATED') delete liveReadings[src];
+  }
+  saveStore(store);
+  document.getElementById('demo-results').innerHTML = '';
+  updateHero();
+  renderSourceCards();
+  updateBudget();
+  drawChart();
+}
+
+// ============================================================
+// MICROBIOLOGY LOG
+// ============================================================
+function addMicroEntry() {
+  const src = document.getElementById('micro-src').value;
+  const result = document.getElementById('micro-result').value;
+  const date = document.getElementById('micro-date').value || new Date().toISOString().slice(0,10);
+  const notes = document.getElementById('micro-notes').value;
+  store.microLog.push({ id: Date.now(), source: src, result, date, notes });
+  saveStore(store);
+  renderMicroList();
+  updateHero();
+  renderSourceCards();
+}
+
+function renderMicroList() {
+  const list = document.getElementById('micro-list');
+  if (!store.microLog.length) { list.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:8px">No entries yet</div>'; return; }
+  list.innerHTML = store.microLog.slice().reverse().map(e =>
+    `<div class="log-entry">
+      <div class="le-time">${e.date}</div>
+      <div class="le-src">${SOURCE_INFO[e.source]?.emoji || ''} ${e.source}</div>
+      <div><span class="chip ${e.result==='pass'?'chip-ok':'chip-bad'}">${e.result.toUpperCase()}</span></div>
+      <div style="color:var(--muted)">${e.notes || ''}</div>
+      <button class="btn btn-secondary btn-sm" onclick="deleteMicro(${e.id})" style="margin-left:auto">✕</button>
+    </div>`
+  ).join('');
+}
+
+function deleteMicro(id) {
+  store.microLog = store.microLog.filter(e => e.id !== id);
+  saveStore(store);
+  renderMicroList();
+  updateHero();
+  renderSourceCards();
+}
+
+// ============================================================
+// CALIBRATION LOG
+// ============================================================
+function addCalEntry() {
+  const sensor = document.getElementById('cal-sensor').value;
+  const date = document.getElementById('cal-date').value || new Date().toISOString().slice(0,10);
+  const notes = document.getElementById('cal-notes').value;
+  store.calLog.push({ id: Date.now(), sensor, date, notes });
+  saveStore(store);
+  renderCalList();
+}
+
+function renderCalList() {
+  const list = document.getElementById('cal-list');
+  if (!store.calLog.length) { list.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:8px">No entries yet</div>'; return; }
+  list.innerHTML = store.calLog.slice().reverse().map(e =>
+    `<div class="log-entry">
+      <div class="le-time">${e.date}</div>
+      <div class="le-src" style="font-weight:700">${e.sensor.toUpperCase()}</div>
+      <div style="color:var(--muted)">${e.notes || ''}</div>
+      <button class="btn btn-secondary btn-sm" onclick="deleteCal(${e.id})" style="margin-left:auto">✕</button>
+    </div>`
+  ).join('');
+}
+
+function deleteCal(id) {
+  store.calLog = store.calLog.filter(e => e.id !== id);
+  saveStore(store);
+  renderCalList();
+}
+
+// ============================================================
+// WATER BUDGET
+// ============================================================
+function updateBudget() {
+  const allReadings = store.readings.slice();
+  document.getElementById('bv-readings').textContent = allReadings.length;
+
+  // Latest level across all sources
+  const withLevel = allReadings.filter(r => r.level_pct !== null && !isNaN(r.level_pct));
+  if (withLevel.length > 0) {
+    withLevel.sort((a,b) => new Date(b.timestamp)-new Date(a.timestamp));
+    const latest = withLevel[0].level_pct;
+    document.getElementById('bv-level').textContent = latest.toFixed(1) + '%';
+
+    // Trend: last 5 readings
+    const last5 = withLevel.slice(0,5).map(r=>r.level_pct);
+    if (last5.length >= 2) {
+      const delta = last5[0] - last5[last5.length-1];
+      document.getElementById('bv-trend').textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1) + '% / period';
+
+      // Estimate time to empty
+      if (delta < 0 && last5.length >= 2) {
+        const periods = last5.length - 1;
+        const ratePerPeriod = Math.abs(delta) / periods;
+        const periodsLeft = latest / ratePerPeriod;
+        // Estimate period as average time between readings
+        const times = withLevel.slice(0, last5.length).map(r=>new Date(r.timestamp).getTime());
+        times.sort((a,b)=>b-a);
+        let avgGap = 3600000; // default 1hr
+        if (times.length >= 2) {
+          avgGap = (times[0] - times[times.length-1]) / (times.length-1);
+        }
+        const msLeft = periodsLeft * avgGap;
+        const hoursLeft = msLeft / 3600000;
+        if (hoursLeft < 48) document.getElementById('bv-tte').textContent = hoursLeft.toFixed(1) + ' hrs';
+        else document.getElementById('bv-tte').textContent = (hoursLeft/24).toFixed(1) + ' days';
+      } else {
+        document.getElementById('bv-tte').textContent = delta >= 0 ? '↑ Filling' : '—';
+      }
+    } else {
+      document.getElementById('bv-trend').textContent = '—';
+      document.getElementById('bv-tte').textContent = '—';
+    }
+  } else {
+    document.getElementById('bv-level').textContent = '—';
+    document.getElementById('bv-trend').textContent = '—';
+    document.getElementById('bv-tte').textContent = '—';
+  }
+}
+
+// ============================================================
+// HISTORY CHART
+// ============================================================
+function drawChart() {
+  const canvas = document.getElementById('history-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // Set canvas size
+  canvas.width = canvas.offsetWidth || 800;
+  canvas.height = 280;
+
+  const W = canvas.width, H = canvas.height;
+  const pad = { top:30, right:20, bottom:50, left:55 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  const paramKey = document.getElementById('chart-param').value;
+  const srcFilter = document.getElementById('chart-source').value;
+  const rangeFilter = document.getElementById('chart-range').value;
+
+  // Get style values
+  const style = getComputedStyle(document.documentElement);
+  const colOk = style.getPropertyValue('--ok').trim() || '#2f7d57';
+  const colWarn = style.getPropertyValue('--warn').trim() || '#a4740d';
+  const colBad = style.getPropertyValue('--danger').trim() || '#a52f26';
+  const colUnknown = style.getPropertyValue('--muted').trim() || '#77695d';
+  const colLine = style.getPropertyValue('--line').trim() || '#e6dbcd';
+  const colInk = style.getPropertyValue('--ink').trim() || '#241c16';
+  const colSim = style.getPropertyValue('--sim').trim() || '#6b4aa3';
+
+  ctx.clearRect(0,0,W,H);
+
+  // Filter readings
+  let readings = store.readings.filter(r => r[paramKey] !== null && r[paramKey] !== undefined && !isNaN(r[paramKey]));
+  if (srcFilter !== 'all') readings = readings.filter(r=>r.source===srcFilter);
+
+  if (rangeFilter !== 'all') {
+    const days = parseInt(rangeFilter);
+    const cutoff = Date.now() - days * 86400000;
+    readings = readings.filter(r => new Date(r.timestamp).getTime() >= cutoff);
+  }
+
+  if (readings.length === 0) {
+    ctx.fillStyle = colInk;
+    ctx.font = '14px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data for selected parameter/source/range', W/2, H/2);
+    return;
+  }
+
+  readings.sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp));
+
+  const values = readings.map(r => r[paramKey]);
+  const minVal = Math.min(...values);
+  const maxVal = Math.max(...values);
+  const range = maxVal - minVal || 1;
+  const dataMin = minVal - range * 0.1;
+  const dataMax = maxVal + range * 0.1;
+
+  const toX = (ts) => pad.left + (new Date(ts).getTime() - new Date(readings[0].timestamp).getTime()) / Math.max(1, new Date(readings[readings.length-1].timestamp).getTime() - new Date(readings[0].timestamp).getTime()) * plotW;
+  const toY = (val) => pad.top + plotH - ((val - dataMin) / (dataMax - dataMin)) * plotH;
+
+  // Grid lines
+  ctx.strokeStyle = colLine;
+  ctx.lineWidth = 1;
+  const ySteps = 5;
+  for (let i = 0; i <= ySteps; i++) {
+    const yVal = dataMin + (dataMax - dataMin) * i / ySteps;
+    const y = toY(yVal);
+    ctx.beginPath();
+    ctx.setLineDash([4,4]);
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + plotW, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = colInk;
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(yVal.toFixed(1), pad.left - 4, y + 4);
+  }
+
+  // X axis labels (up to 6)
+  ctx.fillStyle = colInk;
+  ctx.font = '10px system-ui';
+  ctx.textAlign = 'center';
+  const xLabelCount = Math.min(6, readings.length);
+  for (let i = 0; i < xLabelCount; i++) {
+    const idx = Math.floor(i * (readings.length-1) / Math.max(1, xLabelCount-1));
+    const r = readings[idx];
+    const x = toX(r.timestamp);
+    const label = new Date(r.timestamp).toLocaleDateString('en',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    ctx.save();
+    ctx.translate(x, H - pad.bottom + 14);
+    ctx.rotate(-0.5);
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  }
+
+  // Axis lines
+  ctx.strokeStyle = colInk;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(pad.left, pad.top);
+  ctx.lineTo(pad.left, pad.top + plotH);
+  ctx.lineTo(pad.left + plotW, pad.top + plotH);
+  ctx.stroke();
+
+  // Y axis label
+  ctx.save();
+  ctx.translate(14, H/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillStyle = colInk;
+  ctx.font = '11px system-ui';
+  ctx.textAlign = 'center';
+  ctx.fillText(PARAM_LABELS[paramKey] || paramKey, 0, 0);
+  ctx.restore();
+
+  // Draw connecting line
+  ctx.beginPath();
+  ctx.strokeStyle = colLine;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([]);
+  readings.forEach((r, i) => {
+    const x = toX(r.timestamp);
+    const y = toY(r[paramKey]);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Draw points
+  readings.forEach(r => {
+    const verdict = computeVerdict(r);
+    let col = colUnknown;
+    if (verdict.verdict === 'ok') col = colOk;
+    else if (verdict.verdict === 'warn') col = colWarn;
+    else if (verdict.verdict === 'bad') col = colBad;
+
+    const x = toX(r.timestamp);
+    const y = toY(r[paramKey]);
+    const dataT = r.dataType || 'MEASURED';
+
+    ctx.fillStyle = col;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+
+    if (dataT === 'SIMULATED') {
+      // Triangle, dashed outline
+      ctx.fillStyle = colSim;
+      ctx.setLineDash([2,2]);
+      ctx.beginPath();
+      ctx.moveTo(x, y-7);
+      ctx.lineTo(x+6, y+5);
+      ctx.lineTo(x-6, y+5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.setLineDash([]);
+    } else if (dataT === 'MANUAL') {
+      // Square
+      ctx.fillStyle = col;
+      ctx.setLineDash([]);
+      ctx.fillRect(x-5, y-5, 10, 10);
+      ctx.strokeRect(x-5, y-5, 10, 10);
+    } else {
+      // Circle
+      ctx.fillStyle = col;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  });
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+function exportCSV() {
+  if (!store.readings.length) {
+    showExportStatus('No readings to export.');
+    return;
+  }
+  const headers = ['timestamp','source','dataType','ph','turbidity_ntu','ec_us_cm','temp_c','level_pct','orp_mv','verdict','confidence'];
+  const rows = store.readings.map(r => {
+    const v = computeVerdict(r);
+    return [
+      r.timestamp||'', r.source||'', r.dataType||'',
+      r.ph??'', r.turbidity_ntu??'', r.ec_us_cm??'', r.temp_c??'', r.level_pct??'', r.orp_mv??'',
+      v.verdict, v.confidence||'',
+    ].join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `water-monitor-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showExportStatus(`Exported ${store.readings.length} reading(s).`);
+}
+
+function showExportStatus(msg) {
+  const el = document.getElementById('export-status');
+  if (el) { el.textContent = msg; setTimeout(()=>{ el.textContent=''; }, 4000); }
+}
+
+function clearAllData() {
+  if (!confirm('Clear ALL stored readings, microbiology, and calibration data? This cannot be undone.')) return;
+  store = { readings:[], microLog:[], calLog:[] };
+  saveStore(store);
+  liveReadings = {};
+  liveFormReading = null;
+  updateHero();
+  renderSourceCards();
+  updateBudget();
+  drawChart();
+  renderMicroList();
+  renderCalList();
+  showExportStatus('All data cleared.');
+}
+
+// ============================================================
+// TABS & SECTIONS
+// ============================================================
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  if (btn) btn.classList.add('active');
+  else {
+    const allBtns = document.querySelectorAll('.tab-btn');
+    // find by text match (rough)
+  }
+}
+
+function toggleSection(header) {
+  const body = header.nextElementSibling;
+  if (!body) return;
+  const isOpen = header.classList.contains('open');
+  if (isOpen) {
+    header.classList.remove('open');
+    body.classList.add('collapsed');
+  } else {
+    header.classList.add('open');
+    body.classList.remove('collapsed');
+    // Redraw chart if it's the history section
+    if (header.closest('.section') && header.closest('.section').querySelector('#history-chart')) {
+      setTimeout(drawChart, 100);
+    }
+  }
+}
+
+// ============================================================
+// THEME
+// ============================================================
+let isDark = false;
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
+  document.getElementById('theme-btn').textContent = isDark ? '☀️ Light' : '🌙 Dark';
+  setTimeout(drawChart, 100);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  // Load persisted readings into liveReadings (last per source)
+  const storeReadings = getLatestStoreReadings();
+  for (const r of storeReadings) {
+    liveReadings[r.source] = r;
+  }
+
+  renderThresholdsTable();
+  renderMicroList();
+  renderCalList();
+  renderSourceCards();
+  updateBudget();
+  updateHero();
+
+  // Set today's date in log forms
+  const today = new Date().toISOString().slice(0,10);
+  if (document.getElementById('micro-date')) document.getElementById('micro-date').value = today;
+  if (document.getElementById('cal-date')) document.getElementById('cal-date').value = today;
+
+  // Initial live preview
+  updateLivePreview({ source:'clean', dataType:'MEASURED', ph:null,turbidity_ntu:null,ec_us_cm:null,temp_c:null,level_pct:null,orp_mv:null });
+
+  // Chart resize
+  window.addEventListener('resize', () => {
+    if (document.getElementById('history-chart')) drawChart();
+  });
+
+  // Apply translations
+  applyTranslations();
+}
+
+// Wait for DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>

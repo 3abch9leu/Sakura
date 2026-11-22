@@ -1,18 +1,18 @@
 :host {
-  --cream: #f4efe6;
-  --sand: #ebe2d1;
-  --clay: #c4693f;
-  --clay-deep: #9c4a2a;
-  --moss: #2f5a3f;
-  --ink: #1d2b24;
-  --muted: #6b746e;
-  --sun: #f5b85a;
+  --cream: #f7f5ef;
+  --sand: #eeeadf;
+  --clay: #b77b59;
+  --clay-deep: #8e5a3e;
+  --moss: #414b30;
+  --ink: #252822;
+  --muted: #6d7067;
+  --sun: #d9b77a;
   --water: #4fa3b8;
   --error: #b4412b;
-  --line: rgba(29, 43, 36, 0.14);
-  --paper: #fbf8f2;
-  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --line: rgba(37, 40, 34, 0.13);
+  --paper: #fbfaf6;
+  --serif: 'Inter Tight', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   display: block;
   position: relative;
@@ -31,8 +31,8 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(520px circle at var(--sx, 80%) var(--sy, 10%), rgba(245, 184, 90, 0.3), transparent 65%),
-    linear-gradient(180deg, var(--cream), #efe6d6);
+    radial-gradient(520px circle at var(--sx, 80%) var(--sy, 10%), rgba(217, 183, 122, 0.14), transparent 65%),
+    linear-gradient(180deg, var(--cream), #f1eee5);
 }
 
 * {
@@ -63,6 +63,7 @@
 }
 
 .logo {
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -119,7 +120,7 @@
   border: 1.5px solid var(--line);
   background: var(--paper);
   font-family: var(--serif);
-  font-style: italic;
+  font-style: normal;
   font-size: 1.2rem;
   color: var(--muted);
   transition: background 0.4s, border-color 0.4s, color 0.4s, transform 0.3s;
@@ -476,7 +477,7 @@
 .field input:focus {
   background: #fff;
   border-color: var(--moss);
-  box-shadow: 0 0 0 4px rgba(47, 90, 63, 0.14);
+  box-shadow: 0 0 0 4px rgba(65, 75, 48, 0.14);
 }
 
 .field label {
@@ -549,7 +550,7 @@
 
 .pcard.on {
   border-color: var(--moss);
-  box-shadow: 0 0 0 4px rgba(47, 90, 63, 0.14), 0 34px 60px -34px rgba(60, 40, 20, 0.5);
+  box-shadow: 0 0 0 4px rgba(65, 75, 48, 0.14), 0 34px 60px -34px rgba(60, 40, 20, 0.5);
 }
 
 .pcard:focus-visible {
@@ -639,7 +640,7 @@
 .pill {
   padding: 7px 16px;
   border-radius: 999px;
-  background: rgba(47, 90, 63, 0.1);
+  background: rgba(65, 75, 48, 0.1);
   color: var(--moss);
   font-size: 0.82rem;
   font-weight: 600;
@@ -669,7 +670,7 @@
 
 .plant:hover {
   transform: translateY(-3px);
-  border-color: rgba(47, 90, 63, 0.4);
+  border-color: rgba(65, 75, 48, 0.4);
 }
 
 .plant:focus-visible {
@@ -680,7 +681,7 @@
 .plant.on {
   border-color: var(--moss);
   background: #eef3e2;
-  box-shadow: 0 18px 36px -24px rgba(47, 90, 63, 0.7);
+  box-shadow: 0 18px 36px -24px rgba(65, 75, 48, 0.7);
 }
 
 .plant__icon {
@@ -713,7 +714,7 @@
 
 .plant__txt small {
   font-size: 0.74rem;
-  font-style: italic;
+  font-style: normal;
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -905,7 +906,7 @@
   margin: 0;
   padding: 6px 14px;
   border-radius: 999px;
-  background: rgba(196, 105, 63, 0.12);
+  background: rgba(183, 123, 89, 0.12);
   color: var(--clay-deep);
   font-size: 0.74rem;
   font-weight: 700;
@@ -1017,11 +1018,11 @@
   border: 0;
   background: var(--moss);
   color: var(--cream);
-  box-shadow: 0 16px 32px -16px rgba(31, 77, 52, 0.75);
+  box-shadow: 0 16px 32px -16px rgba(50, 58, 37, 0.75);
 }
 
 .btn--primary:hover {
-  background: #1f4d34;
+  background: #323a25;
   transform: translateY(-2px);
 }
 
@@ -1044,7 +1045,7 @@
 }
 
 .btn:focus-visible {
-  outline: 3px solid rgba(196, 105, 63, 0.55);
+  outline: 3px solid rgba(183, 123, 89, 0.55);
   outline-offset: 3px;
 }
 

@@ -1,0 +1,459 @@
+<header class="bar">
+  <a class="brand" routerLink="/"><img src="images/logo-mark-96.png" alt="" width="30" height="30" /><b>INBETWEEN</b><span>Studio</span></a>
+  <ol class="steps" aria-label="Steps">
+    @for (s of steps; track s; let i = $index) {
+      <li [class.on]="step() === i" [class.done]="step() > i"><button type="button" (click)="go(i)"><span>{{ i + 1 }}</span>{{ s }}</button></li>
+    }
+  </ol>
+  <a class="bar__link" routerLink="/dashboard">Digital twin →</a>
+</header>
+
+@if (error()) { <p class="err" role="alert">{{ error() }} <button type="button" (click)="error.set('')" aria-label="Dismiss">×</button></p> }
+
+<main class="wrap">
+  @switch (step()) {
+    <!-- ============================================================ 1. SPACE -->
+    @case (0) {
+      <section class="head">
+        <p class="eyebrow">Step 1 · Your space</p>
+        <h1>Select the space you want to bring to life.</h1>
+        <p class="sub">A wall, a balcony, a façade, a terrace or a courtyard. Upload a photo, then show us the exact area: you stay in control of the selection.</p>
+      </section>
+
+      @if (!photoUrl()) {
+        <label class="drop" (dragover)="$event.preventDefault()" (drop)="onDrop($event)">
+          <input type="file" accept="image/*" (change)="onFile($event)" hidden />
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16l4-4 3 3 5-6 4 5M4 20h16M14 6a2 2 0 100 4 2 2 0 000-4z" fill="none" stroke="currentColor" stroke-width="1.3" /></svg>
+          <b>Upload an architectural photo</b>
+          <small>JPG or PNG · taken straight on if possible · the photo stays in the server's memory for 30 minutes and is never stored</small>
+        </label>
+        <button type="button" class="link" (click)="useSample()">No photo at hand? Use a sample wall</button>
+      } @else {
+        <div class="space">
+          <div class="canvas">
+            <div class="tools" role="toolbar" aria-label="Selection tools">
+              <button type="button" [class.on]="tool() === 'include'" (click)="tool.set('include')"><i class="dot dot--in"></i>Include</button>
+              <button type="button" [class.on]="tool() === 'exclude'" (click)="tool.set('exclude')"><i class="dot dot--out"></i>Exclude</button>
+              <button type="button" [class.on]="tool() === 'rect'" (click)="tool.set('rect')">Rectangle</button>
+              <button type="button" [class.on]="tool() === 'polygon'" (click)="tool.set('polygon')">Polygon</button>
+              @if (scaleMode() === 'line') {
+                <button type="button" [class.on]="tool() === 'reference'" (click)="tool.set('reference')">Measuring line</button>
+              }
+              <span class="tools__sp"></span>
+              <button type="button" class="ghost" (click)="undoClick()" [disabled]="!clicks().length">Undo</button>
+              <button type="button" class="ghost" (click)="clearSelection()">Clear</button>
+            </div>
+            <div class="photo" [class.busy]="segmenting() || uploading()">
+              <img [src]="photoUrl()" alt="Your photo" />
+              @if (upload(); as U) {
+                <svg #svg [attr.viewBox]="vb()" preserveAspectRatio="none" (click)="onImageClick($event, svg)"
+                     (pointerdown)="onDown($event, svg)" (pointermove)="onMove($event, svg)" (pointerup)="onUp()" [class]="'tool-' + tool()">
+                  @if (showSuggestions() && !seg()) {
+                    @for (s of U.suggestions?.regions ?? []; track $index; let i = $index) {
+                      @for (p of s.polygons; track $index) {
+                        <polygon class="sugg sugg--{{ s.kind }}" [attr.points]="pts(p.outer)" (click)="$event.stopPropagation(); useSuggestion(i)" />
+                      }
+                    }
+                  }
+                  @if (overlay()) { <image [attr.href]="overlay()" x="0" y="0" [attr.width]="U.width" [attr.height]="U.height" preserveAspectRatio="none" /> }
+                  @for (o of seg()?.obstacles ?? []; track $index; let i = $index) {
+                    <polygon class="obs" [class.obs--off]="keepClear()[i] === false" [attr.points]="pts(o.polygon)" />
+                  }
+                  @if (poly().length) { <polyline class="polyline" [attr.points]="pts(poly())" /> }
+                  @for (p of poly(); track $index) { <circle class="vtx" [attr.cx]="p[0]" [attr.cy]="p[1]" r="6" /> }
+                  @if (rectBox(); as R) { <rect class="rectsel" [attr.x]="R.x" [attr.y]="R.y" [attr.width]="R.w" [attr.height]="R.h" /> }
+                  @for (c of clicks(); track $index) {
+                    <circle class="click" [class.click--out]="!c.l" [attr.cx]="c.p[0]" [attr.cy]="c.p[1]" r="9" />
+                  }
+                  @if (refPts().length) {
+                    @if (refPts().length === 2) { <line class="ref" [attr.x1]="refPts()[0][0]" [attr.y1]="refPts()[0][1]" [attr.x2]="refPts()[1][0]" [attr.y2]="refPts()[1][1]" /> }
+                    @for (p of refPts(); track $index) { <circle class="refpt" [attr.cx]="p[0]" [attr.cy]="p[1]" r="7" /> }
+                  }
+                </svg>
+              }
+              @if (uploading()) { <div class="veil"><span class="spin"></span> Looking for usable surfaces…</div> }
+            </div>
+            <p class="hint">
+              @switch (tool()) {
+                @case ('include') { Click on the surface you want. Add more clicks to grow the selection. }
+                @case ('exclude') { Click on what must stay out: a window, a pipe, a neighbour's wall. }
+                @case ('rect') { Drag a rectangle over the area (fallback, no AI). }
+                @case ('polygon') { Click the corners, then “Close polygon”. }
+                @case ('reference') { Click both ends of something you can measure in real life: a door, a window, a row of tiles. }
+              }
+              @if (tool() === 'polygon' && poly().length >= 3) { <button type="button" class="link" (click)="closePolygon()">Close polygon</button> }
+            </p>
+          </div>
+
+          <aside class="side">
+            @if (upload(); as U) {
+              @if (U.suggestions?.regions?.length && !seg()) {
+                <div class="block">
+                  <h3>Suggested areas</h3>
+                  <p class="muted">Detected automatically. A visible surface is not necessarily able to carry an installation.</p>
+                  <ul class="chips">
+                    @for (s of U.suggestions!.regions; track $index; let i = $index) {
+                      @if (s.kind !== 'opening') {
+                        <li><button type="button" (click)="useSuggestion(i)">{{ s.kind === 'surface' ? 'Surface' : 'Region' }} · {{ s.area_frac * 100 | number: '1.0-0' }} % of the photo</button></li>
+                      }
+                    }
+                  </ul>
+                </div>
+              }
+            }
+            @if (seg(); as S) {
+              <div class="block">
+                <h3>Your selection</h3>
+                <p class="muted">{{ S.area_frac * 100 | number: '1.0-0' }} % of the photo · {{ S.backend === 'manual' ? 'drawn by you' : 'segmented by ' + S.backend.toUpperCase() + ' from your clicks' }}</p>
+              </div>
+              @if (S.obstacles.length) {
+                <div class="block">
+                  <h3>Obstacles found</h3>
+                  <ul class="obslist">
+                    @for (o of S.obstacles; track $index; let i = $index) {
+                      <li><label><input type="checkbox" [checked]="keepClear()[i] !== false" (change)="toggleObstacle(i)" />
+                        {{ o.label }} <small>keep clear</small></label></li>
+                    }
+                  </ul>
+                </div>
+              }
+              <div class="block">
+                <h3>How big is this area?</h3>
+                <p class="muted">A photo has no sizes. Give one real measurement, taken with a tape measure, and everything else is computed from it.</p>
+                <div class="scalepick" role="radiogroup" aria-label="Which measurement do you know?">
+                  @for (m of [['width', 'I know its width'], ['height', 'I know its height'], ['line', 'I measured something else']]; track m[0]) {
+                    <button type="button" role="radio" [attr.aria-checked]="scaleMode() === m[0]" [class.on]="scaleMode() === m[0]" (click)="setScaleMode($any(m[0]))">
+                      <svg viewBox="0 0 48 36" aria-hidden="true">
+                        <rect x="8" y="6" width="32" height="24" class="sp__area" />
+                        @switch (m[0]) {
+                          @case ('width') { <path d="M8 33h32M8 31v4M40 31v4" class="sp__dim" /> }
+                          @case ('height') { <path d="M44 6v24M42 6h4M42 30h4" class="sp__dim" /> }
+                          @default { <rect x="14" y="13" width="9" height="17" class="sp__door" /><path d="M11 13v17M9 13h4M9 30h4" class="sp__dim" /> }
+                        }
+                      </svg>
+                      <span>{{ m[1] }}</span>
+                    </button>
+                  }
+                </div>
+                @switch (scaleMode()) {
+                  @case ('width') {
+                    <label class="known">Real width of the selected area, from its left edge to its right edge
+                      <span class="unit"><input type="number" min="0.1" step="0.01" placeholder="e.g. 2.60" [value]="refLen() ?? ''" (input)="refLen.set($any($event.target).valueAsNumber || null)" /> m</span></label>
+                  }
+                  @case ('height') {
+                    <label class="known">Real height of the selected area, from the bottom to the top
+                      <span class="unit"><input type="number" min="0.1" step="0.01" placeholder="e.g. 2.00" [value]="refLen() ?? ''" (input)="refLen.set($any($event.target).valueAsNumber || null)" /> m</span></label>
+                  }
+                  @case ('line') {
+                    <ol class="howto">
+                      <li [class.ok]="refPts().length === 2">On the photo, click both ends of something you can measure: a door, a window, a row of tiles. <b>{{ refPts().length }}/2 clicks</b></li>
+                      <li [class.ok]="!!refLen()">Type its real length:
+                        <span class="unit"><input type="number" min="0.1" step="0.01" placeholder="e.g. 2.05" [value]="refLen() ?? ''" (input)="refLen.set($any($event.target).valueAsNumber || null)" /> m</span></li>
+                    </ol>
+                    <details class="more">
+                      <summary>Photo taken at an angle?</summary>
+                      <label class="known">Also give the real height of the area (optional, corrects the perspective)
+                        <span class="unit"><input type="number" min="0.1" step="0.01" [value]="heightM() ?? ''" (input)="heightM.set($any($event.target).valueAsNumber || null)" /> m</span></label>
+                    </details>
+                  }
+                }
+                <button type="button" class="btn btn--solid" (click)="measure()" [disabled]="measuring()">{{ measuring() ? 'Measuring…' : 'Measure the installation area' }}</button>
+              </div>
+            }
+            @if (area(); as A) {
+              <div class="block block--result">
+                <h3>Installation area</h3>
+                <dl class="kv">
+                  <div><dt>Envelope</dt><dd>{{ A.width_m | number: '1.2-2' }} × {{ A.height_m | number: '1.2-2' }} m</dd></div>
+                  <div><dt>Usable</dt><dd>{{ A.usable_area_m2 | number: '1.2-2' }} m²</dd></div>
+                  <div><dt>Kept clear</dt><dd>{{ A.obstacles_m.length }} obstacle(s), 5 cm margin</dd></div>
+                  <div><dt>Height</dt><dd>{{ A.scale.height_source }}</dd></div>
+                </dl>
+                @for (w of A.warnings; track w) { <p class="note">{{ w }}</p> }
+                <button type="button" class="btn btn--solid" (click)="go(1)">Continue: sunlight →</button>
+              </div>
+            }
+          </aside>
+        </div>
+      }
+    }
+
+    <!-- ============================================================ 2. SUN -->
+    @case (1) {
+      <section class="head">
+        <p class="eyebrow">Step 2 · Sunlight</p>
+        <h1>How the sun meets this wall.</h1>
+        <p class="sub">A photo cannot tell which way a wall faces. Confirm the orientation and the place; the sun is then computed (pvlib, clear sky) and drives the design.</p>
+      </section>
+      <div class="sun">
+        <div class="block">
+          <h3>Place</h3>
+          <div class="row">
+            <select [value]="city().name" (change)="pickCity($any($event.target).value)" aria-label="City">
+              @if (!cities.includes(city())) { <option [value]="city().name">{{ city().name }} ({{ city().lat }}, {{ city().lon }})</option> }
+              @for (c of cities; track c.name) { <option [value]="c.name">{{ c.name }}</option> }
+            </select>
+            <button type="button" class="btn btn--line btn--sm" (click)="locate()">Use my location</button>
+          </div>
+          <h3>Which way does the wall face?</h3>
+          @if (exifAz() != null) {
+            <p class="note">Your photo's compass says the wall faces about {{ exifAz() }}°. Phone compasses can be off near metal and concrete: please confirm.</p>
+          }
+          <div class="compass">
+            @for (c of compass; track c[0]) {
+              <button type="button" [class.on]="azimuth() === c[1]" (click)="setAz(c[1])">{{ c[0] }}<small>{{ c[1] }}°</small></button>
+            }
+          </div>
+          <div class="row">
+            <label>Exact azimuth <span class="unit"><input type="number" min="0" max="359" [value]="azimuth() ?? ''" (input)="setAz($any($event.target).valueAsNumber)" /> °</span></label>
+            <button type="button" class="btn btn--solid btn--sm" (click)="confirmAz()" [disabled]="azimuth() == null">{{ azConfirmed() ? 'Confirmed ✓' : 'Confirm orientation' }}</button>
+          </div>
+          <p class="muted">Direction you see when standing with your back against the wall.</p>
+        </div>
+
+        @if (sunDay(); as D) {
+          <div class="block sunpanel">
+            <div class="seg">
+              <button type="button" [class.on]="season() === 'summer'" (click)="setSeason('summer')">Summer · 21 June</button>
+              <button type="button" [class.on]="season() === 'winter'" (click)="setSeason('winter')">Winter · 21 December</button>
+            </div>
+            @if (sunChart(); as G) {
+              <svg class="chart" viewBox="0 0 600 180" role="img" aria-label="Sun elevation and irradiance on the wall through the day">
+                @for (b of G.bars; track $index) { <rect [attr.x]="b.x" [attr.y]="150 - b.h" width="6" [attr.height]="b.h" [class.beam]="b.beam" class="bar" /> }
+                <path [attr.d]="G.el" class="elev" />
+                <line [attr.x1]="G.cursor" [attr.x2]="G.cursor" y1="10" y2="150" class="cursor" />
+                @for (t of G.ticks; track t.t) { <text [attr.x]="t.x" y="170" text-anchor="middle">{{ t.t }}</text> }
+                <text x="30" y="14" class="lg">— sun elevation</text><text x="160" y="14" class="lg lg--b">▮ irradiance on the wall (W/m²)</text>
+              </svg>
+            }
+            <label class="slider">Time ({{ D.sunrise }} – {{ D.sunset }})
+              <input type="range" min="0" [max]="D.times.length - 1" [value]="tIndex()" (input)="tIndex.set($any($event.target).valueAsNumber)" />
+            </label>
+            @if (sunNow(); as N) {
+              <div class="readout">
+                <b>{{ N.time }}</b>
+                <span>sun {{ N.el | number: '1.0-0' }}° high, azimuth {{ N.az | number: '1.0-0' }}°</span>
+                <span [class.lit]="N.facing">{{ N.facing ? 'Direct sun on the wall: ' + (N.beam | number: '1.0-0') + ' W/m²' : 'Wall in its own shade (diffuse ' + (N.diffuse | number: '1.0-0') + ' W/m²)' }}</span>
+              </div>
+            }
+            <div class="compare">
+              @for (k of ['summer', 'winter']; track k) {
+                @if (solar()[k]; as S) {
+                  <div [class.on]="season() === k"><small>{{ k }}</small><b>{{ S.daily_kwh_m2 | number: '1.1-1' }} kWh/m²/day</b>
+                    <span>{{ S.direct_hours | number: '1.1-1' }} h of direct sun · peak {{ S.peak_w_m2 | number: '1.0-0' }} W/m²</span></div>
+                }
+              }
+            </div>
+            <p class="muted">{{ D.note }}</p>
+            <button type="button" class="btn btn--solid" (click)="go(2)">Continue: plants & culture →</button>
+          </div>
+        } @else {
+          <div class="block muted">Confirm the orientation to compute the sun on this wall.</div>
+        }
+      </div>
+    }
+
+    <!-- ============================================================ 3. PLANTS & CULTURE -->
+    @case (2) {
+      <section class="head">
+        <p class="eyebrow">Step 3 · Plants & cultural inspiration</p>
+        <h1>What should grow, and in which geometry?</h1>
+        <p class="sub">Pick your plants, how green the wall should be, and a cultural pattern. The sun decides which plant goes in which pocket; the water you'll need is computed for you.</p>
+      </section>
+      <div class="cols">
+        <div class="block">
+          <h3>Plants (1 to 6)</h3>
+          <div class="plants">
+            @for (p of allPlants; track p) {
+              <button type="button" [class.on]="plants().includes(p)" (click)="togglePlant(p)" [attr.aria-pressed]="plants().includes(p)">{{ plantLabel[p] }}</button>
+            }
+          </div>
+          <h3 class="h3gap">How green?</h3>
+          <div class="greens" role="radiogroup" aria-label="How many pockets are planted">
+            @for (g of greeneryOptions; track g.id) {
+              <button type="button" role="radio" class="green" [class.on]="greenery() === g.id" [attr.aria-checked]="greenery() === g.id" (click)="greenery.set(g.id)">
+                <svg viewBox="0 0 36 36" aria-hidden="true">
+                  @for (f of g.fill; track $index; let i = $index) {
+                    <rect [attr.x]="2 + (i % 3) * 11.5" [attr.y]="2 + (i < 3 ? 0 : i < 6 ? 11.5 : 23)" width="9.5" height="9.5" [class.green__on]="f" />
+                  }
+                </svg>
+                <span><b>{{ g.name }}</b><small>{{ g.text }}</small></span>
+              </button>
+            }
+          </div>
+          <p class="muted">You don't need to know how much water you have: each design tells you how many litres it needs per day and how often to refill it.</p>
+          <details class="prices">
+            <summary>I can only give a limited amount of water (optional)</summary>
+            <label class="toggle"><input type="checkbox" [checked]="waterLimitOn()" (change)="waterLimitOn.set(!waterLimitOn())" /> Limit the water to</label>
+            @if (waterLimitOn()) {
+              <label class="slider"><b>{{ waterLimit() }} L per day</b> (fewer pockets will be planted to stay under it)
+                <input type="range" min="1" max="30" step="0.5" [value]="waterLimit()" (input)="waterLimit.set($any($event.target).valueAsNumber)" />
+              </label>
+            }
+          </details>
+          <details class="prices">
+            <summary>Local prices (optional, for a cost estimate)</summary>
+            <div class="row">
+              <label>Frame <span class="unit"><input type="number" min="0" (input)="setPrice('frame', $any($event.target).value)" /> TND/m</span></label>
+              <label>Screen <span class="unit"><input type="number" min="0" (input)="setPrice('screen', $any($event.target).value)" /> TND/m²</span></label>
+              <label>Pocket <span class="unit"><input type="number" min="0" (input)="setPrice('pocket', $any($event.target).value)" /> TND</span></label>
+            </div>
+            <p class="muted">Without real prices, no cost is shown.</p>
+          </details>
+        </div>
+        <div class="block">
+          <div class="pick__head">
+            <h3>{{ compare() ? 'Patterns to compare' : 'Choose your pattern' }}</h3>
+            <label class="toggle"><input type="checkbox" [checked]="compare()" (change)="setCompare(!compare())" /> Compare several patterns</label>
+          </div>
+          <div class="styles" [attr.role]="compare() ? 'group' : 'radiogroup'" aria-label="Cultural patterns">
+            @for (s of styleInfo; track s.id) {
+              <button type="button" class="style" [class.on]="styleSel().includes(s.id)" (click)="toggleStyle(s.id)"
+                      [attr.role]="compare() ? null : 'radio'" [attr.aria-checked]="compare() ? null : styleSel().includes(s.id)"
+                      [attr.aria-pressed]="compare() ? styleSel().includes(s.id) : null">
+                <span class="style__draw" [innerHTML]="patterns()[s.id]?.svg ?? ''"></span>
+                <span class="style__txt"><b>{{ s.name }}</b><small>{{ s.culture }}</small></span>
+              </button>
+            }
+          </div>
+          @if (styleSel().length === 1 && patterns()[styleSel()[0]]; as P) { <p class="muted">{{ P.text }}</p> }
+          <button type="button" class="btn btn--solid" (click)="generate()">
+            {{ styleSel().length === 1 ? 'Generate this design for my wall →' : 'Generate ' + styleSel().length + ' designs for my wall →' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- ============================================================ 4. DESIGNS -->
+    @case (3) {
+      <section class="head">
+        <p class="eyebrow">Step 4 · Designs</p>
+        <h1>Geometries that fit your space.</h1>
+        @if (result(); as R) {
+          <p class="sub">{{ R.designs.length }} {{ R.designs.length === 1 ? 'style' : 'styles' }} fitted to {{ area()?.width_m | number: '1.1-1' }} × {{ area()?.height_m | number: '1.1-1' }} m in {{ R.seconds | number: '1.0-0' }} s. {{ R.note }}</p>
+        }
+      </section>
+      @if (generating()) {
+        <div class="block muted"><span class="spin"></span> Fitting each geometry to the area, placing plants by sunlight and optimizing the channels… {{ genElapsed() }} s</div>
+      }
+      @if (result(); as R) {
+        <div class="recs">
+          <h3>What the sun says <span class="tag">{{ R.exposure_class }} exposure</span></h3>
+          <ul>@for (r of R.recommendations; track r.text) { <li><b>{{ r.topic }}</b> {{ r.text }}</li> }</ul>
+        </div>
+        <div class="gallery" [class.gallery--one]="R.designs.length === 1">
+          @for (d of R.designs; track d.style) {
+            <article class="card" [class.on]="chosen()?.style === d.style" [class.err]="d.error" (click)="choose(d)" tabindex="0" (keydown.enter)="choose(d)">
+              @if (d.error) {
+                <h3>{{ d.name }}</h3><p class="muted">{{ d.error }}</p>
+              } @else {
+                <div class="card__svg" [innerHTML]="svgOf(d)"></div>
+                <div class="card__body">
+                  <p class="eyebrow">{{ d.culture }}</p>
+                  <h3>{{ d.name }}</h3>
+                  <p class="fit" [class.fit--ok]="isFit(d)">{{ d.fit }}</p>
+                  @if (d.water; as Wt) {
+                    <div class="water">
+                      <p class="water__t">Water you will give</p>
+                      <p class="water__big"><b>{{ Wt.summer_l_day | number: '1.0-1' }} L</b> a day in summer <span>≈ {{ bottles(Wt.summer_l_day) }} bottles of 1.5 L</span></p>
+                      <p>{{ Wt.winter_l_day | number: '1.0-1' }} L a day in winter.</p>
+                      @if (Wt.refill_days_summer) {
+                        <p>The built-in reservoirs hold <b>{{ Wt.storage_l | number: '1.0-0' }} L</b>: fill them about every
+                          <b>{{ Wt.refill_days_summer | number: '1.0-0' }} days</b> in summer{{ Wt.refill_days_winter ? ', every ' + (Wt.refill_days_winter | number: '1.0-0') + ' days in winter' : '' }}.</p>
+                      }
+                      <p class="water__plants">@for (e of perPlant(Wt.per_plant); track e[0]) { <span>{{ e[1] }} × {{ plantLabel[e[0]] }}</span> }</p>
+                      @if (Wt.hand_watered_pockets) { <p class="note">{{ Wt.hand_watered_pockets }} pocket(s) cannot be reached by the hidden channels (cut off by a window or an edge): water them by hand.</p> }
+                      @if (d.metrics.water_limited) { <p class="note">Your water limit left some cells unplanted.</p> }
+                      <p class="water__basis">{{ Wt.basis }}</p>
+                    </div>
+                  }
+                  <dl class="kv kv--sm">
+                    <div><dt>Planted pockets</dt><dd>{{ d.metrics.planting_cells }} of {{ d.metrics.cells }} cells</dd></div>
+                    <div><dt>Size</dt><dd>{{ d.width_m | number: '1.2-2' }} × {{ d.height_m | number: '1.2-2' }} m</dd></div>
+                    @if (d.optimisation?.summary; as O) {
+                      <div><dt>Heat reduction</dt><dd>{{ O.heat_reduction_pct | number: '1.0-0' }} % <small>model</small></dd></div>
+                      <div><dt>Drip time</dt><dd>{{ O.drain_time_min | number: '1.0-0' }} min</dd></div>
+                    } @else {
+                      <div class="wide"><dt>Optimizer</dt><dd>{{ d.optimisation?.message }}</dd></div>
+                    }
+                    <div><dt>Wood</dt><dd>{{ d.metrics.frame_length_m | number: '1.0-0' }} m of frame</dd></div>
+                    <div><dt>Cost</dt><dd>{{ d.cost_tnd != null ? (d.cost_tnd | number: '1.0-0') + ' TND' : 'not estimated' }}</dd></div>
+                  </dl>
+                </div>
+              }
+            </article>
+          }
+        </div>
+
+        @if (chosen(); as C) {
+          <section class="inspect">
+            <div class="inspect__head">
+              <div><p class="eyebrow">Selected</p><h2>{{ C.name }}</h2></div>
+              <div class="seg">
+                <button type="button" [class.on]="twinView() === 'architecture'" (click)="twinView.set('architecture')">Architecture</button>
+                <button type="button" [class.on]="twinView() === 'hydraulic'" (click)="twinView.set('hydraulic')">Hydraulic</button>
+                <button type="button" [class.on]="twinView() === 'environment'" (click)="twinView.set('environment')">Sunlight</button>
+              </div>
+            </div>
+            <div class="inspect__grid">
+              <app-twin3d class="viewport" [design]="C" [view]="twinView()" [showChannels]="twinChannels()" [sun]="twinSun()" />
+              <div class="block">
+                @if (sunDay(); as D) {
+                  <div class="seg seg--sm">
+                    <button type="button" [class.on]="season() === 'summer'" (click)="setSeason('summer')">Summer</button>
+                    <button type="button" [class.on]="season() === 'winter'" (click)="setSeason('winter')">Winter</button>
+                  </div>
+                  <label class="slider">Sun at {{ sunNow()?.time }} <input type="range" min="0" [max]="D.times.length - 1" [value]="tIndex()" (input)="tIndex.set($any($event.target).valueAsNumber)" /></label>
+                  <p class="muted">The light in the model follows the computed sun; shadows come from the real geometry. In “Sunlight” view, cells are tinted by the direct sun they receive (self-shading model; surroundings not modelled).</p>
+                }
+                <label class="toggle"><input type="checkbox" [checked]="twinChannels()" (change)="twinChannels.set(!twinChannels())" /> Show hidden irrigation channels</label>
+                <p class="muted">{{ C.text }}</p>
+                <button type="button" class="btn btn--solid" (click)="makePreview()">Preview it on my wall →</button>
+              </div>
+            </div>
+          </section>
+        }
+      }
+    }
+
+    <!-- ============================================================ 5. PREVIEW -->
+    @case (4) {
+      <section class="head">
+        <p class="eyebrow">Step 5 · Future installation</p>
+        <h1>Your wall, with {{ chosen()?.name }}.</h1>
+        <p class="sub">Only the selected area changes; the building, windows and doors stay exactly as photographed. Every image is a design visualization, not a photograph of an existing installation.</p>
+      </section>
+      @if (previewing()) { <div class="block muted"><span class="spin"></span> Building the wooden lattice and the plants on your photo (about 2 s)…</div> }
+      @if (preview(); as P) {
+        <div class="seg">
+          <button type="button" [class.on]="layer() === 'original'" (click)="layer.set('original')">Original photo</button>
+          <button type="button" [class.on]="layer() === 'segmented'" (click)="layer.set('segmented')">Installation area</button>
+          <button type="button" [class.on]="layer() === 'realistic'" (click)="layer.set('realistic')" [disabled]="!P.realistic_png_base64">Realistic preview</button>
+          <button type="button" [class.on]="layer() === 'geometry'" (click)="layer.set('geometry')">Plan drawing</button>
+        </div>
+        <div class="ba" [style.--s]="split() + '%'">
+          <div class="ba__stage" [style.transform]="zoomTf()?.transform ?? null" [style.--s]="stageSplit() + '%'">
+            <img class="ba__before" [src]="photoUrl()" alt="Original photo" />
+            @if (layer() === 'segmented') {
+              <img class="ba__after" [src]="photoUrl()" alt="" />
+              <img class="ba__after ba__ov" [src]="png(P.segmented_overlay_png_base64)" alt="Installation area" />
+            } @else {
+              <img class="ba__after" [src]="layerSrc()" alt="Design visualization on your wall" />
+            }
+          </div>
+          <input class="ba__range" type="range" min="0" max="100" [value]="split()" (input)="split.set($any($event.target).valueAsNumber)" aria-label="Before / after" />
+          <span class="ba__l">Before</span><span class="ba__r">Design visualization</span>
+        </div>
+        <p class="hint">Drag across the image to compare before and after.
+          <button type="button" class="link" (click)="zoom.set(!zoom())">{{ zoom() ? 'Show the whole photo' : 'Zoom on the installation' }}</button></p>
+        <div class="row row--actions">
+          <button type="button" class="btn btn--line" (click)="makePreview(true)" [disabled]="realisticBusy()">
+            {{ realisticBusy() ? 'AI pass on the GPU (first time ~40 s)…' : 'Optional: AI touch-up (GPU, slower)' }}
+          </button>
+          <button type="button" class="btn btn--solid" (click)="openTwin()">Open my installation in the digital twin →</button>
+        </div>
+        @if (P.message) { <p class="note">{{ P.message }}</p> }
+      }
+    }
+  }
+</main>

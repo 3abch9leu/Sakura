@@ -1,18 +1,18 @@
 :host {
-  --bg: #f6f3ec;
-  --paper: #fcfbf7;
-  --ink: #2b2d2a;
-  --muted: #6c6f68;
+  --bg: #f7f5ef;
+  --paper: #fbfaf6;
+  --ink: #252822;
+  --muted: #6d7067;
   --line: rgba(43, 45, 42, 0.12);
-  --sage: #9aa98c;
-  --sage-soft: #e7ebe0;
-  --olive: #4c5a36;
-  --olive-deep: #3a4529;
-  --taupe: #c8b99b;
-  --amber: #9a6b22;
-  --amber-soft: #f5ecda;
-  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
-  --sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sage: #a8b39b;
+  --sage-soft: #e9ece2;
+  --olive: #414b30;
+  --olive-deep: #323a25;
+  --taupe: #cdbfa6;
+  --amber: #9a643f;
+  --amber-soft: #f4e9df;
+  --serif: 'Inter Tight', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --arabic: 'Segoe UI', Tahoma, 'Noto Naskh Arabic', sans-serif;
 
   display: block;

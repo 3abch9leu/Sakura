@@ -1,0 +1,116 @@
+<header class="bar">
+  <a class="brand" routerLink="/"><img src="images/logo-mark-96.png" alt="" width="30" height="30" /><b>INBETWEEN</b><span>Plant health</span></a>
+  <nav><a routerLink="/dashboard">Digital twin</a><a routerLink="/camera">Plant camera</a></nav>
+</header>
+
+<main class="wrap">
+  <section class="head">
+    <p class="eyebrow">Plant health</p>
+    <h1>Check a leaf, get a care plan.</h1>
+    <p class="sub">Drop a photo of one leaf. Our model marks the damaged areas, then you get clear steps for today, this week and the
+      long run. It does not name the disease: it tells you what to check and when to ask an expert.</p>
+  </section>
+
+  <div class="grid">
+    <!-- input -->
+    <div class="col">
+      <label class="drop" [class.over]="dragging()" [class.busy]="busy()"
+             (dragover)="onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+        <input type="file" accept="image/*" capture="environment" (change)="onFile($event)" hidden [disabled]="busy()" />
+        @if (busy()) {
+          <span class="spin"></span><b>Looking at the leaf…</b>
+        } @else {
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c8 0 14-6 14-14C11 5 5 11 5 19zm0 0l7-7" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" /></svg>
+          <b>Drop a leaf photo here</b>
+          <small>or click to choose one · on a phone, take the photo directly</small>
+        }
+      </label>
+      <p class="tip">Best results: one leaf filling the frame, in daylight, no flash. Photograph the side with the spots.</p>
+
+      <div class="block">
+        <h3>Which plant? <small>optional, for plant-specific advice</small></h3>
+        <div class="chips">
+          @for (p of plants; track p) {
+            <button type="button" [class.on]="plant() === p" (click)="plant.set(plant() === p ? null : p)">{{ plantLabel[p] }}</button>
+          }
+        </div>
+        <label class="toggle"><input type="checkbox" [checked]="useWeather()" (change)="useWeather.set(!useWeather())" />
+          Use the weather forecast for {{ locName }} (humidity and rain change the advice)</label>
+      </div>
+
+      <div class="block">
+        <div class="block__head"><h3>Plant camera</h3><button type="button" class="link" (click)="loadCamera()">Refresh</button></div>
+        <p class="muted">A phone pointed at the plants takes a photo every two minutes. Pick one to check it.</p>
+        @if (camPhotos().length) {
+          <div class="roll">
+            @for (p of camPhotos(); track p.id) {
+              <button type="button" (click)="analyzeCam(p)" [disabled]="busy()" [attr.aria-label]="'Check the camera photo from ' + time(p.ts)">
+                <img [src]="jpg(p.thumb_jpg_base64)" alt="" /><span>{{ time(p.ts) }}{{ p.cell != null ? ' · cell ' + p.cell : '' }}</span>
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="muted">{{ camLoading() ? 'Loading…' : 'No camera photo yet.' }}</p>
+        }
+        <a class="btn btn--line" routerLink="/camera">Use a phone as plant camera →</a>
+      </div>
+    </div>
+
+    <!-- result -->
+    <div class="col col--result">
+      @if (error()) { <p class="err">{{ error() }}</p> }
+      @if (current(); as C) {
+        @let R = C.result;
+        <div class="ba" [style.--s]="split() + '%'">
+          <img [src]="jpg(R.original_jpg_base64)" alt="Your leaf photo" />
+          <img class="ba__after" [src]="jpg(R.overlay_jpg_base64)" alt="Damaged areas marked by the model" />
+          <input type="range" min="0" max="100" [value]="split()" (input)="split.set($any($event.target).valueAsNumber)" aria-label="Photo / marked areas" />
+          <span class="ba__l">Photo</span><span class="ba__r">Marked areas</span>
+        </div>
+
+        <div [class]="'verdict v--' + R.severity">
+          <b>{{ R.label }}</b>
+          <span>{{ R.affected_share * 100 | number: '1.0-1' }} % of the visible leaf · {{ R.spots }} {{ R.spots === 1 ? 'area' : 'areas' }}{{ C.plant ? ' · ' + plantLabel[C.plant] : '' }}</span>
+        </div>
+        @for (w of R.warnings; track w) { <p class="note">{{ w }}</p> }
+
+        <section class="plan">
+          <p class="plan__sum">{{ R.care.summary }}</p>
+          @if (R.care.today.length) {
+            <div class="step"><h4><span>1</span> Today</h4><ul>@for (t of R.care.today; track t) { <li>{{ t }}</li> }</ul></div>
+          }
+          @if (R.care.week.length) {
+            <div class="step"><h4><span>2</span> This week</h4><ul>@for (t of R.care.week; track t) { <li>{{ t }}</li> }</ul></div>
+          }
+          @if (R.care.prevention.length) {
+            <div class="step"><h4><span>3</span> To prevent it</h4><ul>@for (t of R.care.prevention; track t) { <li>{{ t }}</li> }</ul></div>
+          }
+          @if (R.care.plant_note) { <p class="pnote"><b>{{ plantLabel[C.plant!] }}:</b> {{ R.care.plant_note }}</p> }
+          @if (R.care.expert) { <p class="expert">{{ R.care.expert }}</p> }
+          @if (R.care.why.length) {
+            <details><summary>Why this advice</summary><ul>@for (w of R.care.why; track w) { <li>{{ w }}</li> }</ul></details>
+          }
+        </section>
+
+        <p class="muted small">{{ R.disclaimer }}</p>
+        <p class="meta">{{ R.model.name }} · {{ R.model.device }} · {{ R.timing_ms.total | number: '1.0-0' }} ms{{ R.weather_used ? ' · weather included' : '' }}</p>
+
+        @if (checks().length > 1) {
+          <div class="history">
+            <h3>Earlier checks</h3>
+            @for (c of checks().slice(1); track c.at) {
+              <button type="button" (click)="show(c)">
+                <img [src]="jpg(c.result.overlay_jpg_base64)" alt="" />
+                <span>{{ time(c.at) }} · {{ c.result.label }} · {{ c.result.affected_share * 100 | number: '1.0-1' }} %</span>
+              </button>
+            }
+          </div>
+        }
+      } @else {
+        <div class="empty">
+          <p>Your result appears here: the leaf with the damaged areas marked, how much of the leaf is affected, and a step-by-step care plan.</p>
+        </div>
+      }
+    </div>
+  </div>
+</main>

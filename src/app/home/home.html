@@ -1,337 +1,341 @@
 <div class="progress" aria-hidden="true"></div>
 
-<!-- Shared SVG definitions: lattice masks, clay/moss gradients, ceramic grain -->
+<!-- Shared SVG definitions -->
 <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
   <defs>
-    <pattern id="pStar" width="100" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
+    <pattern id="pStar" width="100" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(.9)">
       <polygon [attr.points]="star8" fill="#000" />
-      @for (c of star8Dots; track $index) {
-        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="11" fill="#000" />
-      }
+      @for (c of star8Dots; track $index) { <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="11" fill="#000" /> }
     </pattern>
-    <pattern id="pHex" width="100" height="173.2" patternUnits="userSpaceOnUse" patternTransform="scale(.8)">
-      @for (p of hexStars; track $index) {
-        <polygon [attr.points]="p" fill="#000" />
-      }
-      @for (c of hexDots; track $index) {
-        <circle [attr.cx]="c[0]" [attr.cy]="c[1]" r="6" fill="#000" />
-      }
-    </pattern>
-    <mask id="mStar" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
-      <rect width="1000" height="1000" fill="#fff" />
-      <rect width="1000" height="1000" fill="url(#pStar)" />
+    <mask id="mStar" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="1000">
+      <rect width="1200" height="1000" fill="#fff" /><rect width="1200" height="1000" fill="url(#pStar)" />
     </mask>
-    <mask id="mHex" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000">
-      <rect width="1000" height="1000" fill="#fff" />
-      <rect width="1000" height="1000" fill="url(#pHex)" />
-    </mask>
-    <linearGradient id="gClay" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#dc7c4d" />
-      <stop offset="1" stop-color="#b3573a" />
-    </linearGradient>
-    <linearGradient id="gMoss" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#3d7050" />
-      <stop offset="1" stop-color="#244533" />
-    </linearGradient>
-    <filter id="fBlur" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="3" />
-    </filter>
+    <filter id="fSoft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14" /></filter>
+    <filter id="fShadow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="5" /></filter>
     <filter id="fGrain" x="0" y="0" width="100%" height="100%">
-      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n" />
-      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .25  0 0 0 0 .1  0 0 0 0 .04  1.4 0 0 0 -.55" result="g" />
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4" result="n" />
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 .25  0 0 0 0 .1  0 0 0 0 .04  1.2 0 0 0 -.6" result="g" />
       <feComposite in="g" in2="SourceAlpha" operator="in" result="gc" />
-      <feMerge>
-        <feMergeNode in="SourceGraphic" />
-        <feMergeNode in="gc" />
-      </feMerge>
+      <feMerge><feMergeNode in="SourceGraphic" /><feMergeNode in="gc" /></feMerge>
     </filter>
   </defs>
 </svg>
 
 <!-- NAV -->
 <header class="nav" #nav>
-  <a class="logo" href="#top" aria-label="InBetween home">
-    <svg viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M6 26c0-11 7-19 20-20 0 12-7 20-18 20-.7 0-1.4 0-2-.1" fill="currentColor" />
-      <path d="M6 26c4-7 9-12 15-15" stroke="#f4efe6" stroke-width="1.6" stroke-linecap="round" fill="none" />
-    </svg>
-    <span>InBetween</span>
+  <a class="brand" routerLink="/" aria-label="INBETWEEN, home">
+    <img src="images/logo-mark-96.png" alt="" width="48" height="48" />
+    <b>INBETWEEN</b>
   </a>
-  <nav class="links" aria-label="Sections">
-    <a href="#between">Between</a>
-    <a href="#how">How it works</a>
-    <a href="#elements">Elements</a>
-    <a routerLink="/energy">Energy &amp; Comfort</a>
+  <button type="button" class="burger" (click)="menuOpen.set(!menuOpen())" [attr.aria-expanded]="menuOpen()" aria-controls="menu" aria-label="Menu">
+    <i></i><i></i>
+  </button>
+  <nav class="links" id="menu" [class.open]="menuOpen()" aria-label="Main">
+    <button type="button" (click)="scrollTo('features')">Features</button>
+    <button type="button" (click)="scrollTo('prototype')">Prototype</button>
+    <button type="button" (click)="scrollTo('heritage')">Heritage</button>
+    <button type="button" (click)="scrollTo('applications')">Urban &amp; Agro</button>
+    <a routerLink="/dashboard">Digital twin</a>
+    <a routerLink="/energy">Energy</a>
+    <a class="links__cta" routerLink="/space">Explore <span aria-hidden="true">→</span></a>
   </nav>
-  <a class="pill" routerLink="/design">Design your screen</a>
 </header>
 
 <main id="top">
-  <!-- HERO -->
-  <section class="hero" #hero>
+  <!-- HERO: full-bleed photograph, calm wall on the left for the words -->
+  <section class="hero" #hero aria-labelledby="hero-title">
+    <div class="hero__media" aria-hidden="true">
+      <picture>
+        <source type="image/webp" srcset="images/hero-living-wall-960.webp 960w, images/hero-living-wall.webp 1672w" sizes="100vw" />
+        <img src="images/hero-living-wall.jpg" alt="" width="1672" height="941" fetchpriority="high" decoding="async" />
+      </picture>
+    </div>
+    <!-- decorative daylight: a soft warm wash and a leaf-shadow layer drifting the other way (not a solar simulation) -->
+    <div class="hero__shadow" aria-hidden="true">
+      <svg viewBox="0 0 900 700" preserveAspectRatio="xMidYMid slice">
+        <g filter="url(#fShadow)" fill="#3b2a1a">
+          @for (b of [0, 1, 2]; track b) {
+            <g [attr.transform]="'translate(' + (120 + b * 210) + ' ' + (40 + b * 70) + ') rotate(' + (28 + b * 9) + ')'">
+              <path d="M0 0 C 40 120, 30 260, 90 420" fill="none" stroke="#3b2a1a" stroke-width="5" />
+              @for (k of [0, 1, 2, 3, 4, 5]; track k) {
+                <ellipse [attr.cx]="6 + k * 14" [attr.cy]="40 + k * 64" rx="15" ry="34" [attr.transform]="'rotate(' + (k % 2 ? 48 : -42) + ' ' + (6 + k * 14) + ' ' + (40 + k * 64) + ')'" />
+              }
+            </g>
+          }
+        </g>
+      </svg>
+    </div>
+    <div class="hero__sun" aria-hidden="true"></div>
+    <div class="hero__veil" aria-hidden="true"></div>
+
     <div class="hero__copy">
-      <p class="eyebrow">Tunisia × Japan · Living façades</p>
-      <h1 class="title" aria-label="InBetween">
-        <span class="in" aria-hidden="true">In</span>
-        <span class="between" aria-hidden="true">
-          @for (l of letters; track $index) {
-            <span class="ch" [style.--i]="$index">{{ l }}</span>
-          }
-        </span>
-      </h1>
-      <p class="lead">
-        A façade that
-        <span class="rotator">
-          <ul aria-hidden="true">
-            @for (w of words; track w) {
-              <li>{{ w }}</li>
-            }
-            <li>{{ words[0] }}</li>
-          </ul>
-        </span>
-        with no electricity once it’s built.
-      </p>
-      <p class="sub">
-        InBetween designs a perforated screen for your window with AI, then lets sun and gravity do the work.
-      </p>
-      <div class="cta-row">
-        <a class="btn btn--primary" routerLink="/design">
-          <span>Design my screen</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-        </a>
-        <a class="btn btn--ghost" href="#how">How it works</a>
-      </div>
-      <p class="hint"><i></i>Move your cursor. The sun follows.</p>
-    </div>
-
-    <div class="stage">
-      <svg class="orbit orbit--a" viewBox="-200 -200 400 400" aria-hidden="true">
-        <polygon [attr.points]="orbit8" />
-        <circle r="196" />
-      </svg>
-      <svg class="orbit orbit--b" viewBox="-200 -200 400 400" aria-hidden="true">
-        <polygon [attr.points]="orbit6" />
-      </svg>
-
-      <div class="arch-frame">
-        <div class="arch" #arch>
-          <div class="arch__wall"></div>
-          <div class="arch__glow"></div>
-          <svg viewBox="0 0 400 560" preserveAspectRatio="xMidYMid slice" role="img"
-               aria-label="A terracotta lattice screen casting a moving shadow, with herbs growing below">
-            <g class="shadow" filter="url(#fBlur)">
-              <rect width="400" height="560" fill="#2a1608" opacity=".4" mask="url(#mStar)" />
-            </g>
-            <g filter="url(#fGrain)">
-              <rect width="400" height="560" fill="url(#gClay)" mask="url(#mStar)" />
-            </g>
-
-            <!-- gravity channel -->
-            <rect x="366" y="170" width="30" height="42" rx="7" fill="rgba(255,255,255,.4)" stroke="rgba(255,255,255,.75)" />
-            <rect x="370" y="190" width="22" height="18" rx="4" fill="#7cc4d6" />
-            <rect x="381" y="212" width="6" height="276" rx="3" fill="rgba(124,196,214,.5)" />
-            <circle class="hdrop" cx="384" cy="216" r="3.5" fill="#cdeef6" />
-            <circle class="hdrop" cx="384" cy="216" r="3.5" fill="#cdeef6" style="animation-delay:-.95s" />
-            <circle class="hdrop" cx="384" cy="216" r="3.5" fill="#cdeef6" style="animation-delay:-1.9s" />
-
-            <!-- herbs -->
-            @for (p of plants; track p.x) {
-              <g [attr.transform]="'translate(' + p.x + ' 496)'">
-                <g class="sway" [style.animation-delay]="p.d">
-                  @for (a of leafAngles; track a; let i = $index) {
-                    <path class="lf" [attr.d]="leafD" [attr.transform]="'rotate(' + a + ') scale(' + (1.25 + (i % 2) * 0.25) + ')'" />
-                  }
-                </g>
-              </g>
-            }
-            <rect y="488" width="400" height="72" fill="#85391f" />
-            <rect y="488" width="400" height="9" fill="#a9532f" />
-          </svg>
-        </div>
-      </div>
-
-      <span class="chip chip--shade"><i></i>Shade</span>
-      <span class="chip chip--water"><i></i>Water</span>
-      <span class="chip chip--food"><i></i>Food</span>
-    </div>
-  </section>
-
-  <!-- RIBBON -->
-  <div class="ribbon" aria-hidden="true">
-    <div class="ribbon__track">
-      @for (n of [1, 2]; track n) {
-        <div class="ribbon__group">
-          @for (w of ribbon; track w) {
-            <span>{{ w }}</span><b>✦</b>
-          }
-        </div>
-      }
-    </div>
-  </div>
-
-  <!-- BETWEEN -->
-  <section class="section" id="between">
-    <div class="wrap">
-      <p class="eyebrow" data-reveal>01 — Between</p>
-      <h2 class="h2" data-reveal>Two traditions.<br /><em>One screen.</em></h2>
-      <p class="sub sub--wide" data-reveal>
-        Tunisian star geometry and Japanese lattice meet under constraints: every opening must still carry shade, water and structure. Drag to blend.
-      </p>
-
-      <div class="compare" #cmp data-reveal [style.--pos]="pos()"
-           (pointerdown)="startDrag($event, cmp)" (pointermove)="moveDrag($event, cmp)"
-           (pointerup)="endDrag()" (pointercancel)="endDrag()">
-        <div class="layer layer--a">
-          <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-            <g style="transform:translate(10px,14px)" filter="url(#fBlur)">
-              <rect width="800" height="500" fill="#2a1608" opacity=".35" mask="url(#mStar)" />
-            </g>
-            <g filter="url(#fGrain)"><rect width="800" height="500" fill="url(#gClay)" mask="url(#mStar)" /></g>
-          </svg>
-        </div>
-        <div class="layer layer--b">
-          <svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-            <g style="transform:translate(10px,14px)" filter="url(#fBlur)">
-              <rect width="800" height="500" fill="#10200f" opacity=".35" mask="url(#mHex)" />
-            </g>
-            <g filter="url(#fGrain)"><rect width="800" height="500" fill="url(#gMoss)" mask="url(#mHex)" /></g>
-          </svg>
-        </div>
-
-        <span class="tagline tagline--l"><b>Tunisia</b> Qallaline · zellige star</span>
-        <span class="tagline tagline--r"><b>Japan</b> Asanoha-inspired lattice</span>
-
-        <div class="handle" role="slider" tabindex="0" aria-label="Blend between Tunisian and Japanese motifs"
-             aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="pos()" (keydown)="onKey($event)">
-          <span class="knob">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l-6 6 6 6M15 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-          </span>
-        </div>
-      </div>
-      <p class="note" data-reveal>Illustrative geometry. Final screens are validated for hydraulics and structure before fabrication.</p>
-    </div>
-  </section>
-
-  <!-- HOW -->
-  <section class="section section--sand" id="how">
-    <div class="wrap">
-      <p class="eyebrow" data-reveal>02 — How it works</p>
-      <h2 class="h2" data-reveal>From a photo to<br /><em>a living wall.</em></h2>
-      <ol class="steps">
-        @for (s of steps; track s.n) {
-          <li data-reveal [style.--d]="$index * 0.12 + 's'">
-            <span class="num">{{ s.n }}</span>
-            <h3>{{ s.t }}</h3>
-            <p>{{ s.p }}</p>
-          </li>
+      <p class="eyebrow rise" style="--i:0">Tunisian heritage <span>×</span> Japanese ingenuity</p>
+      <h1 id="hero-title" class="hero__title">
+        @for (w of headline; track $index) {
+          <span class="word"><span [style.--i]="$index + 1">{{ w }}</span></span>{{ ' ' }}
         }
-      </ol>
+      </h1>
+      <p class="hero__lead rise" style="--i:5">
+        Turning overlooked spaces into living ecosystems. AI-designed structures that bring greenery, passive shading and
+        intelligent water management into everyday life.
+      </p>
+      <div class="hero__cta rise" style="--i:6">
+        <button type="button" class="btn btn--solid" (click)="scrollTo('features')">
+          Explore Features <span class="arr" aria-hidden="true">→</span>
+        </button>
+        <button type="button" class="btn btn--line" (click)="scrollTo('prototype')">Explore Prototype</button>
+      </div>
+    </div>
+
+    <p class="hero__note rise" style="--i:7">Concept visualisation · not a built installation</p>
+    <button type="button" class="hero__scroll rise" style="--i:7" (click)="scrollTo('manifesto')" aria-label="Scroll to the next section">
+      <span></span>
+    </button>
+  </section>
+
+  <!-- MANIFESTO: the system in one drawing -->
+  <section class="manifesto" id="manifesto">
+    <div class="wrap manifesto__grid">
+      <div class="manifesto__text" data-reveal>
+        <p class="eyebrow">The principle</p>
+        <p class="statement">
+          AI designs it. <span>Nature powers it.</span> Life fills the gaps.
+        </p>
+        <p class="body">
+          A thin tube brings water in from above. Channels hidden inside the timber frame carry it down by gravity to every
+          planted cell, where it is stored in a compartment under the roots: no pump, no tank on top. The open cells filter
+          the sun and let the wall breathe, and the plants grow inside the geometry itself.
+        </p>
+      </div>
+      <figure class="roots" data-reveal [style.--d]="'0.15s'">
+        <svg viewBox="0 0 460 520" role="img" aria-label="Diagram: a thin supply tube at the top, channels inside the frame, and planted cells storing water under the roots" data-live>
+          <path d="M230 6 V118" class="roots__tube" />
+          <text x="244" y="40" class="roots__lbl">supply tube</text>
+          <path [attr.d]="channels.main" class="roots__line" pathLength="1" />
+          <text x="300" y="240" class="roots__lbl">channels in the frame</text>
+          @for (b of channels.branches; track $index) {
+            <path [attr.id]="'br' + $index" [attr.d]="b" class="roots__line roots__line--b" pathLength="1" [style.--d]="0.5 + $index * 0.12 + 's'" />
+          }
+          @for (p of channels.pockets; track $index) {
+            <g class="roots__pocket" [style.--d]="1.1 + $index * 0.1 + 's'">
+              <path [attr.d]="'M' + (p[0] - 19) + ' ' + (p[1] + 4) + ' L' + (p[0] - 16) + ' ' + (p[1] + 18) + ' H' + (p[0] + 16) + ' L' + (p[0] + 19) + ' ' + (p[1] + 4) + ' Z'" class="roots__water" />
+              <path [attr.d]="'M' + (p[0] - 22) + ' ' + (p[1] - 14) + ' L' + (p[0] - 16) + ' ' + (p[1] + 18) + ' H' + (p[0] + 16) + ' L' + (p[0] + 22) + ' ' + (p[1] - 14)" />
+              <path [attr.d]="'M' + p[0] + ' ' + (p[1] - 14) + ' v -30'" class="roots__stem" />
+              <path [attr.d]="'M' + p[0] + ' ' + (p[1] - 26) + ' c -6 -2, -18 -6, -22 -20 c 12 0, 20 8, 22 20 z'" class="roots__leaf" />
+              <path [attr.d]="'M' + p[0] + ' ' + (p[1] - 34) + ' c 6 -2, 18 -6, 22 -20 c -12 0, -20 8, -22 20 z'" class="roots__leaf" />
+            </g>
+          }
+          <text x="16" y="512" class="roots__lbl">planted cells · water stored under the roots</text>
+          @for (d of channels.drops; track $index; let bi = $index) {
+            @for (k of [0, 1]; track k) {
+              <circle r="3.2" class="roots__drop">
+                <animateMotion [attr.dur]="(4.6 + bi * 0.35) + 's'" repeatCount="indefinite" [attr.begin]="'-' + (k * 2.3 + bi * 0.4) + 's'"
+                               [attr.path]="d" />
+              </circle>
+            }
+          }
+        </svg>
+        <figcaption>Path of the water (illustration). Channel widths in the real design come from HydroEngine.</figcaption>
+      </figure>
     </div>
   </section>
 
-  <!-- ELEMENTS -->
-  <section class="section" id="elements">
+  <!-- FEATURES -->
+  <section class="section" id="features">
     <div class="wrap">
-      <p class="eyebrow" data-reveal>03 — Elements</p>
-      <h2 class="h2" data-reveal>Four ideas,<br /><em>zero wires.</em></h2>
-
-      <div class="bento">
-        <article class="card card--a" data-reveal>
-          <svg class="art" viewBox="0 0 320 170" aria-hidden="true">
-            <rect x="110" y="6" width="100" height="44" rx="10" fill="rgba(255,255,255,.14)" stroke="rgba(255,255,255,.5)" />
-            <rect x="116" y="26" width="88" height="18" rx="6" fill="#7cc4d6" opacity=".85" />
-            <path d="M160 50V72M60 72H260M60 72V116M160 72V116M260 72V116" stroke="rgba(255,255,255,.55)" stroke-width="3" fill="none" stroke-linecap="round" />
-            <g fill="#9fdcea">
-              <circle class="drop" cx="60" cy="120" r="4" />
-              <circle class="drop" cx="160" cy="120" r="4" style="animation-delay:-.7s" />
-              <circle class="drop" cx="260" cy="120" r="4" style="animation-delay:-1.4s" />
-            </g>
-            <g stroke="rgba(255,255,255,.6)" fill="none" stroke-width="2.5" stroke-linejoin="round">
-              <path d="M42 146H78L73 166H47Z" />
-              <path d="M142 146H178L173 166H147Z" />
-              <path d="M242 146H278L273 166H247Z" />
-            </g>
-          </svg>
-          <div>
-            <h3>No power. Just gravity.</h3>
-            <p>Water flows from a raised reservoir through gravity channels to wicks at each plant. No pump, no sensors, no Wi-Fi.</p>
-          </div>
-        </article>
-
-        <article class="card card--b" data-reveal [style.--d]="'.1s'">
-          <svg class="art" viewBox="0 0 320 170" aria-hidden="true">
-            <g class="sun-b">
-              <circle cx="50" cy="26" r="26" fill="#f5b85a" opacity=".25" />
-              <circle cx="50" cy="26" r="14" fill="#f5b85a" />
-            </g>
-            <rect x="30" y="64" width="260" height="96" rx="12" fill="#efe3cd" />
-            <rect x="30" y="64" width="260" height="38" rx="10" fill="#c4693f" />
-            <g fill="#fff3c4">
-              <circle cx="75" cy="83" r="10" /><circle cx="135" cy="83" r="10" />
-              <circle cx="195" cy="83" r="10" /><circle cx="255" cy="83" r="10" />
-            </g>
-            <g class="sh-b" fill="#ffd37a" opacity=".9">
-              <ellipse cx="75" cy="130" rx="15" ry="9" /><ellipse cx="135" cy="130" rx="15" ry="9" />
-              <ellipse cx="195" cy="130" rx="15" ry="9" /><ellipse cx="255" cy="130" rx="15" ry="9" />
-            </g>
-          </svg>
-          <div>
-            <h3>Shade that follows the sun.</h3>
-            <p>Openings are tuned by sun-path simulation for your orientation, so light is filtered, not just blocked.</p>
-          </div>
-        </article>
-
-        <article class="card card--c" data-reveal>
-          <svg class="art" viewBox="0 0 320 170" aria-hidden="true">
-            @for (x of [70, 160, 250]; track x; let i = $index) {
-              <g [attr.transform]="'translate(' + x + ' 138)'">
-                <g class="sprout" [style.animation-delay]="i * -1.1 + 's'">
-                  @for (a of [-32, 0, 32]; track a) {
-                    <path class="lf2" [attr.d]="leafD" [attr.transform]="'rotate(' + a + ') scale(1.5)'" />
-                  }
-                </g>
-              </g>
+      <header class="head" data-reveal>
+        <p class="eyebrow">What it does</p>
+        <h2>Nature works. <em>Intelligence makes it better.</em></h2>
+      </header>
+      <div class="features">
+        @for (f of features; track f.t; let i = $index) {
+          <article class="feature" [class.feature--dev]="f.status === 'dev'" data-reveal [style.--d]="(i % 4) * 0.07 + 's'">
+            <figure class="feature__img"><img [src]="f.img" [alt]="f.alt" loading="lazy" width="800" height="600" /></figure>
+            <div class="feature__top">
+              <span class="feature__n">{{ f.n }}</span>
+              <svg class="feature__icon" viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="f.icon" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </div>
+            <h3>{{ f.t }}</h3>
+            <p>{{ f.p }}</p>
+            @if (f.status === 'dev') {
+              <span class="tag">In development</span>
+            } @else if (f.fragment) {
+              <button type="button" class="more stretch" (click)="scrollTo(f.fragment)">{{ f.cta }} <span aria-hidden="true">→</span></button>
+            } @else {
+              <a class="more stretch" [routerLink]="f.link">{{ f.cta }} <span aria-hidden="true">→</span></a>
             }
-            <rect x="30" y="134" width="260" height="32" rx="10" fill="#b5593a" />
-          </svg>
-          <div>
-            <h3>Edible by design.</h3>
-            <p>Pockets for mint, basil and rosemary, fed by a water budget that always puts plants first.</p>
-          </div>
-        </article>
-
-        <article class="card card--d" data-reveal [style.--d]="'.1s'">
-          <svg class="art art--round" viewBox="-100 -100 200 200" aria-hidden="true">
-            <circle r="92" fill="none" stroke="rgba(255,244,232,.3)" />
-            <polygon class="spin" [attr.points]="mini8" fill="none" stroke="#fff4e8" stroke-width="1.6" />
-            <polygon class="spin-r" [attr.points]="mini6" fill="none" stroke="#fff4e8" stroke-width="1.6" opacity=".75" />
-            <circle r="4" fill="#fff4e8" />
-          </svg>
-          <div>
-            <h3>Heritage, computed.</h3>
-            <p>Qallaline and asanoha become parametric geometry, blended under engineering constraints and always credited to their traditions.</p>
-          </div>
-        </article>
+          </article>
+        }
       </div>
     </div>
   </section>
 
-  <!-- CTA -->
-  <section class="finale" id="cta">
+  <!-- PROTOTYPE -->
+  <section class="section section--deep" id="prototype">
+    <div class="wrap">
+      <header class="head head--split" data-reveal>
+        <div>
+          <p class="eyebrow">The prototype</p>
+          <h2>An artificial root system. <em>A living architecture.</em></h2>
+        </div>
+        <p class="sub">An asanoha lattice whose empty spaces become growing cells. Water enters through one tube at the top,
+          falls through channels hidden in the struts and is stored in the floor beam of each planted cell. Drag to turn it,
+          then switch between architecture, planting, water, sun and the exploded view.</p>
+      </header>
+      <app-lattice data-reveal />
+    </div>
+  </section>
+
+  <!-- HERITAGE -->
+  <section class="section" id="heritage">
+    <div class="wrap">
+      <header class="head" data-reveal>
+        <p class="eyebrow">Two cultures</p>
+        <h2>Two cultures, <em>one design philosophy.</em></h2>
+      </header>
+
+      <div class="triptych">
+        <figure class="plate" data-reveal>
+          <div class="plate__img">
+            <img src="images/sidi-bou-said-mashrabiya.jpg" alt="Blue wooden mashrabiya balcony with lattice screens in Sidi Bou Said, Tunisia" loading="lazy" width="530" height="398" />
+          </div>
+          <figcaption><span>Tunisia · Sidi Bou Said</span><b>Mashrabiya &amp; claustra</b>
+            Turned and carved wooden screens break the sun into small patches of light, keep air moving and preserve privacy.</figcaption>
+        </figure>
+        <figure class="plate" data-reveal [style.--d]="'0.1s'">
+          <div class="plate__img">
+            <img src="images/kagome-screen.jpg" alt="Interior lined with wooden kagome lattice screens lit from behind" loading="lazy" width="736" height="491" />
+          </div>
+          <figcaption><span>Japan</span><b>Kagome pattern</b>
+            The woven-bamboo lattice of triangles and hexagons. As a screen it filters light and air through rhythm and restraint, without closing the room.</figcaption>
+        </figure>
+        <figure class="plate plate--photo" data-reveal [style.--d]="'0.2s'">
+          <div class="plate__img">
+            <img src="images/hero-facade.jpg" alt="Hexagonal timber cells with star perforations and edible plants growing inside them" loading="lazy" width="763" height="771" />
+          </div>
+          <figcaption><span>INBETWEEN</span><b>The fusion</b>
+            Modular cells where the perforations filter the sun and the hollows become planting pockets fed from above.</figcaption>
+        </figure>
+      </div>
+
+      <div class="film" data-reveal>
+        <video #film src="videos/INBETWEEN_film.mp4" poster="videos/INBETWEEN_film-poster.jpg" preload="none" [muted]="true" loop playsinline
+               (playing)="filmPlaying.set(true)" (pause)="filmPlaying.set(false)" aria-label="The INBETWEEN film"></video>
+        <button type="button" class="film__play" (click)="playFilm()" [attr.aria-label]="filmPlaying() ? 'Pause the film' : 'Play the film'">
+          @if (filmPlaying()) {
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+          } @else {
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" fill="currentColor" /></svg>
+          }
+        </button>
+      </div>
+
+      <blockquote class="quote" data-reveal>
+        <p>Rooted in heritage. Shaped by intelligence. <em>Powered by nature.</em></p>
+      </blockquote>
+    </div>
+  </section>
+
+  <!-- APPLICATIONS -->
+  <section class="section section--tint" id="applications">
+    <div class="wrap">
+      <header class="head head--split" data-reveal>
+        <div>
+          <p class="eyebrow">Two applications</p>
+          <h2>One intelligence, <em>two kinds of ground.</em></h2>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Applications" (keydown)="onAppKey($event)">
+          <button type="button" role="tab" id="tab-urban" [attr.aria-selected]="app() === 'urban'" [attr.tabindex]="app() === 'urban' ? 0 : -1"
+                  aria-controls="panel-app" (click)="setApp('urban')">Urban</button>
+          <button type="button" role="tab" id="tab-agro" [attr.aria-selected]="app() === 'agro'" [attr.tabindex]="app() === 'agro' ? 0 : -1"
+                  aria-controls="panel-app" (click)="setApp('agro')">Agro</button>
+          <span class="tabs__ink" [class.right]="app() === 'agro'" aria-hidden="true"></span>
+        </div>
+      </header>
+
+      <div class="showcase" id="panel-app" role="tabpanel" [attr.aria-labelledby]="'tab-' + app()" data-reveal>
+        <div class="showcase__media">
+          <figure class="slide" [class.on]="app() === 'urban'">
+            <img src="images/hero-wall.jpg" alt="Concept image: a building façade with an INBETWEEN planted screen" loading="lazy" width="576" height="704" />
+            <figcaption>Concept image (AI visualisation)</figcaption>
+          </figure>
+          <figure class="slide" [class.on]="app() === 'agro'">
+            <svg viewBox="0 0 640 520" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Concept illustration: elevated growing troughs on a frame, a tank above and a drainage line below">
+              <rect width="640" height="520" fill="#e9e3d4" />
+              <path d="M0 330 Q160 308 320 318 T640 306 V520 H0Z" fill="#d9cdb3" />
+              <g fill="#a8b39b" opacity=".75"><ellipse cx="70" cy="304" rx="70" ry="36" /><ellipse cx="560" cy="296" rx="84" ry="40" /><ellipse cx="470" cy="306" rx="40" ry="22" /></g>
+              <rect x="282" y="70" width="76" height="54" rx="3" fill="#cfd6c8" stroke="#414b30" stroke-width="2" />
+              <rect x="278" y="64" width="84" height="8" rx="2" fill="#414b30" />
+              <path d="M320 124 V196" stroke="#4f8fb0" stroke-width="4" />
+              @for (row of [0, 1]; track row) {
+                <g [attr.transform]="'translate(0 ' + row * 96 + ')'">
+                  <path [attr.d]="'M' + (96 - row * 34) + ' 196 H' + (544 + row * 34)" stroke="#4f8fb0" stroke-width="2.5" stroke-dasharray="6 5" />
+                  <rect [attr.x]="90 - row * 34" y="206" [attr.width]="460 + row * 68" height="40" rx="3" fill="#b77b59" />
+                  @for (k of [0, 1, 2, 3, 4, 5, 6, 7]; track k) {
+                    <g [attr.transform]="'translate(' + (122 - row * 26 + k * (57 + row * 8)) + ' 208)'">
+                      <ellipse cx="-8" cy="-10" rx="7" ry="16" fill="#5a7f4c" transform="rotate(-30 -8 -10)" />
+                      <ellipse cx="0" cy="-14" rx="8" ry="18" fill="#6f9c58" />
+                      <ellipse cx="8" cy="-10" rx="7" ry="16" fill="#4f7340" transform="rotate(30 8 -10)" />
+                    </g>
+                  }
+                  <path [attr.d]="'M' + (104 - row * 34) + ' 246 V' + (318 + row * 18) + ' M320 246 V' + (318 + row * 18) + ' M' + (536 + row * 34) + ' 246 V' + (318 + row * 18)" stroke="#414b30" stroke-width="5" />
+                  <path [attr.d]="'M' + (96 - row * 34) + ' 258 H' + (544 + row * 34)" stroke="#8a8f80" stroke-width="3" />
+                </g>
+              }
+            </svg>
+            <figcaption>Concept illustration · extension in development</figcaption>
+          </figure>
+        </div>
+
+        <div class="showcase__text">
+          @if (app() === 'urban') {
+            <div class="pane" [attr.data-k]="'urban'">
+              <p class="eyebrow">INBETWEEN Urban</p>
+              <h3>Balconies, blank walls, windows.</h3>
+              <p>Homes, schools and shared urban spaces gain living structures that shade windows, grow food and herbs, and use water
+                carefully. You describe the space; the studio designs the panel for its orientation and climate.</p>
+              <ul class="ticks">
+                <li>Shade + planting tiles, 30 cm modules</li>
+                <li>Gravity-fed watering, water stored inside the cells</li>
+                <li>Designed for your façade orientation</li>
+              </ul>
+              <a class="btn btn--solid" routerLink="/space">Design for my building <span class="arr" aria-hidden="true">→</span></a>
+            </div>
+          } @else {
+            <div class="pane" [attr.data-k]="'agro'">
+              <p class="eyebrow">INBETWEEN Agro <span class="tag tag--inline">Extension in development</span></p>
+              <h3>Elevated growing structures.</h3>
+              <p>The same design intelligence applied to raised cultivation: making better use of limited space, guiding irrigation by
+                gravity and lifting roots away from shallow waterlogging.</p>
+              <ul class="ticks">
+                <li>Same tiles, channels and engines</li>
+                <li>Drainage planned below each tier</li>
+                <li>Field data not yet collected</li>
+              </ul>
+              <a class="btn btn--line" routerLink="/design" [queryParams]="{ setting: 'farm' }">Tell us about your farm <span class="arr" aria-hidden="true">→</span></a>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINALE -->
+  <section class="finale">
     <svg class="finale__lattice" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <rect width="1200" height="600" fill="#fff" opacity=".07" mask="url(#mStar)" />
+      <rect width="1200" height="1000" fill="#fff" opacity=".05" mask="url(#mStar)" />
     </svg>
-    <div class="wrap finale__inner">
-      <h2 data-reveal>Find your place<br /><em>in between.</em></h2>
-      <a class="btn btn--light" routerLink="/design" data-reveal [style.--d]="'.15s'">
-        <span>Design your screen</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-      </a>
+    <div class="wrap finale__inner" data-reveal>
+      <p class="eyebrow eyebrow--light">Start with your space</p>
+      <h2>AI designs it. Nature powers it. <em>Life fills the gaps.</em></h2>
+      <a class="btn btn--ivory" routerLink="/space">Explore INBETWEEN <span class="arr" aria-hidden="true">→</span></a>
     </div>
   </section>
 </main>
 
 <footer class="foot">
-  <span>InBetween · Kizuna 2026 · Tunisia × Japan</span>
-  <span>Concept stage. All performance figures require experimental validation.</span>
+  <div class="wrap foot__inner">
+    <span class="foot__brand"><b>INBETWEEN</b> Making Room for Life · Kizuna 2026, Tunisia × Japan</span>
+    <span>Images marked as concepts are visualisations. Model estimates are not measurements.</span>
+  </div>
 </footer>

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, OnInit, comput
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DecimalPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   Api, ApiError, ChatMessage, DesignName, DesignResponse, FacadeResponse, Health, SiteContext, SunResponse,
@@ -53,6 +53,8 @@ export class DesignComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly sanitizer = inject(DomSanitizer);
   readonly api = inject(Api);
+  /** 'farm' when the user chose Farm on /space (Agro is an extension in development). */
+  readonly setting = inject(ActivatedRoute).snapshot.queryParamMap.get('setting') ?? 'urban';
 
   /* ================================================================ engine status */
   readonly engine = signal<'checking' | 'online' | 'offline'>('checking');

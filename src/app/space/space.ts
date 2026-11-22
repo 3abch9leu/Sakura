@@ -1,3 +1,4 @@
+import { Router, RouterLink } from '@angular/router';
 import {
   AfterViewInit,
   Component,
@@ -29,12 +30,14 @@ interface Building {
 
 @Component({
   selector: 'app-space',
+  imports: [RouterLink],
   templateUrl: './space.html',
   styleUrl: './space.css',
 })
 export class SpaceComponent implements AfterViewInit, OnDestroy {
   private readonly zone = inject(NgZone);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly router = inject(Router);
 
   /** Emits the chosen setting when the user continues (wire to the design page later). */
   readonly continued = output<Setting>();
@@ -160,9 +163,9 @@ export class SpaceComponent implements AfterViewInit, OnDestroy {
       setTimeout(() => this.shake.set(false), 500);
       return;
     }
-    // Next phase: navigate to the design page.
-    console.log('Space chosen', s);
     this.continued.emit(s);
+    // Urban -> design studio. Agro is an extension in development: same studio, with a note.
+    this.router.navigate(s === 'farm' ? ['/design'] : ['/studio'], s === 'farm' ? { queryParams: { setting: 'farm' } } : {});
   }
 
   /* ---------- generators ---------- */

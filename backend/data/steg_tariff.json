@@ -1,0 +1,82 @@
+{
+  "_readme": "STEG low-voltage (basse tension) electricity tariff, residential sector only. Every number below is copied from an official STEG source listed in `sources`. Prices are in millimes (1 TND = 1000 millimes), excluding taxes. Do not edit a value without updating its source. Anything not listed here (gas, RTT contribution, arrears, connection fees, non-residential and special tariffs) is NOT verified by the calculator.",
+  "version": "2022-05-01 (web page checked 2026-11-21)",
+  "currency": "TND",
+  "price_unit": "millime",
+  "sources": {
+    "steg_web": {
+      "title": "STEG - Les tarifs d'électricité (Niveau tension BT)",
+      "url": "https://www.steg.com.tn/fr/page/les-tarifs-d%C3%A9lectricit%C3%A9",
+      "checked": "2026-11-21",
+      "note": "Page states: (à compter du 01/05/2022) (Hors taxes). Taxes notes on this page differ from the PDF (see conflicts)."
+    },
+    "steg_pdf": {
+      "title": "STEG - Table des tarifs, Tarifs de l'électricité en basse tension à compter du 1er mai 2022 (tarifsbt_fr.pdf)",
+      "url": "https://www.steg.com.tn/system/files/pdf/tarifsbt_fr.pdf",
+      "local_copy": "data/sources/steg_tarifsbt_fr.pdf",
+      "checked": "2026-11-21"
+    },
+    "steg_bill_guide": {
+      "title": "STEG - Comprendre votre facture",
+      "url": "https://www.steg.com.tn/fr/page/comprendre-votre-facture?menu=particulier",
+      "checked": "2026-11-21"
+    }
+  },
+  "residential": {
+    "power_fee_mill_per_kva_month": 700,
+    "power_fee_source": "steg_pdf",
+    "economic_max_kva": 2,
+    "economic_definition": "Tranche économique: 1 et 2 kVA (steg_pdf). Tranche normale: > 2 kVA et plus.",
+    "pricing_rule": "selective",
+    "pricing_rule_note": "In the official table each price cell spans from 1 kWh up to the upper limit of its band, and footnotes (3)-(9) read 'Si la consommation est comprise entre ... kWh/mois'. The whole monthly consumption is therefore billed at the single price of the band it falls in (not band-by-band). This reading of the table layout is ours; the calculator reports a match only when the printed bill agrees.",
+    "bands": [
+      {"min_kwh_month": 0, "max_kwh_month": 50, "price_mill_per_kwh": 62, "applies_to": ["economic"], "footnote": "(3) Si la consommation ne dépasse pas 50 kWh/mois pour le secteur Résidentiel"},
+      {"min_kwh_month": 50, "max_kwh_month": 100, "price_mill_per_kwh": 96, "applies_to": ["economic"], "footnote": "(4) Si la consommation est comprise entre 51 et 100 kWh/mois pour le secteur Résidentiel"},
+      {"min_kwh_month": 100, "max_kwh_month": 200, "price_mill_per_kwh": 176, "applies_to": ["economic", "normal"], "footnote": "(6) Si la consommation est comprise entre 101 et 200 kWh/mois"},
+      {"min_kwh_month": 200, "max_kwh_month": 300, "price_mill_per_kwh": 218, "applies_to": ["economic", "normal"], "footnote": "(7) Si la consommation est comprise entre 201 et 300 kWh/mois"},
+      {"min_kwh_month": 300, "max_kwh_month": 500, "price_mill_per_kwh": 341, "applies_to": ["economic", "normal"], "footnote": "(8) Si la consommation est comprise entre 301 et 500 kWh/mois"},
+      {"min_kwh_month": 500, "max_kwh_month": null, "price_mill_per_kwh": 414, "applies_to": ["economic", "normal"], "footnote": "(9) Si la consommation dépasse 500 kWh/mois"}
+    ],
+    "unsupported_cases": [
+      "Tranche normale (> 2 kVA) with a monthly consumption of 100 kWh or less: the official table gives no price for this case."
+    ]
+  },
+  "taxes": {
+    "current_source": "steg_web",
+    "vat_base": "energy_price_excluding_tax",
+    "vat_base_note": "Residential VAT applies to the energy price excluding taxes only; the 19 % rate on fees (redevances) is for uses other than residential and irrigation (steg_web note 1, steg_pdf note 1).",
+    "vat_residential": [
+      {"max_kwh_month": 300, "rate": 0.07, "text": "7% pour les clients domestiques ayant une consommation inférieur ou égale à 300 kWh/mois"},
+      {"max_kwh_month": null, "rate": 0.13, "text": "sinon 13% sur le prix de l'énergie (hors taxes) de l'usage résidentiel"}
+    ],
+    "municipal_mill_per_kwh": 5,
+    "municipal_text": "La surtaxe municipale : 5 mill/kWh (steg_web) / la contribution au profit des collectivités locales : 5 mill/kWh (steg_pdf)",
+    "fte_mill_per_kwh": 5,
+    "fte_exemption": "economic_and_max_100_kwh_month",
+    "fte_text": "La taxe au profit du Fonds de Transition Energitique (FTE) : 5 mill/kWh, sauf pour les clients de la Basse Tension (tranche économique) dont la consommation ne dépasse pas 100kwh/mois."
+  },
+  "previous_taxes_pdf_2022": {
+    "source": "steg_pdf",
+    "vat_residential": [{"max_kwh_month": null, "rate": 0.13}],
+    "municipal_mill_per_kwh": 5,
+    "fte_mill_per_kwh": 1,
+    "fte_exemption": "economic_and_max_100_kwh_month"
+  },
+  "conflicts": [
+    "FTE: the PDF dated 01-05-2022 says 1 mill/kWh; the current web page says 5 mill/kWh. The calculator uses the web page and also tests the PDF values when explaining a mismatch.",
+    "Residential VAT: the PDF says 13 %; the current web page says 7 % up to 300 kWh/month, otherwise 13 %. Same handling as above."
+  ],
+  "billing": {
+    "default_period_months": 2,
+    "period_text": "La facture sur relève est bimestrielle suite à une relève quadrimestrielle en milieu urbain ou semestrielle en milieu rural.",
+    "estimated_text": "Cette facture peut être estimée si jamais les index n'ont pas pu être relevés par la STEG et dans ce cas, elle sera calculée sur une estimation basée sur la consommation des 24 derniers mois.",
+    "intermediate_text": "Le net à payer de cette facture est une avance, il vous sera déduit sur la facture comportant les relevés réels de vos consommations.",
+    "source": "steg_bill_guide",
+    "monthly_split_assumption": "Not documented by STEG: the calculator divides the period consumption by the number of months in the period to find the monthly band, and states this as an assumption."
+  },
+  "not_verified": [
+    "Contribution RTT (radio-télévision): mentioned by STEG but no rate is published on the tariff pages.",
+    "Natural gas consumption and its taxes (STEG bills may combine electricity and gas).",
+    "Arrears, payment facilities, connection or other fees."
+  ]
+}

@@ -226,6 +226,15 @@
               <p class="src">Sources:
                 @for (s of E.sources; track s; let last = $last) { <a [href]="s" target="_blank" rel="noopener">{{ s.includes('steg') ? 'STEG' : 'ANME' }}</a>{{ last ? '' : ', ' }} }
               </p>
+              @if (E.mode !== 'llm') {
+                <div class="explain__ai">
+                  <button type="button" class="btn btn--ghost btn--sm" (click)="rewriteWithAi()" [disabled]="rewriting()">
+                    @if (rewriting()) { <span class="spin"></span> The AI is rephrasing… } @else { Rephrase with the AI assistant }
+                  </button>
+                  <small>Optional. Can take up to a minute.</small>
+                </div>
+                @if (rewriteNote()) { <p class="note">{{ rewriteNote() }}</p> }
+              }
             }
           </div>
 
