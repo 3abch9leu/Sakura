@@ -1,0 +1,85 @@
+{
+  "system": "ROOTCODE Water Monitoring System",
+  "version": "2.0.0",
+  "description": "Preloaded water telemetry and threshold engine for Kizuna 2026 Hackathon (Team Sakura)",
+  "thresholds": {
+    "ph": { "cleanLo": 6.5, "cleanHi": 8.4, "warnLo": 6.0, "warnHi": 9.0, "badLo": 0, "badHi": 14, "ref": "FAO 29", "unit": "" },
+    "turbidity_ntu": { "cleanLo": 0, "cleanHi": 5.0, "warnLo": 5.0, "warnHi": 25.0, "badLo": 25.0, "badHi": 999999, "ref": "WHO", "unit": "NTU" },
+    "ec_us_cm": { "cleanLo": 0, "cleanHi": 700, "warnLo": 700, "warnHi": 3000, "badLo": 3000, "badHi": 999999, "ref": "FAO 29", "unit": "µS/cm" },
+    "temp_c": { "cleanLo": 10.0, "cleanHi": 30.0, "warnLo": 5.0, "warnHi": 35.0, "badLo": 0, "badHi": 45.0, "ref": "FAO", "unit": "°C" },
+    "level_pct": { "cleanLo": 20.0, "cleanHi": 100.0, "warnLo": 10.0, "warnHi": 20.0, "badLo": 0, "badHi": 10.0, "ref": "Tank supply", "unit": "%" }
+  },
+  "sources": [
+    { "id": "clean", "name": "Clean water", "emoji": "💧", "role": "Primary municipal / filtered irrigation line", "policy": "Permitted for all crops if within thresholds" },
+    { "id": "rain", "name": "Rainwater", "emoji": "🌧️", "role": "Rooftop & terrace collection tanks", "policy": "Permitted for edible crops with first-flush and filter check" },
+    { "id": "ac", "name": "AC condensate", "emoji": "❄️", "role": "Condensate reclamation from cooling units", "policy": "Low salinity, low mineral. Permitted with pH buffering" },
+    { "id": "grey", "name": "Greywater", "emoji": "🪣", "role": "Domestic runoff (sinks, laundry)", "policy": "STRICTLY PROHIBITED for edible crops per FAO/WHO standards" }
+  ],
+  "latest_readings": {
+    "clean": {
+      "source": "clean",
+      "dataType": "MEASURED",
+      "ph": 7.20,
+      "turbidity_ntu": 1.8,
+      "ec_us_cm": 420,
+      "temp_c": 21.5,
+      "level_pct": 84,
+      "orp_mv": 345,
+      "expected_verdict": "CLEAN",
+      "verdict_reason": "All parameters within clean range"
+    },
+    "rain": {
+      "source": "rain",
+      "dataType": "MEASURED",
+      "ph": 6.40,
+      "turbidity_ntu": 7.8,
+      "ec_us_cm": 48,
+      "temp_c": 18.2,
+      "level_pct": 65,
+      "orp_mv": 295,
+      "expected_verdict": "ACCEPTABLE WITH CAUTION",
+      "verdict_reason": "Turbidity 7.8 NTU is in warning range (5–25 NTU)"
+    },
+    "ac": {
+      "source": "ac",
+      "dataType": "MEASURED",
+      "ph": 6.85,
+      "turbidity_ntu": 0.9,
+      "ec_us_cm": 18,
+      "temp_c": 16.0,
+      "level_pct": 45,
+      "orp_mv": 320,
+      "expected_verdict": "CLEAN",
+      "verdict_reason": "All parameters within clean range"
+    },
+    "grey": {
+      "source": "grey",
+      "dataType": "MEASURED",
+      "ph": 7.60,
+      "turbidity_ntu": 28.5,
+      "ec_us_cm": 1150,
+      "temp_c": 22.8,
+      "level_pct": 28,
+      "orp_mv": 180,
+      "expected_verdict": "NOT CLEAN",
+      "verdict_reason": "Greywater: not permitted for edible crops (FAO guidelines)"
+    }
+  },
+  "microbiology_log": [
+    { "id": "m1", "source": "clean", "date": "2026-11-20", "type": "Coliform Kit (IDEXX)", "result": "pass", "notes": "0 CFU/100ml. Verified safe by municipal screen." },
+    { "id": "m2", "source": "rain", "date": "2026-11-17", "type": "Membrane Filtration", "result": "pass", "notes": "First-flush diverter active, passing screen." }
+  ],
+  "calibration_log": [
+    { "id": "c1", "sensor": "ph", "date": "2026-11-19", "notes": "2-point buffer pH 4.01 / 7.00 slope 98.4%" },
+    { "id": "c2", "sensor": "turbidity", "date": "2026-11-16", "notes": "Formazin standard 20 NTU zero check" },
+    { "id": "c3", "sensor": "ec", "date": "2026-11-19", "notes": "1413 µS/cm KCl standard calibrated" },
+    { "id": "c4", "sensor": "temp", "date": "2026-11-12", "notes": "Ice point reference verified ±0.1°C" }
+  ],
+  "test_cases": [
+    { "name": "All Clean", "source": "clean", "dataType": "MEASURED", "ph": 7.2, "turbidity_ntu": 2.0, "ec_us_cm": 450, "temp_c": 22.0, "level_pct": 80, "expected": "CLEAN" },
+    { "name": "One Warning", "source": "rain", "dataType": "MEASURED", "ph": 7.0, "turbidity_ntu": 8.0, "ec_us_cm": 400, "temp_c": 20.0, "level_pct": 60, "expected": "ACCEPTABLE WITH CAUTION" },
+    { "name": "Bad Value", "source": "clean", "dataType": "MEASURED", "ph": 7.0, "turbidity_ntu": 32.0, "ec_us_cm": 400, "temp_c": 20.0, "level_pct": 70, "expected": "NOT CLEAN" },
+    { "name": "Missing Data", "source": "clean", "dataType": "MANUAL", "ph": 7.0, "turbidity_ntu": null, "ec_us_cm": null, "temp_c": null, "level_pct": null, "expected": "CANNOT DECIDE" },
+    { "name": "Greywater", "source": "grey", "dataType": "MEASURED", "ph": 7.0, "turbidity_ntu": 4.0, "ec_us_cm": 350, "temp_c": 22.0, "level_pct": 50, "expected": "NOT CLEAN" }
+  ]
+}

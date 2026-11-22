@@ -179,6 +179,19 @@ td.status-invalid{color:var(--danger);font-weight:700}
 .legend-item{display:flex;align-items:center;gap:4px}
 .legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
 /* Additional */
+.hero-source-pills{display:flex;justify-content:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.hero-pill{padding:5px 14px;border-radius:20px;border:1.5px solid rgba(0,0,0,.15);background:rgba(255,255,255,.6);color:var(--ink);cursor:pointer;font-size:.8rem;font-weight:600;transition:.2s}
+[data-theme="dark"] .hero-pill{background:rgba(0,0,0,.4);border-color:rgba(255,255,255,.15);color:var(--ink)}
+.hero-pill:hover{background:rgba(255,255,255,.9)}
+.hero-pill.active{background:var(--terra);color:#fff;border-color:var(--terra)}
+#live-stream-btn.active{background:var(--ok-soft);color:var(--ok);border-color:var(--ok);font-weight:700}
+.toast-msg{position:fixed;bottom:24px;right:24px;background:var(--panel);border:1px solid var(--line);box-shadow:0 8px 24px rgba(0,0,0,.15);padding:10px 16px;border-radius:10px;font-size:.85rem;font-weight:600;z-index:9999;transition:opacity .3s,transform .3s;opacity:0;transform:translateY(10px);pointer-events:none}
+.toast-msg.show{opacity:1;transform:translateY(0)}
+.code-block{background:var(--bg-alt);border:1px solid var(--line);border-radius:8px;padding:12px;font-family:monospace;font-size:.8rem;overflow-x:auto;position:relative;margin:10px 0}
+.code-copy-btn{position:absolute;top:8px;right:8px;padding:4px 8px;font-size:.75rem;border-radius:4px;border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:.2s}
+.code-copy-btn:hover{background:var(--terra);color:#fff}
+.clickable-card{cursor:pointer;transition:transform .15s,box-shadow .15s}
+.clickable-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
 .row-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .info-note{font-size:.8rem;color:var(--muted);background:var(--bg-alt);border-left:3px solid var(--line);padding:8px 12px;border-radius:0 8px 8px 0;margin-top:10px}
 </style>
@@ -189,6 +202,8 @@ td.status-invalid{color:var(--danger);font-weight:700}
 <div id="header">
   <h1>ROOTCODE <span>Water Monitor</span></h1>
   <div class="hdr-controls">
+    <button class="btn btn-sm btn-secondary" id="reset-demo-btn" onclick="resetToPreloadedData()" title="Reload rich preloaded sample dataset">🔄 Reset Demo Data</button>
+    <button class="btn btn-sm btn-secondary" id="live-stream-btn" onclick="toggleLiveStream()" title="Simulate live IoT sensor telemetry stream every 3s">⚡ Live Stream: OFF</button>
     <div class="lang-btn-group" style="display:flex;gap:4px">
       <button class="lang-btn active" onclick="setLang('en')">EN</button>
       <button class="lang-btn" onclick="setLang('fr')">FR</button>
@@ -200,13 +215,23 @@ td.status-invalid{color:var(--danger);font-weight:700}
 
 <!-- HERO VERDICT BANNER -->
 <div id="hero">
-  <div id="hero-no-data" data-i18n="hero_no_data">No data loaded yet — enter values below or load a test case</div>
-  <div id="hero-content" style="display:none">
-    <div id="hero-emoji">❔</div>
+  <div class="hero-source-pills" id="hero-pills">
+    <button class="hero-pill active" onclick="setHeroFilter('all', this)" id="pill-all">🌐 All Sources (Worst Decides)</button>
+    <button class="hero-pill" onclick="setHeroFilter('clean', this)" id="pill-clean">💧 Clean water</button>
+    <button class="hero-pill" onclick="setHeroFilter('rain', this)" id="pill-rain">🌧️ Rainwater</button>
+    <button class="hero-pill" onclick="setHeroFilter('ac', this)" id="pill-ac">❄️ AC condensate</button>
+    <button class="hero-pill" onclick="setHeroFilter('grey', this)" id="pill-grey">🪣 Greywater 🔒</button>
+  </div>
+  <div id="hero-no-data" data-i18n="hero_no_data" style="display:none">No data loaded yet — enter values below or load a test case</div>
+  <div id="hero-content">
+    <div id="hero-emoji">✅</div>
     <div id="hero-verdict"></div>
     <div id="hero-reason"></div>
     <div id="hero-action"></div>
-    <div id="hero-confidence" class="chip"></div>
+    <div style="display:flex;justify-content:center;gap:8px;align-items:center;flex-wrap:wrap">
+      <div id="hero-confidence" class="chip"></div>
+      <div id="live-stream-badge" class="chip chip-measured" style="display:none;background:var(--ok-soft);color:var(--ok)">● LIVE STREAMING (3s)</div>
+    </div>
   </div>
 </div>
 
@@ -528,6 +553,131 @@ td.status-invalid{color:var(--danger);font-weight:700}
 
 </main>
 
+<!-- DEVELOPER & TEAM INTEGRATION HUB -->
+<div class="section" id="integration-hub">
+  <div class="section-header" onclick="toggleSection(this)">
+    <h2>🔌 Developer & Team Integration Hub <span style="font-weight:400;font-size:.82rem;color:var(--muted)">(Angular · Python · REST · Modules)</span></h2>
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="section-body collapsed">
+    <p class="info-note" style="margin-top:0;margin-bottom:14px">
+      Pre-packaged for Team Sakura teammates (Kizuna 2026). Import this water analysis engine directly into Angular (<code>front</code> branch), Python AI (<code>weather_prediction</code> branch), or fetch the raw data via JSON.
+    </p>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchIntegrationTab('angular', this)">Angular / TypeScript</button>
+      <button class="tab-btn" onclick="switchIntegrationTab('python', this)">Python (AI Backend)</button>
+      <button class="tab-btn" onclick="switchIntegrationTab('json', this)">Raw JSON API</button>
+      <button class="tab-btn" onclick="switchIntegrationTab('js', this)">Universal JS / Node</button>
+    </div>
+
+    <!-- Angular Tab -->
+    <div class="tab-pane active" id="int-tab-angular">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <strong>1. Import <code>water-analyzer.ts</code> into your Angular project</strong>
+        <a href="water-analyzer.ts" download class="btn btn-sm btn-secondary">📥 Download water-analyzer.ts</a>
+      </div>
+      <div class="code-block">
+        <button class="code-copy-btn" onclick="copySnippet(this)">Copy</button>
+<pre><code>// Example Angular Component usage (e.g. src/app/components/water-monitor.component.ts)
+import { WaterAnalyzer, WaterReading, VerdictResult } from './water-analyzer';
+
+@Component({ ... })
+export class WaterDashboardComponent {
+  reading: WaterReading = {
+    source: 'clean',
+    ph: 7.20,
+    turbidity_ntu: 1.8,
+    ec_us_cm: 420,
+    temp_c: 21.5,
+    level_pct: 84
+  };
+
+  // Instant analysis on every change
+  verdict: VerdictResult = WaterAnalyzer.computeVerdict(this.reading);
+  
+  ngOnInit() {
+    console.log('Verdict:', this.verdict.label);  // 'CLEAN'
+    console.log('Action:', this.verdict.action);    // 'SAFE to use for plant irrigation'
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <!-- Python Tab -->
+    <div class="tab-pane" id="int-tab-python">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <strong>1. Import <code>water_engine.py</code> into your Python AI backend</strong>
+        <a href="water_engine.py" download class="btn btn-sm btn-secondary">📥 Download water_engine.py</a>
+      </div>
+      <div class="code-block">
+        <button class="code-copy-btn" onclick="copySnippet(this)">Copy</button>
+<pre><code># In your Python prediction / FastAPI / Flask pipeline
+from water_engine import evaluate_reading, PRELOADED_WATER_DATA
+
+# Evaluate preloaded reading or live sensor telemetry
+reading = {
+    "source": "clean",
+    "ph": 7.20,
+    "turbidity_ntu": 1.8,
+    "ec_us_cm": 420.0,
+    "temp_c": 21.5,
+    "level_pct": 84.0
+}
+
+result = evaluate_reading(reading)
+print(result["verdict"])  # 'ok'
+print(result["label"])    # 'CLEAN'
+print(result["action"])   # 'SAFE to use for plant irrigation'</code></pre>
+      </div>
+    </div>
+
+    <!-- JSON Tab -->
+    <div class="tab-pane" id="int-tab-json">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <strong>1. Fetch or load <code>water-data.json</code></strong>
+        <a href="water-data.json" download class="btn btn-sm btn-secondary">📥 Download water-data.json</a>
+      </div>
+      <div class="code-block">
+        <button class="code-copy-btn" onclick="copySnippet(this)">Copy</button>
+<pre><code>// Client-side or backend JSON fetch
+const res = await fetch('./water-data.json');
+const data = await res.json();
+
+console.log('Thresholds:', data.thresholds);
+console.log('Latest Preloaded Readings:', data.latest_readings);
+console.log('Test Cases:', data.test_cases);</code></pre>
+      </div>
+    </div>
+
+    <!-- JS Tab -->
+    <div class="tab-pane" id="int-tab-js">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <strong>1. Use Universal JavaScript Module</strong>
+        <a href="water-analyzer.js" download class="btn btn-sm btn-secondary">📥 Download water-analyzer.js</a>
+      </div>
+      <div class="code-block">
+        <button class="code-copy-btn" onclick="copySnippet(this)">Copy</button>
+<pre><code>// Node.js: const { WaterAnalyzer } = require('./water-analyzer.js');
+// Browser: window.WaterAnalyzer
+
+const verdict = WaterAnalyzer.computeVerdict({
+  source: 'rain',
+  ph: 6.4,
+  turbidity_ntu: 7.8,
+  ec_us_cm: 48,
+  temp_c: 18.2
+});
+
+console.log(verdict.label);   // 'ACCEPTABLE WITH CAUTION'
+console.log(verdict.reason);  // 'Turbidity 7.8 NTU is in warning band (5–25 NTU)'</code></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-msg" id="global-toast"></div>
+
 <footer>
   <span data-i18n="footer_disclaimer">⚠️ Based on sensor readings only. Sensors cannot detect bacteria, so this is a screening result for plant irrigation, not a drinking-water certificate. Always combine with laboratory microbiology testing for critical decisions.</span>
 </footer>
@@ -793,10 +943,113 @@ const JUDGED_PARAMS = ['ph','turbidity_ntu','ec_us_cm','temp_c'];
 // ============================================================
 const STORE_KEY = 'rootcode.water-analyzer.v2';
 
+function getPreloadedDataset() {
+  const now = Date.now();
+  const readings = [];
+
+  const sources = [
+    {
+      id: 'clean',
+      basePh: 7.20, phDev: 0.05,
+      baseTurb: 1.8, turbDev: 0.2,
+      baseEc: 420, ecDev: 8,
+      baseTemp: 21.5, tempDev: 0.4,
+      baseLevel: 84, levelRate: -0.6,
+      baseOrp: 345, orpDev: 6
+    },
+    {
+      id: 'rain',
+      basePh: 6.40, phDev: 0.06,
+      baseTurb: 7.8, turbDev: 0.5,
+      baseEc: 48, ecDev: 3,
+      baseTemp: 18.2, tempDev: 0.5,
+      baseLevel: 65, levelRate: -0.4,
+      baseOrp: 295, orpDev: 8
+    },
+    {
+      id: 'ac',
+      basePh: 6.85, phDev: 0.04,
+      baseTurb: 0.9, turbDev: 0.15,
+      baseEc: 18, ecDev: 2,
+      baseTemp: 16.0, tempDev: 0.3,
+      baseLevel: 45, levelRate: +0.3,
+      baseOrp: 320, orpDev: 5
+    },
+    {
+      id: 'grey',
+      basePh: 7.60, phDev: 0.08,
+      baseTurb: 28.5, turbDev: 1.2,
+      baseEc: 1150, ecDev: 25,
+      baseTemp: 22.8, tempDev: 0.4,
+      baseLevel: 28, levelRate: -0.2,
+      baseOrp: 180, orpDev: 10
+    }
+  ];
+
+  for (let step = 11; step >= 0; step--) {
+    const timeIso = new Date(now - step * 3600000).toISOString();
+    for (const s of sources) {
+      const sinOffset = Math.sin((11 - step) * 0.7);
+      const isLatest = (step === 0);
+
+      const ph = isLatest ? s.basePh : Number((s.basePh + sinOffset * s.phDev).toFixed(2));
+      const turb = isLatest ? s.baseTurb : Number((s.baseTurb + Math.abs(sinOffset) * s.turbDev).toFixed(1));
+      const ec = isLatest ? s.baseEc : Math.round(s.baseEc + sinOffset * s.ecDev);
+      const temp = isLatest ? s.baseTemp : Number((s.baseTemp + sinOffset * s.tempDev).toFixed(1));
+      const level = isLatest ? s.baseLevel : Math.round(Math.max(5, Math.min(98, s.baseLevel - (11 - step) * s.levelRate)));
+      const orp = isLatest ? s.baseOrp : Math.round(s.baseOrp + sinOffset * s.orpDev);
+
+      readings.push({
+        id: `preload_${s.id}_${step}`,
+        timestamp: timeIso,
+        source: s.id,
+        dataType: 'MEASURED',
+        ph: ph,
+        turbidity_ntu: turb,
+        ec_us_cm: ec,
+        temp_c: temp,
+        level_pct: level,
+        orp_mv: orp
+      });
+    }
+  }
+
+  const d2 = new Date(now - 2 * 86400000).toISOString().slice(0, 10);
+  const d3 = new Date(now - 3 * 86400000).toISOString().slice(0, 10);
+  const d5 = new Date(now - 5 * 86400000).toISOString().slice(0, 10);
+  const d10 = new Date(now - 10 * 86400000).toISOString().slice(0, 10);
+
+  const microLog = [
+    { id: 'm1', source: 'clean', date: d2, type: 'Coliform Kit (IDEXX)', result: 'pass', notes: '0 CFU/100ml. Verified safe by municipal screen.' },
+    { id: 'm2', source: 'rain', date: d5, type: 'Membrane Filtration', result: 'pass', notes: 'First-flush diverter active, passing screen.' }
+  ];
+
+  const calLog = [
+    { id: 'c1', sensor: 'ph', date: d3, notes: '2-point buffer pH 4.01 / 7.00 slope 98.4%' },
+    { id: 'c2', sensor: 'turbidity', date: d5, notes: 'Formazin standard 20 NTU zero check' },
+    { id: 'c3', sensor: 'ec', date: d3, notes: '1413 µS/cm KCl standard calibrated' },
+    { id: 'c4', sensor: 'temp', date: d10, notes: 'Ice point reference verified ±0.1°C' }
+  ];
+
+  return { readings, microLog, calLog };
+}
+
 function loadStore() {
   try {
-    return JSON.parse(localStorage.getItem(STORE_KEY)) || { readings:[], microLog:[], calLog:[] };
-  } catch(e) { return { readings:[], microLog:[], calLog:[] }; }
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.readings) && parsed.readings.length > 0) {
+        return parsed;
+      }
+    }
+    const preloaded = getPreloadedDataset();
+    saveStore(preloaded);
+    return preloaded;
+  } catch(e) {
+    const preloaded = getPreloadedDataset();
+    return preloaded;
+  }
 }
 
 function saveStore(store) {
@@ -1103,20 +1356,26 @@ function updateLivePreview(reading) {
 }
 
 // ============================================================
-// HERO UPDATE
+// HERO UPDATE (with multi-source filter support)
 // ============================================================
+let heroFilter = 'all';
+
+function setHeroFilter(filter, btn) {
+  heroFilter = filter;
+  document.querySelectorAll('.hero-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  updateHero();
+}
+
 function updateHero() {
   const hero = document.getElementById('hero');
   const heroContent = document.getElementById('hero-content');
   const heroNoData = document.getElementById('hero-no-data');
 
-  // Collect all readings with data
   const allReadings = Object.values(liveReadings).filter(r => hasAnyValue(r));
-  // Also include store readings (last per source)
   const storeReadings = getLatestStoreReadings();
   const allSrcs = new Set([...allReadings.map(r=>r.source), ...storeReadings.map(r=>r.source)]);
 
-  // Merge: prefer liveReadings, fallback to store
   const finalReadings = [];
   for (const src of allSrcs) {
     const lr = liveReadings[src];
@@ -1135,15 +1394,31 @@ function updateHero() {
   heroNoData.style.display = 'none';
   heroContent.style.display = 'block';
 
-  // Compute verdict per source, find worst
-  const verdicts = finalReadings.map(r => ({ r, v: computeVerdict(r) }));
-  const worstOrder = ['bad','warn','ok','unknown'];
-  verdicts.sort((a,b) => worstOrder.indexOf(a.v.verdict) - worstOrder.indexOf(b.v.verdict));
-  const worst = verdicts[0];
+  let displayVerdict = null;
+  if (heroFilter !== 'all') {
+    const targetReading = finalReadings.find(r => r.source === heroFilter);
+    if (targetReading) {
+      displayVerdict = { r: targetReading, v: computeVerdict(targetReading) };
+    }
+  }
 
+  if (!displayVerdict) {
+    const verdicts = finalReadings.map(r => ({ r, v: computeVerdict(r) }));
+    const worstOrder = ['bad','warn','ok','unknown'];
+    verdicts.sort((a,b) => worstOrder.indexOf(a.v.verdict) - worstOrder.indexOf(b.v.verdict));
+    displayVerdict = verdicts[0];
+  }
+
+  const worst = displayVerdict;
   document.getElementById('hero-emoji').textContent = worst.v.emoji;
   document.getElementById('hero-verdict').textContent = worst.v.label;
-  document.getElementById('hero-reason').textContent = worst.v.reason;
+
+  if (heroFilter === 'all') {
+    const srcInfo = SOURCE_INFO[worst.r.source] || { name: worst.r.source };
+    document.getElementById('hero-reason').textContent = `${t(srcInfo.name)}: ${worst.v.reason}`;
+  } else {
+    document.getElementById('hero-reason').textContent = worst.v.reason;
+  }
 
   let actionText = '';
   if (worst.v.verdict === 'ok') actionText = t('action_use');
@@ -1200,7 +1475,15 @@ function renderSourceCards() {
     const reading = (liveR && hasAnyValue(liveR)) ? liveR : storeR;
 
     const card = document.createElement('div');
-    card.className = 'src-card';
+    card.className = 'src-card clickable-card';
+    card.title = `Click to inspect and edit ${t(info.name)} parameters in the form`;
+    card.onclick = () => {
+      document.getElementById('f-source').value = src;
+      populateFormFromSource(src);
+      const pill = document.getElementById('pill-' + src);
+      if (pill) setHeroFilter(src, pill);
+      document.getElementById('tab-manual').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
 
     if (!reading || !hasAnyValue(reading)) {
       card.innerHTML = `
@@ -2045,10 +2328,141 @@ function toggleTheme() {
   setTimeout(drawChart, 100);
 }
 
+
+// ============================================================
+// LIVE STREAM & PRELOADED DEMO UTILITIES
+// ============================================================
+let liveStreamTimer = null;
+let isStreaming = false;
+
+function toggleLiveStream() {
+  isStreaming = !isStreaming;
+  const btn = document.getElementById('live-stream-btn');
+  const badge = document.getElementById('live-stream-badge');
+  if (isStreaming) {
+    btn.classList.add('active');
+    btn.innerHTML = '⚡ Stream: <strong style="color:var(--ok)">ON</strong>';
+    if (badge) badge.style.display = 'inline-flex';
+    showToast('🟢 Live sensor telemetry stream started (ticks every 3s)');
+    liveStreamTimer = setInterval(generateLiveSensorTick, 3000);
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '⚡ Live Stream: OFF';
+    if (badge) badge.style.display = 'none';
+    if (liveStreamTimer) clearInterval(liveStreamTimer);
+    liveStreamTimer = null;
+    showToast('⏸️ Live telemetry stream paused');
+  }
+}
+
+function generateLiveSensorTick() {
+  const activeSrc = document.getElementById('f-source').value || 'clean';
+  const latest = liveReadings[activeSrc] || store.readings.filter(r => r.source === activeSrc).pop();
+  if (!latest) return;
+
+  const dPh = (Math.random() - 0.49) * 0.04;
+  const dTurb = (Math.random() - 0.49) * 0.15;
+  const dEc = Math.round((Math.random() - 0.49) * 4);
+  const dTemp = (Math.random() - 0.49) * 0.1;
+  const dOrp = Math.round((Math.random() - 0.49) * 3);
+
+  const newReading = {
+    id: 'live_' + Date.now(),
+    timestamp: new Date().toISOString(),
+    source: activeSrc,
+    dataType: 'MEASURED',
+    ph: Number(Math.max(0, Math.min(14, (latest.ph || 7.0) + dPh)).toFixed(2)),
+    turbidity_ntu: Number(Math.max(0.1, (latest.turbidity_ntu || 1.5) + dTurb).toFixed(1)),
+    ec_us_cm: Math.max(5, (latest.ec_us_cm || 400) + dEc),
+    temp_c: Number(Math.max(5, (latest.temp_c || 20.0) + dTemp).toFixed(1)),
+    level_pct: latest.level_pct !== null ? Math.max(0, Math.min(100, Math.round((latest.level_pct || 80) - 0.05))) : 80,
+    orp_mv: latest.orp_mv !== null ? (latest.orp_mv || 340) + dOrp : 340
+  };
+
+  store.readings.push(newReading);
+  if (store.readings.length > 250) store.readings.shift();
+  saveStore(store);
+
+  liveReadings[activeSrc] = newReading;
+  populateFormFromSource(activeSrc);
+  updateHero();
+  renderSourceCards();
+  updateBudget();
+  drawChart();
+}
+
+function populateFormFromSource(src) {
+  const r = liveReadings[src] || store.readings.filter(x => x.source === src).pop();
+  if (r) {
+    document.getElementById('f-source').value = r.source;
+    document.getElementById('f-type').value = r.dataType || 'MEASURED';
+    document.getElementById('f-ph').value = r.ph !== null ? r.ph : '';
+    document.getElementById('f-turb').value = r.turbidity_ntu !== null ? r.turbidity_ntu : '';
+    document.getElementById('f-ec').value = r.ec_us_cm !== null ? r.ec_us_cm : '';
+    document.getElementById('f-temp').value = r.temp_c !== null ? r.temp_c : '';
+    document.getElementById('f-level').value = r.level_pct !== null ? r.level_pct : '';
+    document.getElementById('f-orp').value = r.orp_mv !== null ? r.orp_mv : '';
+    updateLivePreview(r);
+  }
+}
+
+function resetToPreloadedData() {
+  store = getPreloadedDataset();
+  saveStore(store);
+  liveReadings = {};
+  liveFormReading = null;
+  const storeReadings = getLatestStoreReadings();
+  for (const r of storeReadings) {
+    liveReadings[r.source] = r;
+  }
+  populateFormFromSource('clean');
+  updateHero();
+  renderSourceCards();
+  renderMicroList();
+  renderCalList();
+  updateBudget();
+  drawChart();
+  showToast('🔄 Rich preloaded demo dataset restored');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('global-toast');
+  if (!toast) return;
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3200);
+}
+
+function switchIntegrationTab(tabId, btn) {
+  const container = document.getElementById('integration-hub');
+  if (!container) return;
+  container.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const target = document.getElementById('int-tab-' + tabId);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function copySnippet(btn) {
+  const pre = btn.parentElement.querySelector('pre');
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => { btn.textContent = originalText; }, 2000);
+  });
+}
+
 // ============================================================
 // INIT
 // ============================================================
 function init() {
+  // Ensure store is populated
+  if (!store || !store.readings || store.readings.length === 0) {
+    store = getPreloadedDataset();
+    saveStore(store);
+  }
+
   // Load persisted readings into liveReadings (last per source)
   const storeReadings = getLatestStoreReadings();
   for (const r of storeReadings) {
@@ -2062,13 +2476,26 @@ function init() {
   updateBudget();
   updateHero();
 
+  // Populate manual entry form with clean water by default
+  populateFormFromSource('clean');
+
+  // Expose global API for team integration
+  window.WaterAnalyzer = {
+    DEFAULT_THRESHOLDS,
+    store,
+    getPreloadedDataset,
+    resetToPreloadedData,
+    judgeParam,
+    compensateEC,
+    computeVerdict,
+    liveReadings,
+    toggleLiveStream
+  };
+
   // Set today's date in log forms
   const today = new Date().toISOString().slice(0,10);
   if (document.getElementById('micro-date')) document.getElementById('micro-date').value = today;
   if (document.getElementById('cal-date')) document.getElementById('cal-date').value = today;
-
-  // Initial live preview
-  updateLivePreview({ source:'clean', dataType:'MEASURED', ph:null,turbidity_ntu:null,ec_us_cm:null,temp_c:null,level_pct:null,orp_mv:null });
 
   // Chart resize
   window.addEventListener('resize', () => {
