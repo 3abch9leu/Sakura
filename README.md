@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./hero (2).svg" width="100%" alt="Sakura - Balanced forces. Unstoppable drive. Kizuna 2026"/>
+<img src="./hero (2).svg" width="100%" alt="Sakura🌸 - Many blossoms. One bond. Kizuna 2026"/>
 
 <a href="https://git.io/typing-svg">
   <img src="https://readme-typing-svg.demolab.com?font=Noto+Serif+JP&weight=500&size=21&pause=1300&color=FFB7C5&center=true&vCenter=true&width=820&height=50&lines=Balanced+forces.+Unstoppable+drive.;%E7%B5%86+%C2%B7+Kizuna+means+%22bond%22;Dev+%C2%B7+AI+%C2%B7+Systems+builders;Water+%C2%B7+Energy+%C2%B7+Agriculture;Ready+to+conquer+Kizuna+2026+%F0%9F%8C%B8" alt="typing" />
@@ -19,14 +19,14 @@
 
 </div>
 
-> 🌸 **Hey! We're Sakura**, a passionate team of dev, AI and system builders.
+> 🌸 **Hey! We're Sakura🌸🌸**, a passionate team of dev, AI and system builders.
 > We're tackling **water, energy & agriculture** challenges with smart tech and good vibes. Let's win together! 🚀
 
 <div align="center">
 
 | | |
 |:---|:---|
-| 🌸 **Team** | Sakura |
+| 🌸 **Team** | Sakura🌸 |
 | ⛩️ **Event** | Kizuna 2026 (hackathon) |
 | 👥 **Members** | 4 / 4, all from ESPRIT |
 | 🎯 **Domains** | Water · Energy · Agriculture |
@@ -41,11 +41,11 @@ That's what this team is about: different skills, one shared goal.
 
 <img src="./divider-b.svg" width="100%" alt=""/>
 
-### ☯️ 陰陽 · Why "Sakura"?
+### 🌸 桜 · Why "Sakura🌸"?
 
-*Two opposite forces, one harmonious system.*
+*Many blossoms, one branch.*
 **Hardware ↔ Software · Data ↔ Design · Engineering ↔ Storytelling.**
-When they stay in balance, nothing can stop them.
+Like cherry blossoms, we bloom strongest together.
 
 <br/>
 
@@ -69,7 +69,7 @@ When they stay in balance, nothing can stop them.
 
 `Frontend` `Backend` `Design / UX` `Business & Pitch`
 
-`React` `Next.js` `Node.js` `Python` `Spring Boot`
+`Python`
 
 [![GitHub](https://img.shields.io/badge/GitHub-3abch9leu-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/3abch9leu)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Aziz%20Nasri-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/aziz-nasri-0a279a271)
@@ -77,12 +77,15 @@ When they stay in balance, nothing can stop them.
     </td>
     <td width="50%" valign="top">
 
-### 🌸 `MOLKA8`
+### 🌸 `MOLKA.MAKRI`
 **Member** · ESPRIT
 
 `Frontend` `Data / AI`
 
-`PyTorch` `Flutter` `Python` `Figma` `Computer Vision`
+`PyTorch` `Python` `Computer Vision`
+
+[![GitHub](https://img.shields.io/badge/GitHub-molka--makri-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/molka-makri)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Molka%20Makri-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/molkamakri)
 
     </td>
   </tr>
@@ -94,7 +97,10 @@ When they stay in balance, nothing can stop them.
 
 `Frontend`
 
-`TypeScript` `PyTorch` `Flutter` `Node.js` `Python`
+`PyTorch` `Python`
+
+[![GitHub](https://img.shields.io/badge/GitHub-abbes02-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/abbes02)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Mehdi%20Abbes-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mehdi-abbes)
 
     </td>
     <td width="50%" valign="top">
@@ -104,7 +110,10 @@ When they stay in balance, nothing can stop them.
 
 `Frontend` `Backend` `Data / AI` `Mobile`
 
-`React` `TypeScript` `Python` `TensorFlow` `Next.js`
+`Python`
+
+[![GitHub](https://img.shields.io/badge/GitHub-amennaffeti-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/amennaffeti)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Amen%20Naffeti-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/amen-naffeti-5166152b8)
 
     </td>
   </tr>
@@ -116,26 +125,21 @@ When they stay in balance, nothing can stop them.
 
 <img src="./h-arsenal.svg" width="100%" alt="ARSENAL"/>
 
-**`FRONTEND & MOBILE`**
+**`FRONTEND`**
 
-<img src="https://skillicons.dev/icons?i=react,nextjs,angular,ts,flutter&theme=dark" alt="frontend and mobile"/>
+<img src="https://skillicons.dev/icons?i=angular,js&theme=dark" alt="frontend"/>
 
 **`BACKEND`**
 
-<img src="https://skillicons.dev/icons?i=nodejs,spring,python,docker&theme=dark" alt="backend"/>
+<img src="https://skillicons.dev/icons?i=fastapi,py&theme=dark" alt="backend"/>
 
 **`AI & DATA`**
 
-<img src="https://skillicons.dev/icons?i=pytorch,tensorflow,python&theme=dark" alt="ai and data"/>
-
-**`DESIGN`**
-
-<img src="https://skillicons.dev/icons?i=figma&theme=dark" alt="design"/>
+<img src="https://skillicons.dev/icons?i=pytorch,py&theme=dark" alt="ai and data"/>
 
 **`ALSO`**
 
 ![Computer Vision](https://img.shields.io/badge/COMPUTER%20VISION-ff8fab?style=for-the-badge&labelColor=1a0f1f)
-![SQL](https://img.shields.io/badge/SQL-ffb7c5?style=for-the-badge&labelColor=1a0f1f)
 ![FullStack](https://img.shields.io/badge/FULLSTACK-e6c27a?style=for-the-badge&labelColor=1a0f1f)
 ![Business Model](https://img.shields.io/badge/BUSINESS%20MODEL-d7263d?style=for-the-badge&labelColor=1a0f1f)
 ![Pitch](https://img.shields.io/badge/PITCH-ff8fab?style=for-the-badge&labelColor=1a0f1f)
@@ -152,7 +156,7 @@ When they stay in balance, nothing can stop them.
 ![Hardware](https://img.shields.io/badge/HARDWARE%20%2F%20IoT-ff8fab?style=for-the-badge&logo=arduino&logoColor=white&labelColor=1a0f1f)
 
 *Skills that would complete the circle:*
-`UI/UX Design` `Business Model` `Docker` `IoT / Arduino` `Angular` `AI / ML` `Spring Boot`
+`UI/UX Design` `Business Model` `Docker` `IoT / Arduino` `AI / ML`
 
 <img src="./divider-b.svg" width="100%" alt=""/>
 
@@ -180,6 +184,6 @@ When they stay in balance, nothing can stop them.
 [![LinkedIn](https://img.shields.io/badge/LINKEDIN-Aziz%20Nasri-ff8fab?style=for-the-badge&logo=linkedin&logoColor=white&labelColor=1a0f1f)](https://linkedin.com/in/aziz-nasri-0a279a271)
 [![GitHub](https://img.shields.io/badge/GITHUB-3abch9leu-ffb7c5?style=for-the-badge&logo=github&logoColor=white&labelColor=1a0f1f)](https://github.com/3abch9leu)
 
-<img src="./footer.svg" width="100%" alt="Two forces. One bond."/>
+<img src="./footer.svg" width="100%" alt="Many blossoms. One bond."/>
 
 </div>
